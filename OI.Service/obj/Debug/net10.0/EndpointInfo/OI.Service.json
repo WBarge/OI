@@ -1,0 +1,35 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "OI.Service | v1",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://localhost:7128"
+    },
+    {
+      "url": "http://localhost:5008"
+    }
+  ],
+  "paths": {
+    "/api/Ping": {
+      "get": {
+        "tags": [
+          "Ping"
+        ],
+        "summary": "Will always return a 200\r\nThis endpoint it to be used to validate the service is up and running",
+        "responses": {
+          "200": {
+            "description": "IActionResult."
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Ping"
+    }
+  ]
+}

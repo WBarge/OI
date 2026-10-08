@@ -1,0 +1,32 @@
+@if (!isHidden()) {
+<p-fieldset legend={{headingTest}} class="addressPanel">
+  <span class="fieldOnSide">
+    <label for="address1">Address 1</label>
+    <input id="address1" type="text" pInputText  [(ngModel)]="data.address1" />
+  </span>
+  <span class="fieldOnSide">
+    <label for="address2">Address 2</label>
+    <input id="address2" type="text" pInputText  [(ngModel)]="data.address2" />
+  </span>
+  <span class="fieldOnSide">
+    <label for="city">City</label>
+    <input id="city" type="text" pInputText [(ngModel)]="data.city" />
+  </span>
+    <span class="fieldOnSide">
+    <label for="state">State</label>
+    <p-select
+        id="state"
+        [options]="states"
+        optionLabel="name"
+        optionValue="code"
+        placeholder="Select a State"
+        autoDisplayFirst="false"
+        [(ngModel)]="data.stateCode"
+    />
+  </span>
+  <span class="fieldOnSide">
+    <label for="zipCode">Zip Code</label>
+    <input id="zipCode" pInputMask="99999" placeholder="99999" type="text" pInputText [(ngModel)]="data.zipCode" />
+  </span>
+</p-fieldset>
+}

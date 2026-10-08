@@ -1,0 +1,9 @@
+<Solution>
+  <Project Path="OI.Business.Tests/OI.Business.Tests.csproj" Id="f0e5b7f0-0777-4c3c-aef8-226d335148e1" />
+  <Project Path="OI.Business/OI.Business.csproj" Id="4d11459d-a33f-46ee-8b14-00f60eab4c28" />
+  <Project Path="OI.Data.Tests/OI.Data.Tests.csproj" Id="11d0e869-5bf1-459f-9df6-2db019ca5793" />
+  <Project Path="OI.Data/OI.Data.csproj" Id="9008a198-45a8-469a-b850-474445afb46c" />
+  <Project Path="OI.Glue/OI.Glue.csproj" Id="d24b1c9e-8c7d-4058-8167-6371c1d2072e" />
+  <Project Path="OI.Service.Tests/OI.Service.Tests.csproj" Id="0f55371f-9dcd-4190-adac-cf1069de31ed" />
+  <Project Path="OI.Service/OI.Service.csproj" Id="2ce728b2-f2ba-4b86-9afe-7f0bb8f75c91" />
+</Solution>

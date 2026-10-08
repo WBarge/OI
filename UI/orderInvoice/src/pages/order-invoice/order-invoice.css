@@ -1,0 +1,67 @@
+.order-details {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.5rem 1rem;
+	width: 100%;
+}
+
+.order-details .fieldOnSide {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.address-panels {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+	align-items: start;
+}
+
+.address-panels address-panel {
+  justify-self: center;
+}
+
+.fieldOnSide{
+  display:flex;
+  flex-direction: row;
+}
+
+.fieldOnSide label{
+  flex-basis: 10rem;
+  flex-grow: 0;
+  flex-shrink: 0;
+  padding-top: 0.25rem;
+}
+
+.fieldOnSide input{
+  flex-basis: 5rem;
+  flex-grow: 0;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.gridHeader{
+  text-align: center;
+}
+
+.totals {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  margin-right: 14rem;
+}
+.totalRow {
+  display: flex;
+  justify-content: space-between;
+  width: 15rem;
+}
+
+@media (max-width: 700px) {
+	.address-panels {
+		grid-template-columns: 1fr;
+	}
+}
