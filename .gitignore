@@ -16,3 +16,6 @@ OI.Service.Tests/obj/
 OI.Data.Tests/bin/
 
 OI.Data.Tests/obj/
+
+bin/
+obj/
