@@ -39,6 +39,38 @@ public class CreateOrder : ICreateOrder
     public decimal? Tax { get; set; }
     /// <summary>Gets or sets the total. If not provided, defaults to zero.</summary>
     public decimal? Total { get; set; }
-    /// <summary>Gets or sets the order items. Optional; if provided, SubTotal and Total are recalculated.</summary>
-    public IEnumerable<ICreateOrderItem>? OrderItems { get; set; }
+
+    /// <summary>
+    /// Gets or sets the order items. Optional; if provided, SubTotal and Total are recalculated.
+    /// Typed as the concrete <see cref="CreateOrderItem"/> so System.Text.Json can deserialize it
+    /// (it cannot deserialize interface types).
+    /// </summary>
+    public IEnumerable<CreateOrderItem>? OrderItems { get; set; }
+
+    /// <summary>
+    /// Explicit <see cref="ICreateOrder"/> view of <see cref="OrderItems"/>.
+    /// The getter returns the same <see cref="CreateOrderItem"/> instances, so changes made to the items
+    /// through the interface (defaults, recalculated totals) are visible on this request.
+    /// The setter keeps any <see cref="CreateOrderItem"/> as-is and copies other implementations.
+    /// Explicit interface members are ignored by System.Text.Json, so this does not affect (de)serialization.
+    /// </summary>
+    IEnumerable<ICreateOrderItem>? ICreateOrder.OrderItems
+    {
+        get => OrderItems;
+        set => OrderItems = value?.Select(ToCreateOrderItem).ToList();
+    }
+
+    private static CreateOrderItem ToCreateOrderItem(ICreateOrderItem item)
+    {
+        return item as CreateOrderItem ?? new CreateOrderItem
+        {
+            ProductId = item.ProductId,
+            Name = item.Name,
+            Description = item.Description,
+            Sku = item.Sku,
+            Price = item.Price,
+            Quantity = item.Quantity,
+            Total = item.Total
+        };
+    }
 }

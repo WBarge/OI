@@ -739,6 +739,27 @@ public class OrderRepoTests
         await act.Should().ThrowAsync<OperationCanceledException>("the token was cancelled before the call");
     }
 
+    [Test, Description("GetNextOrderNumberAsync should throw InvalidOperationException when no OrderCounter row exists")]
+    public async Task GetNextOrderNumberAsync_ThrowsWhenNoCounterExists()
+    {
+        await TestContext.Out.WriteLineAsync("Setting up test");
+        ServiceCollection services = new();
+        services.AddEntityFrameworkInMemoryDatabase()
+            .AddDbContext<OiDbContext>(optionsBuilder => optionsBuilder.UseInMemoryDatabase($"NoCounter-{Guid.NewGuid()}"));
+        using ServiceProvider isolatedProvider = services.BuildServiceProvider();
+        using IServiceScope serviceScope = isolatedProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
+        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        await context.Database.EnsureCreatedAsync();
+        context.OrderCounters.RemoveRange(context.OrderCounters);
+        await context.SaveChangesAsync();
+        OrderRepo sut = new(context);
+
+        await TestContext.Out.WriteLineAsync("Executing test");
+        Func<Task> act = () => sut.GetNextOrderNumberAsync(CancellationToken.None);
+
+        await TestContext.Out.WriteLineAsync("Examining results");
+        await act.Should().ThrowAsync<InvalidOperationException>("FirstAsync throws when the table has no rows");
+    }
     private static ICreateOrder CreateRequest()
     {
         Mock<ICreateOrder> mock = new();

@@ -4,3 +4,15 @@ _ReSharper.Caches/
 .vs/
 
 UI/orderInvoice/.vscode/
+
+OI.Service/bin/
+
+OI.Service/obj/
+
+OI.Service.Tests/bin/
+
+OI.Service.Tests/obj/
+
+OI.Data.Tests/bin/
+
+OI.Data.Tests/obj/
