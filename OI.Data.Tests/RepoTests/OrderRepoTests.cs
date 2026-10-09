@@ -780,4 +780,92 @@ public class OrderRepoTests
         mock.Setup(r => r.Total).Returns((decimal?)null);
         return mock.Object;
     }
+
+    [Test, Description("CreateOrderAsync should return the created order items on the returned order")]
+    public async Task CreateOrderAsync_ReturnsOrderItemsOnResult()
+    {
+        await TestContext.Out.WriteLineAsync("Setting up test");
+        using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
+        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        OrderRepo sut = new(context);
+
+        Mock<ICreateOrderItem> item1Mock = new();
+        item1Mock.Setup(i => i.ProductId).Returns(Guid.NewGuid());
+        item1Mock.Setup(i => i.Name).Returns("Widget");
+        item1Mock.Setup(i => i.Description).Returns("A widget");
+        item1Mock.Setup(i => i.Sku).Returns("WID-001");
+        item1Mock.Setup(i => i.Price).Returns(10.50m);
+        item1Mock.Setup(i => i.Quantity).Returns(2);
+        item1Mock.Setup(i => i.Total).Returns(21.00m);
+
+        Mock<ICreateOrderItem> item2Mock = new();
+        item2Mock.Setup(i => i.ProductId).Returns(Guid.NewGuid());
+        item2Mock.Setup(i => i.Name).Returns("Gadget");
+        item2Mock.Setup(i => i.Description).Returns("A gadget");
+        item2Mock.Setup(i => i.Sku).Returns("GAD-002");
+        item2Mock.Setup(i => i.Price).Returns(5.25m);
+        item2Mock.Setup(i => i.Quantity).Returns(3);
+        item2Mock.Setup(i => i.Total).Returns(15.75m);
+
+        Mock<ICreateOrder> requestMock = new();
+        requestMock.Setup(r => r.CustomerId).Returns(Guid.NewGuid());
+        requestMock.Setup(r => r.BillingAddress1).Returns("123 Main St");
+        requestMock.Setup(r => r.BillingAddress2).Returns(string.Empty);
+        requestMock.Setup(r => r.BillingCity).Returns("Austin");
+        requestMock.Setup(r => r.BillingStateCode).Returns("TX");
+        requestMock.Setup(r => r.BillingZipCode).Returns("78701");
+        requestMock.Setup(r => r.ShippingAddress1).Returns("123 Main St");
+        requestMock.Setup(r => r.ShippingAddress2).Returns(string.Empty);
+        requestMock.Setup(r => r.ShippingCity).Returns("Austin");
+        requestMock.Setup(r => r.ShippingStateCode).Returns("TX");
+        requestMock.Setup(r => r.ShippingZipCode).Returns("78701");
+        requestMock.Setup(r => r.OrderItems).Returns([item1Mock.Object, item2Mock.Object]);
+
+        await TestContext.Out.WriteLineAsync("Executing test");
+        IOrder result = await sut.CreateOrderAsync(requestMock.Object, 1000, true, CancellationToken.None);
+
+        await TestContext.Out.WriteLineAsync("Examining results");
+        List<IOrderItem> items = result.OrderItems.ToList();
+        items.Should().HaveCount(2, "the returned order should carry the items that were saved");
+        IOrderItem widget = items.Single(i => i.Sku == "WID-001");
+        widget.Name.Should().Be("Widget");
+        widget.Description.Should().Be("A widget");
+        widget.Price.Should().Be(10.50m);
+        widget.Quantity.Should().Be(2);
+        widget.Total.Should().Be(21.00m);
+        IOrderItem gadget = items.Single(i => i.Sku == "GAD-002");
+        gadget.Name.Should().Be("Gadget");
+        gadget.Price.Should().Be(5.25m);
+        gadget.Quantity.Should().Be(3);
+        gadget.Total.Should().Be(15.75m);
+    }
+
+    [Test, Description("CreateOrderAsync should return an empty OrderItems collection when the request has no items")]
+    public async Task CreateOrderAsync_ReturnsEmptyOrderItemsWhenRequestHasNone()
+    {
+        await TestContext.Out.WriteLineAsync("Setting up test");
+        using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
+        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        OrderRepo sut = new(context);
+
+        Mock<ICreateOrder> requestMock = new();
+        requestMock.Setup(r => r.CustomerId).Returns(Guid.NewGuid());
+        requestMock.Setup(r => r.BillingAddress1).Returns("123 Main St");
+        requestMock.Setup(r => r.BillingAddress2).Returns(string.Empty);
+        requestMock.Setup(r => r.BillingCity).Returns("Austin");
+        requestMock.Setup(r => r.BillingStateCode).Returns("TX");
+        requestMock.Setup(r => r.BillingZipCode).Returns("78701");
+        requestMock.Setup(r => r.ShippingAddress1).Returns("123 Main St");
+        requestMock.Setup(r => r.ShippingAddress2).Returns(string.Empty);
+        requestMock.Setup(r => r.ShippingCity).Returns("Austin");
+        requestMock.Setup(r => r.ShippingStateCode).Returns("TX");
+        requestMock.Setup(r => r.ShippingZipCode).Returns("78701");
+        requestMock.Setup(r => r.OrderItems).Returns((IEnumerable<ICreateOrderItem>?)null);
+
+        await TestContext.Out.WriteLineAsync("Executing test");
+        IOrder result = await sut.CreateOrderAsync(requestMock.Object, 1000, true, CancellationToken.None);
+
+        await TestContext.Out.WriteLineAsync("Examining results");
+        result.OrderItems.Should().NotBeNull().And.BeEmpty("an order without items should still expose an empty collection");
+    }
 }

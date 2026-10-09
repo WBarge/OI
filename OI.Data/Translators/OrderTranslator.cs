@@ -14,6 +14,8 @@ internal static class OrderTranslator
             OrderDate = order.OrderDate,
             CompletedDate = order.CompletedDate ?? DateTime.MinValue,
             CustomerId = order.CustomerId,
+            // null when the customer navigation was not loaded; IOrder.Customer is declared non-null, so callers must not assume it is populated
+            Customer = order.Customer?.Translate()!,
             BillingAddress1 = order.BillingAddress1 ?? string.Empty,
             BillingAddress2 = order.BillingAddress2 ?? string.Empty,
             BillingCity = order.BillingCity ?? string.Empty,
@@ -24,6 +26,7 @@ internal static class OrderTranslator
             ShippingCity = order.ShippingCity ?? string.Empty,
             ShippingStateCode = order.ShippingStateCode ?? string.Empty,
             ShippingZipCode = order.ShippingZipCode ?? string.Empty,
+            OrderItems = order.OrderItems?.Select(orderItem => orderItem.Translate()).ToList() ?? [],
             SubTotal = order.SubTotal,
             Shipping = order.Shipping,
             Tax = order.Tax,
