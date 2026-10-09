@@ -15,10 +15,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Models\Requests\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\OI.Business\OI.Business.csproj" />
     <ProjectReference Include="..\OI.Data\OI.Data.csproj" />
   </ItemGroup>

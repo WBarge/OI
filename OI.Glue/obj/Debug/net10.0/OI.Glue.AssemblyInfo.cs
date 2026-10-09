@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("OI.Glue")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c709ab6dd06123969a6a74f874683779fdfab8a0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c8ade807560f6da21f4cbfd8740df117fcaee393")]
 [assembly: System.Reflection.AssemblyProductAttribute("OI.Glue")]
 [assembly: System.Reflection.AssemblyTitleAttribute("OI.Glue")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

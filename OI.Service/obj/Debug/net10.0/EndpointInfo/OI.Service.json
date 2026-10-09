@@ -13,6 +13,80 @@
     }
   ],
   "paths": {
+    "/api/Orders": {
+      "post": {
+        "tags": [
+          "Orders"
+        ],
+        "summary": "Creates a new order.",
+        "requestBody": {
+          "description": "The cancellation token.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/CreateOrder"
+                  }
+                ]
+              }
+            },
+            "text/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/CreateOrder"
+                  }
+                ]
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/CreateOrder"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/IOrder"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IOrder"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IOrder"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
     "/api/Ping": {
       "get": {
         "tags": [
@@ -71,6 +145,392 @@
   },
   "components": {
     "schemas": {
+      "CreateOrder": {
+        "type": "object",
+        "properties": {
+          "customerId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets or sets the customer identifier.",
+            "format": "uuid"
+          },
+          "orderDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Gets or sets the order date. If not provided, defaults to UTC now.",
+            "format": "date-time"
+          },
+          "billingAddress1": {
+            "type": "string",
+            "description": "Gets or sets the billing address line 1."
+          },
+          "billingAddress2": {
+            "type": "string",
+            "description": "Gets or sets the billing address line 2."
+          },
+          "billingCity": {
+            "type": "string",
+            "description": "Gets or sets the billing city."
+          },
+          "billingStateCode": {
+            "type": "string",
+            "description": "Gets or sets the billing state code."
+          },
+          "billingZipCode": {
+            "type": "string",
+            "description": "Gets or sets the billing zip code."
+          },
+          "shippingAddress1": {
+            "type": "string",
+            "description": "Gets or sets the shipping address line 1."
+          },
+          "shippingAddress2": {
+            "type": "string",
+            "description": "Gets or sets the shipping address line 2."
+          },
+          "shippingCity": {
+            "type": "string",
+            "description": "Gets or sets the shipping city."
+          },
+          "shippingStateCode": {
+            "type": "string",
+            "description": "Gets or sets the shipping state code."
+          },
+          "shippingZipCode": {
+            "type": "string",
+            "description": "Gets or sets the shipping zip code."
+          },
+          "subTotal": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "description": "Gets or sets the subtotal. If not provided, defaults to zero.",
+            "format": "double"
+          },
+          "shipping": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "description": "Gets or sets the shipping cost. If not provided, defaults to zero.",
+            "format": "double"
+          },
+          "tax": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "description": "Gets or sets the tax amount. If not provided, defaults to zero.",
+            "format": "double"
+          },
+          "total": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "description": "Gets or sets the total. If not provided, defaults to zero.",
+            "format": "double"
+          },
+          "orderItems": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ICreateOrderItem"
+            },
+            "description": "Gets or sets the order items. Optional; if provided, SubTotal and Total are recalculated."
+          }
+        },
+        "description": "Represents the request body for creating an order."
+      },
+      "ICreateOrderItem": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "price": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "total": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "ICustomer": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "phoneNumber": {
+            "type": "string"
+          },
+          "defaultBillingAddress1": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "defaultBillingAddress2": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "defaultBillingCity": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "defaultBillingStateCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "defaultBillingZipCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "defaultShippingAddress1": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "defaultShippingAddress2": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "defaultShippingCity": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "defaultShippingStateCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "defaultShippingZipCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "IOrder": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "orderNumber": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "orderDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completedDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "customerId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "customer": {
+            "$ref": "#/components/schemas/ICustomer"
+          },
+          "billingAddress1": {
+            "type": "string"
+          },
+          "billingAddress2": {
+            "type": "string"
+          },
+          "billingCity": {
+            "type": "string"
+          },
+          "billingStateCode": {
+            "type": "string"
+          },
+          "billingZipCode": {
+            "type": "string"
+          },
+          "shippingAddress1": {
+            "type": "string"
+          },
+          "shippingAddress2": {
+            "type": "string"
+          },
+          "shippingCity": {
+            "type": "string"
+          },
+          "shippingStateCode": {
+            "type": "string"
+          },
+          "shippingZipCode": {
+            "type": "string"
+          },
+          "orderItems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IOrderItem"
+            }
+          },
+          "subTotal": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "shipping": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "tax": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "total": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "isPending": {
+            "type": "boolean"
+          }
+        }
+      },
+      "IOrderItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "price": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "total": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
       "IState": {
         "type": "object",
         "properties": {
@@ -85,6 +545,9 @@
     }
   },
   "tags": [
+    {
+      "name": "Orders"
+    },
     {
       "name": "Ping"
     },

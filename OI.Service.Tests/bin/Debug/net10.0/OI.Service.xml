@@ -4,6 +4,24 @@
         <name>OI.Service</name>
     </assembly>
     <members>
+        <member name="T:OI.Service.Controllers.OrdersController">
+            <summary>
+            Controller for order-related endpoints.
+            </summary>
+        </member>
+        <member name="M:OI.Service.Controllers.OrdersController.#ctor(OI.Glue.Managers.IOrderManager,Microsoft.Extensions.Logging.ILogger{OI.Service.Controllers.OrdersController})">
+            <summary>
+            Controller for order-related endpoints.
+            </summary>
+        </member>
+        <member name="M:OI.Service.Controllers.OrdersController.CreateOrder(OI.Service.Models.Requests.CreateOrder,System.Threading.CancellationToken)">
+            <summary>
+            Creates a new order.
+            </summary>
+            <param name="request">The create order request.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>The created order.</returns>
+        </member>
         <member name="T:OI.Service.Controllers.PingController">
             <summary>
             Class PingController.
@@ -79,6 +97,88 @@
             </summary>
             <param name="builder">The builder.</param>
             <returns>IApplicationBuilder.</returns>
+        </member>
+        <member name="T:OI.Service.Models.Requests.CreateOrder">
+            <summary>
+            Represents the request body for creating an order.
+            </summary>
+        </member>
+        <member name="P:OI.Service.Models.Requests.CreateOrder.CustomerId">
+            <summary>Gets or sets the customer identifier.</summary>
+        </member>
+        <member name="P:OI.Service.Models.Requests.CreateOrder.OrderDate">
+            <summary>Gets or sets the order date. If not provided, defaults to UTC now.</summary>
+        </member>
+        <member name="P:OI.Service.Models.Requests.CreateOrder.BillingAddress1">
+            <summary>Gets or sets the billing address line 1.</summary>
+        </member>
+        <member name="P:OI.Service.Models.Requests.CreateOrder.BillingAddress2">
+            <summary>Gets or sets the billing address line 2.</summary>
+        </member>
+        <member name="P:OI.Service.Models.Requests.CreateOrder.BillingCity">
+            <summary>Gets or sets the billing city.</summary>
+        </member>
+        <member name="P:OI.Service.Models.Requests.CreateOrder.BillingStateCode">
+            <summary>Gets or sets the billing state code.</summary>
+        </member>
+        <member name="P:OI.Service.Models.Requests.CreateOrder.BillingZipCode">
+            <summary>Gets or sets the billing zip code.</summary>
+        </member>
+        <member name="P:OI.Service.Models.Requests.CreateOrder.ShippingAddress1">
+            <summary>Gets or sets the shipping address line 1.</summary>
+        </member>
+        <member name="P:OI.Service.Models.Requests.CreateOrder.ShippingAddress2">
+            <summary>Gets or sets the shipping address line 2.</summary>
+        </member>
+        <member name="P:OI.Service.Models.Requests.CreateOrder.ShippingCity">
+            <summary>Gets or sets the shipping city.</summary>
+        </member>
+        <member name="P:OI.Service.Models.Requests.CreateOrder.ShippingStateCode">
+            <summary>Gets or sets the shipping state code.</summary>
+        </member>
+        <member name="P:OI.Service.Models.Requests.CreateOrder.ShippingZipCode">
+            <summary>Gets or sets the shipping zip code.</summary>
+        </member>
+        <member name="P:OI.Service.Models.Requests.CreateOrder.SubTotal">
+            <summary>Gets or sets the subtotal. If not provided, defaults to zero.</summary>
+        </member>
+        <member name="P:OI.Service.Models.Requests.CreateOrder.Shipping">
+            <summary>Gets or sets the shipping cost. If not provided, defaults to zero.</summary>
+        </member>
+        <member name="P:OI.Service.Models.Requests.CreateOrder.Tax">
+            <summary>Gets or sets the tax amount. If not provided, defaults to zero.</summary>
+        </member>
+        <member name="P:OI.Service.Models.Requests.CreateOrder.Total">
+            <summary>Gets or sets the total. If not provided, defaults to zero.</summary>
+        </member>
+        <member name="P:OI.Service.Models.Requests.CreateOrder.OrderItems">
+            <summary>Gets or sets the order items. Optional; if provided, SubTotal and Total are recalculated.</summary>
+        </member>
+        <member name="T:OI.Service.Models.Requests.CreateOrderItem">
+            <summary>Represents a request to create an order item.</summary>
+        </member>
+        <member name="P:OI.Service.Models.Requests.CreateOrderItem.ProductId">
+            <summary>Gets or sets the product identifier.</summary>
+        </member>
+        <member name="P:OI.Service.Models.Requests.CreateOrderItem.Name">
+            <summary>Gets or sets the name of the order item.</summary>
+        </member>
+        <member name="P:OI.Service.Models.Requests.CreateOrderItem.Description">
+            <summary>Gets or sets the description of the order item.</summary>
+        </member>
+        <member name="P:OI.Service.Models.Requests.CreateOrderItem.Sku">
+            <summary>Gets or sets the SKU of the order item.</summary>
+        </member>
+        <member name="P:OI.Service.Models.Requests.CreateOrderItem.Price">
+            <summary>Gets or sets the unit price of the order item.</summary>
+        </member>
+        <member name="P:OI.Service.Models.Requests.CreateOrderItem.Quantity">
+            <summary>Gets or sets the quantity of the order item.</summary>
+        </member>
+        <member name="P:OI.Service.Models.Requests.CreateOrderItem.Total">
+            <summary>
+            Gets or sets the total price of the order item (Price * Quantity). This value is calculated and overridden if it does not match the calculated value.
+            </summary>
         </member>
         <member name="T:OI.Service.Models.Results.ErrorMessageForClient">
             <summary>

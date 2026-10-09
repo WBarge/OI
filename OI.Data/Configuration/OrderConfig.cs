@@ -17,9 +17,14 @@ internal class OrderConfig : IEntityTypeConfiguration<Order>
         // Configure foreign key relationship
         builder.HasOne(o => o.Customer)
             .WithMany()
-            .HasForeignKey(o => o.CustomerId);
+            .HasForeignKey(o => o.CustomerId)
+            .IsRequired(false);
         builder.Property(o => o.CustomerId)
             .HasColumnName("CustomerId");
+        // Configure order number
+        builder.Property(o => o.OrderNumber)
+            .HasColumnName("OrderNumber")
+            .IsRequired();
         // Configure date properties
         builder.Property(o => o.OrderDate)
             .HasColumnName("OrderDate")
@@ -70,6 +75,9 @@ internal class OrderConfig : IEntityTypeConfiguration<Order>
             .IsRequired();
         builder.Property(o => o.Total)
             .HasColumnName("Total")
+            .IsRequired();
+        builder.Property(o => o.IsPending)
+            .HasColumnName("IsPending")
             .IsRequired();
         // Configure audit properties
         builder.Property(o => o.Created)

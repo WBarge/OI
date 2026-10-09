@@ -10,10 +10,19 @@
         "dependencies": {
           "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.12",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.12",
+          "My.CrossCutting.Libraries": "1.0.0.1",
           "OI.Glue": "1.0.0"
         },
         "runtime": {
           "OI.Business.dll": {}
+        }
+      },
+      "JetBrains.Annotations/2024.2.0": {
+        "runtime": {
+          "lib/netstandard2.0/JetBrains.Annotations.dll": {
+            "assemblyVersion": "4242.42.42.42",
+            "fileVersion": "2024.2.0.0"
+          }
         }
       },
       "Microsoft.Extensions.DependencyInjection.Abstractions/10.0.12": {
@@ -35,6 +44,17 @@
           }
         }
       },
+      "My.CrossCutting.Libraries/1.0.0.1": {
+        "dependencies": {
+          "JetBrains.Annotations": "2024.2.0"
+        },
+        "runtime": {
+          "lib/net8.0/CrossCutting.dll": {
+            "assemblyVersion": "1.0.0.1",
+            "fileVersion": "1.0.0.1"
+          }
+        }
+      },
       "OI.Glue/1.0.0": {
         "runtime": {
           "OI.Glue.dll": {
@@ -51,6 +71,13 @@
       "serviceable": false,
       "sha512": ""
     },
+    "JetBrains.Annotations/2024.2.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-GNnqCFW/163p1fOehKx0CnAqjmpPrUSqrgfHM6qca+P+RN39C9rhlfZHQpJhxmQG/dkOYe/b3Z0P8b6Kv5m1qw==",
+      "path": "jetbrains.annotations/2024.2.0",
+      "hashPath": "jetbrains.annotations.2024.2.0.nupkg.sha512"
+    },
     "Microsoft.Extensions.DependencyInjection.Abstractions/10.0.12": {
       "type": "package",
       "serviceable": true,
@@ -64,6 +91,13 @@
       "sha512": "sha512-+24lC4plfbEDNfLAdTV/SWKS7dW+16X4HdydO3R++134kSNTzcbYA4KpR1Hdh6uWisB8Za3AzwyOn+K+NxWIug==",
       "path": "microsoft.extensions.logging.abstractions/10.0.12",
       "hashPath": "microsoft.extensions.logging.abstractions.10.0.12.nupkg.sha512"
+    },
+    "My.CrossCutting.Libraries/1.0.0.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-Y1mZ0btLfGObSSPwMqcn1sXq69IpOMRIcjfAx2dM5yXClOjjhjYS+07q2GngvDrmybLSa6keA5CZY+7akf1IXg==",
+      "path": "my.crosscutting.libraries/1.0.0.1",
+      "hashPath": "my.crosscutting.libraries.1.0.0.1.nupkg.sha512"
     },
     "OI.Glue/1.0.0": {
       "type": "project",

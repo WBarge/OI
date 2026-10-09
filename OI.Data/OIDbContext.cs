@@ -27,4 +27,6 @@ internal class OiDbContext(DbContextOptions<OiDbContext> options) : DbContext(op
 
     public DbSet<State> States { get; set; }
 
+    public DbSet<OrderCounter> OrderCounters { get; set; }
+
 }

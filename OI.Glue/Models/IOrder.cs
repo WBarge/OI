@@ -8,6 +8,11 @@ public interface IOrder
     Guid Id { get; set; }
 
     /// <summary>
+    /// Gets or sets the order number. A sequential number assigned to the order.
+    /// </summary>
+    int OrderNumber { get; set; }
+
+    /// <summary>
     /// Gets or sets the order date. The date when the order was placed.
     /// </summary>
     DateTime OrderDate { get; set; }
@@ -20,7 +25,7 @@ public interface IOrder
     /// <summary>
     /// Gets or sets the customer identifier. Foreign key to the customer who placed the order.
     /// </summary>
-    Guid CustomerId { get; set; }
+    Guid? CustomerId { get; set; }
 
     /// <summary>
     /// Gets or sets the customer. The customer who placed the order.
@@ -101,4 +106,9 @@ public interface IOrder
     /// Gets or sets the total amount. The final total cost of the order, including items, shipping, and taxes.
     /// </summary>
     decimal Total { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the order is pending. True when the order has been created but not yet processed.
+    /// </summary>
+    bool IsPending { get; set; }
 }

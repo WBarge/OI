@@ -40,6 +40,14 @@
           }
         }
       },
+      "JetBrains.Annotations/2024.2.0": {
+        "runtime": {
+          "lib/netstandard2.0/JetBrains.Annotations.dll": {
+            "assemblyVersion": "4242.42.42.42",
+            "fileVersion": "2024.2.0.0"
+          }
+        }
+      },
       "Microsoft.ApplicationInsights/2.22.0": {
         "runtime": {
           "lib/netstandard2.0/Microsoft.ApplicationInsights.dll": {
@@ -556,6 +564,17 @@
           }
         }
       },
+      "My.CrossCutting.Libraries/1.0.0.1": {
+        "dependencies": {
+          "JetBrains.Annotations": "2024.2.0"
+        },
+        "runtime": {
+          "lib/net8.0/CrossCutting.dll": {
+            "assemblyVersion": "1.0.0.1",
+            "fileVersion": "1.0.0.1"
+          }
+        }
+      },
       "Newtonsoft.Json/13.0.3": {
         "runtime": {
           "lib/net6.0/Newtonsoft.Json.dll": {
@@ -608,6 +627,7 @@
         "dependencies": {
           "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.12",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.12",
+          "My.CrossCutting.Libraries": "1.0.0.1",
           "OI.Glue": "1.0.0"
         },
         "runtime": {
@@ -646,6 +666,13 @@
       "sha512": "sha512-EL0ckSJMGfJTiDF0EFU48bV/iIsgFKCaHEpp5LxqjNO0RhfF3WxQuNWosX2L/Xwt8VRRLE8TgN4tSzTTiZAfdA==",
       "path": "fluentassertions/8.4.0",
       "hashPath": "fluentassertions.8.4.0.nupkg.sha512"
+    },
+    "JetBrains.Annotations/2024.2.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-GNnqCFW/163p1fOehKx0CnAqjmpPrUSqrgfHM6qca+P+RN39C9rhlfZHQpJhxmQG/dkOYe/b3Z0P8b6Kv5m1qw==",
+      "path": "jetbrains.annotations/2024.2.0",
+      "hashPath": "jetbrains.annotations.2024.2.0.nupkg.sha512"
     },
     "Microsoft.ApplicationInsights/2.22.0": {
       "type": "package",
@@ -737,6 +764,13 @@
       "sha512": "sha512-EA55cjyNn8eTNWrgrdZJH5QLFp2L43oxl1tlkoYUKIE9pRwL784OWiTXeCV5ApS+AMYEAlt7Fo03A2XfouvHmQ==",
       "path": "moq/4.20.72",
       "hashPath": "moq.4.20.72.nupkg.sha512"
+    },
+    "My.CrossCutting.Libraries/1.0.0.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-Y1mZ0btLfGObSSPwMqcn1sXq69IpOMRIcjfAx2dM5yXClOjjhjYS+07q2GngvDrmybLSa6keA5CZY+7akf1IXg==",
+      "path": "my.crosscutting.libraries/1.0.0.1",
+      "hashPath": "my.crosscutting.libraries.1.0.0.1.nupkg.sha512"
     },
     "Newtonsoft.Json/13.0.3": {
       "type": "package",

@@ -2,6 +2,19 @@
   "version": 4,
   "targets": {
     "net10.0": {
+      "JetBrains.Annotations/2024.2.0": {
+        "type": "package",
+        "compile": {
+          "lib/netstandard2.0/JetBrains.Annotations.dll": {
+            "related": ".deps.json;.xml"
+          }
+        },
+        "runtime": {
+          "lib/netstandard2.0/JetBrains.Annotations.dll": {
+            "related": ".deps.json;.xml"
+          }
+        }
+      },
       "Microsoft.Extensions.DependencyInjection.Abstractions/10.0.12": {
         "type": "package",
         "compile": {
@@ -37,6 +50,18 @@
           "buildTransitive/net8.0/Microsoft.Extensions.Logging.Abstractions.targets": {}
         }
       },
+      "My.CrossCutting.Libraries/1.0.0.1": {
+        "type": "package",
+        "dependencies": {
+          "JetBrains.Annotations": "2024.2.0"
+        },
+        "compile": {
+          "lib/net8.0/CrossCutting.dll": {}
+        },
+        "runtime": {
+          "lib/net8.0/CrossCutting.dll": {}
+        }
+      },
       "OI.Glue/1.0.0": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v10.0",
@@ -50,6 +75,29 @@
     }
   },
   "libraries": {
+    "JetBrains.Annotations/2024.2.0": {
+      "sha512": "GNnqCFW/163p1fOehKx0CnAqjmpPrUSqrgfHM6qca+P+RN39C9rhlfZHQpJhxmQG/dkOYe/b3Z0P8b6Kv5m1qw==",
+      "type": "package",
+      "path": "jetbrains.annotations/2024.2.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "icon.png",
+        "jetbrains.annotations.2024.2.0.nupkg.sha512",
+        "jetbrains.annotations.nuspec",
+        "lib/JetBrains.Annotations.2024.2.0.snupkg",
+        "lib/net20/JetBrains.Annotations.dll",
+        "lib/net20/JetBrains.Annotations.xml",
+        "lib/netstandard1.0/JetBrains.Annotations.deps.json",
+        "lib/netstandard1.0/JetBrains.Annotations.dll",
+        "lib/netstandard1.0/JetBrains.Annotations.xml",
+        "lib/netstandard2.0/JetBrains.Annotations.deps.json",
+        "lib/netstandard2.0/JetBrains.Annotations.dll",
+        "lib/netstandard2.0/JetBrains.Annotations.xml",
+        "lib/portable40-net40+sl5+win8+wp8+wpa81/JetBrains.Annotations.dll",
+        "lib/portable40-net40+sl5+win8+wp8+wpa81/JetBrains.Annotations.xml"
+      ]
+    },
     "Microsoft.Extensions.DependencyInjection.Abstractions/10.0.12": {
       "sha512": "9/qymSh7hVDMGTGwrLz8MRp5zRyXy9adGDOs4HwRdnLil3oZGYuWeZjbmHgCQ9BL1qBroVfgUK3U/nb61617Cw==",
       "type": "package",
@@ -153,6 +201,18 @@
         "useSharedDesignerContext.txt"
       ]
     },
+    "My.CrossCutting.Libraries/1.0.0.1": {
+      "sha512": "Y1mZ0btLfGObSSPwMqcn1sXq69IpOMRIcjfAx2dM5yXClOjjhjYS+07q2GngvDrmybLSa6keA5CZY+7akf1IXg==",
+      "type": "package",
+      "path": "my.crosscutting.libraries/1.0.0.1",
+      "files": [
+        ".nupkg.metadata",
+        "README.md",
+        "lib/net8.0/CrossCutting.dll",
+        "my.crosscutting.libraries.1.0.0.1.nupkg.sha512",
+        "my.crosscutting.libraries.nuspec"
+      ]
+    },
     "OI.Glue/1.0.0": {
       "type": "project",
       "path": "../OI.Glue/OI.Glue.csproj",
@@ -163,6 +223,7 @@
     "net10.0": [
       "Microsoft.Extensions.DependencyInjection.Abstractions >= 10.0.12",
       "Microsoft.Extensions.Logging.Abstractions >= 10.0.12",
+      "My.CrossCutting.Libraries >= 1.0.0.1",
       "OI.Glue >= 1.0.0"
     ]
   },
@@ -233,6 +294,10 @@
           "Microsoft.Extensions.Logging.Abstractions": {
             "target": "Package",
             "version": "[10.0.12, )"
+          },
+          "My.CrossCutting.Libraries": {
+            "target": "Package",
+            "version": "[1.0.0.1, )"
           }
         },
         "imports": [

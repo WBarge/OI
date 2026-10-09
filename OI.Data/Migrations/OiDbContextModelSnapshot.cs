@@ -143,7 +143,7 @@ namespace OI.Data.Migrations
                         .HasColumnType("nvarchar(10)")
                         .HasColumnName("BillingZipCode");
 
-                    b.Property<DateTime>("CompletedDate")
+                    b.Property<DateTime?>("CompletedDate")
                         .HasColumnType("datetime2")
                         .HasColumnName("CompletedDate");
 
@@ -152,9 +152,13 @@ namespace OI.Data.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("Created");
 
-                    b.Property<Guid>("CustomerId")
+                    b.Property<Guid?>("CustomerId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("CustomerId");
+
+                    b.Property<bool>("IsPending")
+                        .HasColumnType("bit")
+                        .HasColumnName("IsPending");
 
                     b.Property<DateTime?>("Modified")
                         .ValueGeneratedOnUpdate()
@@ -164,6 +168,10 @@ namespace OI.Data.Migrations
                     b.Property<DateTime>("OrderDate")
                         .HasColumnType("datetime2")
                         .HasColumnName("OrderDate");
+
+                    b.Property<int>("OrderNumber")
+                        .HasColumnType("int")
+                        .HasColumnName("OrderNumber");
 
                     b.Property<decimal>("Shipping")
                         .HasColumnType("decimal(18,2)")
@@ -211,6 +219,40 @@ namespace OI.Data.Migrations
                     b.HasIndex("CustomerId");
 
                     b.ToTable("Orders", (string)null);
+                });
+
+            modelBuilder.Entity("OI.Data.Model.OrderCounter", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("Id");
+
+                    b.Property<DateTime>("Created")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasColumnName("Created");
+
+                    b.Property<DateTime?>("Modified")
+                        .ValueGeneratedOnUpdate()
+                        .HasColumnType("datetime2")
+                        .HasColumnName("Modified");
+
+                    b.Property<int>("NextOrderNumber")
+                        .HasColumnType("int")
+                        .HasColumnName("NextOrderNumber");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("OrderCounters", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("c0ffee00-1234-5678-abcd-ef0123456789"),
+                            Created = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            NextOrderNumber = 1000
+                        });
                 });
 
             modelBuilder.Entity("OI.Data.Model.OrderItem", b =>
@@ -605,9 +647,7 @@ namespace OI.Data.Migrations
                 {
                     b.HasOne("OI.Data.Model.Customer", "Customer")
                         .WithMany()
-                        .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("CustomerId");
 
                     b.Navigation("Customer");
                 });

@@ -450,6 +450,7 @@
       },
       "OI.Business/1.0.0": {
         "dependencies": {
+          "My.CrossCutting.Libraries": "1.0.0.1",
           "OI.Glue": "1.0.0"
         },
         "runtime": {

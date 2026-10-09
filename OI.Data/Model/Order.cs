@@ -11,6 +11,11 @@ internal class Order
     public Guid Id { get; set; }
 
     /// <summary>
+    /// Gets or sets the order number. A sequential number assigned to the order.
+    /// </summary>
+    public int OrderNumber { get; set; }
+
+    /// <summary>
     /// Gets or sets the order date. The date when the order was placed.
     /// </summary>
     public DateTime OrderDate { get; set; }
@@ -18,12 +23,12 @@ internal class Order
     /// <summary>
     /// Gets or sets the completed date. The date when the order was completed or fulfilled.
     /// </summary>
-    public DateTime CompletedDate { get; set; }
+    public DateTime? CompletedDate { get; set; }
 
     /// <summary>
     /// Gets or sets the customer identifier. Foreign key to the customer who placed the order.
     /// </summary>
-    public Guid CustomerId { get; set; }
+    public Guid? CustomerId { get; set; }
     
     /// <summary>
     /// Gets or sets the customer. The customer who placed the order.
@@ -104,6 +109,11 @@ internal class Order
     /// Gets or sets the total amount. The final total cost of the order, including items, shipping, and taxes.
     /// </summary>
     public decimal Total { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the order is pending. True when the order has been created but not yet processed.
+    /// </summary>
+    public bool IsPending { get; set; }
 
     /// <summary>
     /// Gets or sets the created.

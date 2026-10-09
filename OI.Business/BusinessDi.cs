@@ -16,5 +16,6 @@ public static class BusinessDi
     public static void ConfigureDi(IServiceCollection services)
     {
         services.AddScoped<IStateManager, StateManager>();
+        services.AddScoped<IOrderManager, OrderManager>();
     }
 }

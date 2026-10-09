@@ -451,6 +451,10 @@
             "Microsoft.Extensions.Logging.Abstractions": {
               "target": "Package",
               "version": "[10.0.12, )"
+            },
+            "My.CrossCutting.Libraries": {
+              "target": "Package",
+              "version": "[1.0.0.1, )"
             }
           },
           "imports": [
