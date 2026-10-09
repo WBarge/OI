@@ -156,3 +156,17 @@ D:\Src\Wbarge_GitHub\OI\OI.Business.Tests\obj\Debug\net10.0\refint\OI.Business.T
 D:\Src\Wbarge_GitHub\OI\OI.Business.Tests\obj\Debug\net10.0\OI.Business.Tests.pdb
 D:\Src\Wbarge_GitHub\OI\OI.Business.Tests\obj\Debug\net10.0\OI.Business.Tests.genruntimeconfig.cache
 D:\Src\Wbarge_GitHub\OI\OI.Business.Tests\obj\Debug\net10.0\ref\OI.Business.Tests.dll
+D:\Src\Wbarge_GitHub\OI\OI.Business.Tests\bin\Debug\net10.0\.msCoverageSourceRootsMapping_OI.Business.Tests
+D:\Src\Wbarge_GitHub\OI\OI.Business.Tests\bin\Debug\net10.0\CoverletSourceRootsMapping_OI.Business.Tests
+D:\Src\Wbarge_GitHub\OI\OI.Business.Tests\bin\Debug\net10.0\Castle.Core.dll
+D:\Src\Wbarge_GitHub\OI\OI.Business.Tests\bin\Debug\net10.0\FluentAssertions.dll
+D:\Src\Wbarge_GitHub\OI\OI.Business.Tests\bin\Debug\net10.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll
+D:\Src\Wbarge_GitHub\OI\OI.Business.Tests\bin\Debug\net10.0\Microsoft.Extensions.Logging.Abstractions.dll
+D:\Src\Wbarge_GitHub\OI\OI.Business.Tests\bin\Debug\net10.0\Moq.dll
+D:\Src\Wbarge_GitHub\OI\OI.Business.Tests\bin\Debug\net10.0\System.Diagnostics.EventLog.dll
+D:\Src\Wbarge_GitHub\OI\OI.Business.Tests\bin\Debug\net10.0\runtimes\win\lib\net6.0\System.Diagnostics.EventLog.Messages.dll
+D:\Src\Wbarge_GitHub\OI\OI.Business.Tests\bin\Debug\net10.0\runtimes\win\lib\net6.0\System.Diagnostics.EventLog.dll
+D:\Src\Wbarge_GitHub\OI\OI.Business.Tests\bin\Debug\net10.0\OI.Business.dll
+D:\Src\Wbarge_GitHub\OI\OI.Business.Tests\bin\Debug\net10.0\OI.Glue.dll
+D:\Src\Wbarge_GitHub\OI\OI.Business.Tests\bin\Debug\net10.0\OI.Business.pdb
+D:\Src\Wbarge_GitHub\OI\OI.Business.Tests\bin\Debug\net10.0\OI.Glue.pdb

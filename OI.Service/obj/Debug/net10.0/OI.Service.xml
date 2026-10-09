@@ -18,6 +18,23 @@
             </summary>
             <returns>IActionResult.</returns>
         </member>
+        <member name="T:OI.Service.Controllers.StatesController">
+            <summary>
+            Controller for state-related endpoints.
+            </summary>
+        </member>
+        <member name="M:OI.Service.Controllers.StatesController.#ctor(OI.Glue.Managers.IStateManager,Microsoft.Extensions.Logging.ILogger{OI.Service.Controllers.StatesController})">
+            <summary>
+            Controller for state-related endpoints.
+            </summary>
+        </member>
+        <member name="M:OI.Service.Controllers.StatesController.GetAllStates(System.Threading.CancellationToken)">
+            <summary>
+            Returns all states.
+            </summary>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>A list of all states.</returns>
+        </member>
         <member name="T:OI.Service.Middleware.UiExceptionHandler">
             <summary>
             Class UiExceptionHandler.

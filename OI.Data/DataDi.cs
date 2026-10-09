@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using OI.Data.Repos;
+using OI.Glue.Repos;
 
 namespace OI.Data;
 
@@ -20,5 +22,7 @@ public static class DataDi
         {
             builder.UseSqlServer(configuration["ConnectionString"]);
         });
+
+        services.AddScoped<IStateRepo, StateRepo>();
     }   
 }

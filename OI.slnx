@@ -6,4 +6,5 @@
   <Project Path="OI.Glue/OI.Glue.csproj" Id="d24b1c9e-8c7d-4058-8167-6371c1d2072e" />
   <Project Path="OI.Service.Tests/OI.Service.Tests.csproj" Id="0f55371f-9dcd-4190-adac-cf1069de31ed" />
   <Project Path="OI.Service/OI.Service.csproj" Id="2ce728b2-f2ba-4b86-9afe-7f0bb8f75c91" />
+  <Project Path="OI.Tool.MigrationHelper/OI.Tool.MigrationHelper.csproj" Id="bb48c2f2-e34b-42e4-80fd-735b6d7c526e" />
 </Solution>

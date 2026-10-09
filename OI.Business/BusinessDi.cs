@@ -1,4 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using OI.Business.Managers;
+using OI.Glue.Managers;
 
 namespace OI.Business;
 
@@ -13,5 +15,6 @@ public static class BusinessDi
     /// <param name="services">The services.</param>
     public static void ConfigureDi(IServiceCollection services)
     {
+        services.AddScoped<IStateManager, StateManager>();
     }
 }

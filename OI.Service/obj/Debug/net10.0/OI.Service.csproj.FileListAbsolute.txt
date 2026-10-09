@@ -26,7 +26,6 @@ D:\Src\Wbarge_GitHub\OI\OI.Service\obj\Debug\net10.0\staticwebassets.build.json.
 D:\Src\Wbarge_GitHub\OI\OI.Service\obj\Debug\net10.0\staticwebassets.development.json
 D:\Src\Wbarge_GitHub\OI\OI.Service\obj\Debug\net10.0\staticwebassets.build.endpoints.json
 D:\Src\Wbarge_GitHub\OI\OI.Service\obj\Debug\net10.0\swae.build.ex.cache
-D:\Src\Wbarge_GitHub\OI\OI.Service\obj\Debug\net10.0\staticwebassets.upToDateCheck.txt
 D:\Src\Wbarge_GitHub\OI\OI.Service\obj\Debug\net10.0\OI.Service.csproj.Up2Date
 D:\Src\Wbarge_GitHub\OI\OI.Service\obj\Debug\net10.0\OI.Service.dll
 D:\Src\Wbarge_GitHub\OI\OI.Service\obj\Debug\net10.0\refint\OI.Service.dll
@@ -94,3 +93,4 @@ D:\Src\Wbarge_GitHub\OI\OI.Service\bin\Debug\net10.0\OI.Glue.dll
 D:\Src\Wbarge_GitHub\OI\OI.Service\bin\Debug\net10.0\OI.Business.pdb
 D:\Src\Wbarge_GitHub\OI\OI.Service\bin\Debug\net10.0\OI.Data.pdb
 D:\Src\Wbarge_GitHub\OI\OI.Service\bin\Debug\net10.0\OI.Glue.pdb
+D:\Src\Wbarge_GitHub\OI\OI.Service\obj\Debug\net10.0\staticwebassets.upToDateCheck.txt

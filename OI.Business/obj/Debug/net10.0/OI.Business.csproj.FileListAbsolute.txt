@@ -12,3 +12,5 @@ D:\Src\Wbarge_GitHub\OI\OI.Business\obj\Debug\net10.0\OI.Business.pdb
 D:\Src\Wbarge_GitHub\OI\OI.Business\obj\Debug\net10.0\ref\OI.Business.dll
 D:\Src\Wbarge_GitHub\OI\OI.Business\obj\Debug\net10.0\OI.Busin.6335BA51.Up2Date
 D:\Src\Wbarge_GitHub\OI\OI.Business\obj\Debug\net10.0\OI.Business.csproj.AssemblyReference.cache
+D:\Src\Wbarge_GitHub\OI\OI.Business\bin\Debug\net10.0\OI.Glue.dll
+D:\Src\Wbarge_GitHub\OI\OI.Business\bin\Debug\net10.0\OI.Glue.pdb

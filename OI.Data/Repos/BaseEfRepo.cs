@@ -1,17 +1,4 @@
-﻿// ***********************************************************************
-// Author           : Bill Barge
-// Created          : 07-12-2024
-//
-// Last Modified By : Bill Barge
-// Last Modified On : 07-12-2024
-// ***********************************************************************
-// <copyright file="BaseEfRepo.cs" company="N/A">
-//     Copyright (c) N/A. All rights reserved.
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using OI.Data.Helpers;
 using OI.Glue.Models;
@@ -80,7 +67,7 @@ internal abstract class BaseEfRepo<T> where T : class
         List<T> results = await query.ToListAsync(cancellationToken: cancellationToken);
         await Task.Run(() =>
         {
-            results = results.Skip(pageSize * (pageNumber - 1)).Take(pageSize).ToList();
+            results = [.. results.Skip(pageSize * (pageNumber - 1)).Take(pageSize)];
             return Task.CompletedTask;
         }, cancellationToken);
         return results;

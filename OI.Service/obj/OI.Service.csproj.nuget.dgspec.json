@@ -35,7 +35,11 @@
           "net10.0": {
             "framework": "net10.0",
             "targetAlias": "net10.0",
-            "projectReferences": {}
+            "projectReferences": {
+              "D:\\Src\\Wbarge_GitHub\\OI\\OI.Glue\\OI.Glue.csproj": {
+                "projectPath": "D:\\Src\\Wbarge_GitHub\\OI\\OI.Glue\\OI.Glue.csproj"
+              }
+            }
           }
         },
         "warningProperties": {
@@ -56,6 +60,10 @@
           "targetAlias": "net10.0",
           "dependencies": {
             "Microsoft.Extensions.DependencyInjection.Abstractions": {
+              "target": "Package",
+              "version": "[10.0.12, )"
+            },
+            "Microsoft.Extensions.Logging.Abstractions": {
               "target": "Package",
               "version": "[10.0.12, )"
             }
