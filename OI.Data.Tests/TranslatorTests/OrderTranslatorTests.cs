@@ -634,7 +634,7 @@ public class OrderTranslatorTests
         IOrder result = order.Translate();
 
         result.Customer.Should().NotBeNull();
-        result.Customer.Id.Should().Be(customerId);
+        result.Customer!.Id.Should().Be(customerId);
         result.Customer.LastName.Should().Be("Smith");
         result.Customer.FirstName.Should().Be("Jane");
         result.Customer.PhoneNumber.Should().Be("512-555-0100");

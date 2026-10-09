@@ -30,7 +30,7 @@ public interface IOrder
     /// <summary>
     /// Gets or sets the customer. The customer who placed the order.
     /// </summary>
-    ICustomer Customer { get; set; }
+    ICustomer? Customer { get; set; }
 
     /// <summary>
     /// Gets or sets the billing address line 1. The first line of the billing address for the order.

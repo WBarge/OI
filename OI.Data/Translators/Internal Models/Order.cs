@@ -9,7 +9,7 @@ internal class Order : IOrder
     public DateTime OrderDate { get; set; }
     public DateTime CompletedDate { get; set; }
     public Guid? CustomerId { get; set; }
-    public ICustomer Customer { get; set; } = null!;
+    public ICustomer? Customer { get; set; } = null;
     public string BillingAddress1 { get; set; } = string.Empty;
     public string BillingAddress2 { get; set; } = string.Empty;
     public string BillingCity { get; set; } = string.Empty;
