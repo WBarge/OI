@@ -16,7 +16,13 @@ internal class OrderManager(IOrderRepo orderRepo, ICustomerRepo customerRepo, IL
     private readonly ICustomerRepo _customerRepo = customerRepo ?? throw new ArgumentNullException(nameof(customerRepo));
     private readonly ILogger<OrderManager> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Creates an order in the system
+    /// </summary>
+    /// <param name="request">The order to create.  IF this is null then an empty order will be created and returned.</param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    /// <exception cref="RequestException"></exception>
     public async Task<IOrder> CreateOrderAsync(ICreateOrder? request, CancellationToken cancellationToken = default)
     {
         request ??= new DefaultCreateOrder();
@@ -83,6 +89,8 @@ internal class OrderManager(IOrderRepo orderRepo, ICustomerRepo customerRepo, IL
         if (customer == null)
         {
             _logger.LogInformation("Customer {CustomerId} was not found; using the addresses on the request as supplied", customerId);
+            _logger.LogInformation("Setting the customer to empty");
+            request.CustomerId = null;
             return;
         }
 
@@ -111,11 +119,19 @@ internal class OrderManager(IOrderRepo orderRepo, ICustomerRepo customerRepo, IL
         }
     }
 
+    /// <summary>
+    /// does any of the strings passed in have a value
+    /// </summary>
+    /// <param name="values"></param>
+    /// <returns></returns>
     private static bool HasAnyValue(params string?[] values)
     {
         return values.Any(value => !string.IsNullOrWhiteSpace(value));
     }
 
+    /// <summary>
+    /// used by the CreateOrderAsync method for when the order parameter is null.
+    /// </summary>
     private sealed class DefaultCreateOrder : ICreateOrder
     {
         public Guid? CustomerId { get; set; }
