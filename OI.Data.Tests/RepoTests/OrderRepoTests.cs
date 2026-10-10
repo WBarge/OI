@@ -739,13 +739,15 @@ public class OrderRepoTests
         await act.Should().ThrowAsync<OperationCanceledException>("the token was cancelled before the call");
     }
 
-    [Test, Description("GetNextOrderNumberAsync should throw InvalidOperationException when no OrderCounter row exists")]
+    [Test,
+     Description("GetNextOrderNumberAsync should throw InvalidOperationException when no OrderCounter row exists")]
     public async Task GetNextOrderNumberAsync_ThrowsWhenNoCounterExists()
     {
         await TestContext.Out.WriteLineAsync("Setting up test");
         ServiceCollection services = new();
         services.AddEntityFrameworkInMemoryDatabase()
-            .AddDbContext<OiDbContext>(optionsBuilder => optionsBuilder.UseInMemoryDatabase($"NoCounter-{Guid.NewGuid()}"));
+            .AddDbContext<OiDbContext>(optionsBuilder =>
+                optionsBuilder.UseInMemoryDatabase($"NoCounter-{Guid.NewGuid()}"));
         using ServiceProvider isolatedProvider = services.BuildServiceProvider();
         using IServiceScope serviceScope = isolatedProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
         using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
@@ -760,6 +762,7 @@ public class OrderRepoTests
         await TestContext.Out.WriteLineAsync("Examining results");
         await act.Should().ThrowAsync<InvalidOperationException>("FirstAsync throws when the table has no rows");
     }
+
     private static ICreateOrder CreateRequest()
     {
         Mock<ICreateOrder> mock = new();
@@ -866,6 +869,38 @@ public class OrderRepoTests
         IOrder result = await sut.CreateOrderAsync(requestMock.Object, 1000, true, CancellationToken.None);
 
         await TestContext.Out.WriteLineAsync("Examining results");
-        result.OrderItems.Should().NotBeNull().And.BeEmpty("an order without items should still expose an empty collection");
+        result.OrderItems.Should().NotBeNull().And
+            .BeEmpty("an order without items should still expose an empty collection");
+    }
+
+    [Test, Description("CreateOrderAsync should save an order with no customer when CustomerId is null")]
+    public async Task CreateOrderAsync_PersistsOrderWithNullCustomerId()
+    {
+        await TestContext.Out.WriteLineAsync("Setting up test");
+        using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
+        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        OrderRepo sut = new(context);
+        Mock<ICreateOrder> requestMock = new();
+        requestMock.Setup(r => r.CustomerId).Returns((Guid?)null);
+        requestMock.Setup(r => r.BillingAddress1).Returns("123 Main St");
+        requestMock.Setup(r => r.BillingAddress2).Returns(string.Empty);
+        requestMock.Setup(r => r.BillingCity).Returns("Austin");
+        requestMock.Setup(r => r.BillingStateCode).Returns("TX");
+        requestMock.Setup(r => r.BillingZipCode).Returns("78701");
+        requestMock.Setup(r => r.ShippingAddress1).Returns("123 Main St");
+        requestMock.Setup(r => r.ShippingAddress2).Returns(string.Empty);
+        requestMock.Setup(r => r.ShippingCity).Returns("Austin");
+        requestMock.Setup(r => r.ShippingStateCode).Returns("TX");
+        requestMock.Setup(r => r.ShippingZipCode).Returns("78701");
+
+        await TestContext.Out.WriteLineAsync("Executing test");
+        IOrder result = await sut.CreateOrderAsync(requestMock.Object, 1000, true, CancellationToken.None);
+
+        await TestContext.Out.WriteLineAsync("Examining results");
+        result.CustomerId.Should().BeNull();
+        using IServiceScope verifyScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
+        using OiDbContext verifyContext = verifyScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        Order saved = await verifyContext.Set<Order>().SingleAsync(o => o.Id == result.Id);
+        saved.CustomerId.Should().BeNull("an order without a customer is valid");
     }
 }

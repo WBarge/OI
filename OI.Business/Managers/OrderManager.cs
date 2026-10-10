@@ -19,7 +19,7 @@ internal class OrderManager(IOrderRepo orderRepo, ICustomerRepo customerRepo, IL
     /// <summary>
     /// Creates an order in the system
     /// </summary>
-    /// <param name="request">The order to create.  IF this is null then an empty order will be created and returned.</param>
+    /// <param name="request">The order to create.  IF this is null then an empty order will be created and returned. An unknown customerId will be cleared</param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     /// <exception cref="RequestException"></exception>
@@ -83,6 +83,7 @@ internal class OrderManager(IOrderRepo orderRepo, ICustomerRepo customerRepo, IL
     {
         if (request.CustomerId is not { } customerId || customerId == Guid.Empty)
         {
+            request.CustomerId = null;
             return;
         }
         ICustomer? customer = await _customerRepo.GetCustomerByIdAsync(customerId, cancellationToken);
