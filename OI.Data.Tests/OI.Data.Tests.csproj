@@ -30,10 +30,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="RepoTests\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\OI.Data\OI.Data.csproj" />
   </ItemGroup>
 

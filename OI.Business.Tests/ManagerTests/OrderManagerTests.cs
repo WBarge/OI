@@ -3,7 +3,6 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using OI.Business.Managers;
-using OI.Glue.Managers;
 using OI.Glue.Models;
 using OI.Glue.Repos;
 
@@ -15,15 +14,25 @@ public class OrderManagerTests
     [Test, Description("Constructor should throw when orderRepo is null")]
     public void Constructor_ThrowsWhenOrderRepoIsNull()
     {
-        Action act = () => _ = new OrderManager(null!, NullLogger<OrderManager>.Instance);
+        Mock<ICustomerRepo> customerRepoMock = new();
+        Action act = () => _ = new OrderManager(null!, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
         act.Should().Throw<ArgumentNullException>().WithParameterName("orderRepo");
+    }
+
+    [Test, Description("Constructor should throw when customerRepo is null")]
+    public void Constructor_ThrowsWhenCustomerRepoIsNull()
+    {
+        Mock<IOrderRepo> orderRepoMock = new();
+        Action act = () => _ = new OrderManager(orderRepoMock.Object, null!, NullLogger<OrderManager>.Instance);
+        act.Should().Throw<ArgumentNullException>().WithParameterName("customerRepo");
     }
 
     [Test, Description("Constructor should throw when logger is null")]
     public void Constructor_ThrowsWhenLoggerIsNull()
     {
         Mock<IOrderRepo> orderRepoMock = new();
-        Action act = () => _ = new OrderManager(orderRepoMock.Object, null!);
+        Mock<ICustomerRepo> customerRepoMock = new();
+        Action act = () => _ = new OrderManager(orderRepoMock.Object, customerRepoMock.Object, null!);
         act.Should().Throw<ArgumentNullException>().WithParameterName("logger");
     }
 
@@ -31,7 +40,8 @@ public class OrderManagerTests
     public async Task CreateOrderAsync_ReturnsOrderFromRepo()
     {
         Mock<IOrderRepo> orderRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
         Mock<IOrder> expectedOrder = new();
         expectedOrder.Setup(o => o.OrderNumber).Returns(1000);
         Mock<ICreateOrder> requestMock = new();
@@ -49,7 +59,8 @@ public class OrderManagerTests
     public async Task CreateOrderAsync_GetsNextOrderNumberFromRepo()
     {
         Mock<IOrderRepo> orderRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
         Mock<IOrder> orderMock = new();
         orderMock.Setup(o => o.OrderNumber).Returns(1000);
         Mock<ICreateOrder> requestMock = new();
@@ -67,7 +78,8 @@ public class OrderManagerTests
     public async Task CreateOrderAsync_CallsRepoOnce()
     {
         Mock<IOrderRepo> orderRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
         Mock<IOrder> orderMock = new();
         orderMock.Setup(o => o.OrderNumber).Returns(1000);
         Mock<ICreateOrder> requestMock = new();
@@ -88,7 +100,8 @@ public class OrderManagerTests
     public async Task CreateOrderAsync_PassesOrderNumberToRepo()
     {
         Mock<IOrderRepo> orderRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrder> requestMock = new();
         orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1042);
@@ -107,7 +120,8 @@ public class OrderManagerTests
     public async Task CreateOrderAsync_SetsOrderDateToUtcNowWhenNotProvided()
     {
         Mock<IOrderRepo> orderRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrder> requestMock = new();
         requestMock.SetupProperty(r => r.OrderDate, null);
@@ -127,7 +141,8 @@ public class OrderManagerTests
     public async Task CreateOrderAsync_PreservesOrderDateWhenProvided()
     {
         Mock<IOrderRepo> orderRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
         Mock<IOrder> orderMock = new();
         DateTime specificDate = new DateTime(2025, 3, 10, 0, 0, 0, DateTimeKind.Utc);
         Mock<ICreateOrder> requestMock = new();
@@ -146,7 +161,8 @@ public class OrderManagerTests
     public async Task CreateOrderAsync_PassesRequestToRepo()
     {
         Mock<IOrderRepo> orderRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
         Mock<IOrder> orderMock = new();
         orderMock.Setup(o => o.OrderNumber).Returns(1000);
         Mock<ICreateOrder> requestMock = new();
@@ -166,7 +182,8 @@ public class OrderManagerTests
     public async Task CreateOrderAsync_PassesIsPendingTrueToRepo()
     {
         Mock<IOrderRepo> orderRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrder> requestMock = new();
         orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
@@ -185,7 +202,8 @@ public class OrderManagerTests
     public async Task CreateOrderAsync_SucceedsWhenRequestIsNull()
     {
         Mock<IOrderRepo> orderRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
         Mock<IOrder> orderMock = new();
         orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
         orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(),
@@ -201,7 +219,8 @@ public class OrderManagerTests
     public async Task CreateOrderAsync_DefaultsSubTotalToZeroWhenNotProvided()
     {
         Mock<IOrderRepo> orderRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrder> requestMock = new();
         requestMock.SetupProperty(r => r.SubTotal, (decimal?)null);
@@ -219,7 +238,8 @@ public class OrderManagerTests
     public async Task CreateOrderAsync_PreservesSubTotalWhenProvided()
     {
         Mock<IOrderRepo> orderRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrder> requestMock = new();
         requestMock.SetupProperty(r => r.SubTotal, (decimal?)49.99m);
@@ -237,7 +257,8 @@ public class OrderManagerTests
     public async Task CreateOrderAsync_DefaultsShippingTaxTotalToZeroWhenNotProvided()
     {
         Mock<IOrderRepo> orderRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrder> requestMock = new();
         requestMock.SetupAllProperties();
@@ -257,7 +278,8 @@ public class OrderManagerTests
     public async Task CreateOrderAsync_CalculatesSubTotalFromOrderItems()
     {
         Mock<IOrderRepo> orderRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrder> requestMock = new();
         Mock<ICreateOrderItem> item1 = new();
@@ -290,7 +312,8 @@ public class OrderManagerTests
     public async Task CreateOrderAsync_OverridesSubTotalWhenItemsProducesDifferentValue()
     {
         Mock<IOrderRepo> orderRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrder> requestMock = new();
         Mock<ICreateOrderItem> item1 = new();
@@ -317,7 +340,8 @@ public class OrderManagerTests
     public async Task CreateOrderAsync_SetsTotalToSubTotalPlusShippingPlusTax()
     {
         Mock<IOrderRepo> orderRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrder> requestMock = new();
         Mock<ICreateOrderItem> item1 = new();
@@ -343,7 +367,8 @@ public class OrderManagerTests
     public async Task CreateOrderAsync_SetsTotalToZeroWhenNoItemsAndNoTotals()
     {
         Mock<IOrderRepo> orderRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrder> requestMock = new();
         requestMock.SetupProperty(r => r.SubTotal, (decimal?)null);
@@ -367,7 +392,8 @@ public class OrderManagerTests
     public async Task CreateOrderAsync_ThrowsRequestExceptionWhenItemProductIdIsEmpty()
     {
         Mock<IOrderRepo> orderRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrderItem> item = new();
         item.Setup(i => i.ProductId).Returns(Guid.Empty);
@@ -395,7 +421,8 @@ public class OrderManagerTests
     public async Task CreateOrderAsync_ThrowsWhenSecondItemProductIdIsEmpty()
     {
         Mock<IOrderRepo> orderRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrderItem> validItem = new();
         validItem.Setup(i => i.ProductId).Returns(Guid.NewGuid());
@@ -426,7 +453,8 @@ public class OrderManagerTests
     public async Task CreateOrderAsync_DoesNotCallRepoWhenItemProductIdIsEmpty()
     {
         Mock<IOrderRepo> orderRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrderItem> item = new();
         item.Setup(i => i.ProductId).Returns(Guid.Empty);
@@ -459,7 +487,8 @@ public class OrderManagerTests
     public async Task CreateOrderAsync_DefaultsItemPriceQuantityTotalToZeroWhenNotProvided()
     {
         Mock<IOrderRepo> orderRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrderItem> item = new();
         item.Setup(i => i.ProductId).Returns(Guid.NewGuid());
@@ -488,7 +517,8 @@ public class OrderManagerTests
     public async Task CreateOrderAsync_OverridesItemTotalWhenItDiffersFromPriceTimesQuantity()
     {
         Mock<IOrderRepo> orderRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrderItem> item = new();
         item.Setup(i => i.ProductId).Returns(Guid.NewGuid());
@@ -515,7 +545,8 @@ public class OrderManagerTests
     public async Task CreateOrderAsync_CalculatesItemTotalWhenNotProvided()
     {
         Mock<IOrderRepo> orderRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrderItem> item = new();
         item.Setup(i => i.ProductId).Returns(Guid.NewGuid());
@@ -544,7 +575,8 @@ public class OrderManagerTests
     public async Task CreateOrderAsync_PreservesSubTotalWhenOrderItemsIsEmpty()
     {
         Mock<IOrderRepo> orderRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrder> requestMock = new();
         requestMock.SetupProperty(r => r.SubTotal, (decimal?)49.99m);
@@ -566,7 +598,8 @@ public class OrderManagerTests
     public async Task CreateOrderAsync_CalculatesTotalFromProvidedSubTotalWhenNoItems()
     {
         Mock<IOrderRepo> orderRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrder> requestMock = new();
         requestMock.SetupProperty(r => r.SubTotal, (decimal?)49.99m);
@@ -588,7 +621,8 @@ public class OrderManagerTests
     public async Task CreateOrderAsync_OverridesTotalWhenProvidedTotalDiffers()
     {
         Mock<IOrderRepo> orderRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrder> requestMock = new();
         requestMock.SetupProperty(r => r.SubTotal, (decimal?)10m);
@@ -613,7 +647,8 @@ public class OrderManagerTests
     public async Task CreateOrderAsync_PassesDefaultedRequestToRepoWhenRequestIsNull()
     {
         Mock<IOrderRepo> orderRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
         Mock<IOrder> orderMock = new();
         ICreateOrder? capturedRequest = null;
         orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
@@ -643,7 +678,8 @@ public class OrderManagerTests
     public async Task CreateOrderAsync_PassesCancellationTokenToRepo()
     {
         Mock<IOrderRepo> orderRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrder> requestMock = new();
         using CancellationTokenSource cts = new();
@@ -662,7 +698,8 @@ public class OrderManagerTests
     public async Task CreateOrderAsync_PropagatesExceptionFromGetNextOrderNumber()
     {
         Mock<IOrderRepo> orderRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrder> requestMock = new();
         orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>()))
@@ -683,7 +720,8 @@ public class OrderManagerTests
     public async Task CreateOrderAsync_PropagatesExceptionFromRepoCreateOrder()
     {
         Mock<IOrderRepo> orderRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
         Mock<ICreateOrder> requestMock = new();
         orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
         orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(),
@@ -693,5 +731,386 @@ public class OrderManagerTests
         Func<Task> act = async () => await sut.CreateOrderAsync(requestMock.Object, CancellationToken.None);
 
         await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("save failed");
+    }
+
+
+    // ---------- CUSTOMER DEFAULT ADDRESSES ----------
+
+    [Test, Description("CreateOrderAsync should not look up a customer when the request has no CustomerId")]
+    public async Task CreateOrderAsync_DoesNotLookUpCustomerWhenCustomerIdIsNull()
+    {
+        Mock<IOrderRepo> orderRepoMock = new();
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IOrder> orderMock = new();
+        Mock<ICreateOrder> requestMock = new();
+        requestMock.SetupProperty(r => r.CustomerId, (Guid?)null);
+        orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
+        orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(orderMock.Object);
+
+        await sut.CreateOrderAsync(requestMock.Object, CancellationToken.None);
+
+        customerRepoMock.Verify(r => r.GetCustomerByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test, Description("CreateOrderAsync should not look up a customer when the CustomerId is an empty Guid")]
+    public async Task CreateOrderAsync_DoesNotLookUpCustomerWhenCustomerIdIsEmptyGuid()
+    {
+        Mock<IOrderRepo> orderRepoMock = new();
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IOrder> orderMock = new();
+        Mock<ICreateOrder> requestMock = new();
+        requestMock.SetupProperty(r => r.CustomerId, (Guid?)Guid.Empty);
+        orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
+        orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(orderMock.Object);
+
+        await sut.CreateOrderAsync(requestMock.Object, CancellationToken.None);
+
+        customerRepoMock.Verify(r => r.GetCustomerByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test, Description("CreateOrderAsync should look up the customer using the request's CustomerId and the cancellation token")]
+    public async Task CreateOrderAsync_LooksUpCustomerWithIdAndCancellationToken()
+    {
+        Mock<IOrderRepo> orderRepoMock = new();
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IOrder> orderMock = new();
+        Guid customerId = Guid.NewGuid();
+        using CancellationTokenSource cts = new();
+        Mock<ICreateOrder> requestMock = new();
+        requestMock.SetupProperty(r => r.CustomerId, (Guid?)customerId);
+        customerRepoMock.Setup(r => r.GetCustomerByIdAsync(customerId, cts.Token)).ReturnsAsync((ICustomer?)null);
+        orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
+        orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(orderMock.Object);
+
+        await sut.CreateOrderAsync(requestMock.Object, cts.Token);
+
+        customerRepoMock.Verify(r => r.GetCustomerByIdAsync(customerId, cts.Token), Times.Once);
+    }
+
+    [Test, Description("CreateOrderAsync should populate the billing address from the customer when no billing fields were supplied")]
+    public async Task CreateOrderAsync_PopulatesBillingAddressFromCustomerWhenBlank()
+    {
+        Mock<IOrderRepo> orderRepoMock = new();
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IOrder> orderMock = new();
+        Guid customerId = Guid.NewGuid();
+        Mock<ICustomer> customerMock = new();
+        customerMock.Setup(c => c.DefaultBillingAddress1).Returns("123 Main St");
+        customerMock.Setup(c => c.DefaultBillingAddress2).Returns("Apt 1");
+        customerMock.Setup(c => c.DefaultBillingCity).Returns("Austin");
+        customerMock.Setup(c => c.DefaultBillingStateCode).Returns("TX");
+        customerMock.Setup(c => c.DefaultBillingZipCode).Returns("78701");
+        Mock<ICreateOrder> requestMock = new();
+        requestMock.SetupProperty(r => r.CustomerId, (Guid?)customerId);
+        requestMock.SetupProperty(r => r.BillingAddress1, string.Empty);
+        requestMock.SetupProperty(r => r.BillingAddress2, string.Empty);
+        requestMock.SetupProperty(r => r.BillingCity, string.Empty);
+        requestMock.SetupProperty(r => r.BillingStateCode, string.Empty);
+        requestMock.SetupProperty(r => r.BillingZipCode, string.Empty);
+        requestMock.SetupProperty(r => r.ShippingAddress1, string.Empty);
+        requestMock.SetupProperty(r => r.ShippingAddress2, string.Empty);
+        requestMock.SetupProperty(r => r.ShippingCity, string.Empty);
+        requestMock.SetupProperty(r => r.ShippingStateCode, string.Empty);
+        requestMock.SetupProperty(r => r.ShippingZipCode, string.Empty);
+        customerRepoMock.Setup(r => r.GetCustomerByIdAsync(customerId, It.IsAny<CancellationToken>())).ReturnsAsync(customerMock.Object);
+        orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
+        orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(orderMock.Object);
+
+        await sut.CreateOrderAsync(requestMock.Object, CancellationToken.None);
+
+        requestMock.Object.BillingAddress1.Should().Be("123 Main St");
+        requestMock.Object.BillingAddress2.Should().Be("Apt 1");
+        requestMock.Object.BillingCity.Should().Be("Austin");
+        requestMock.Object.BillingStateCode.Should().Be("TX");
+        requestMock.Object.BillingZipCode.Should().Be("78701");
+    }
+
+    [Test, Description("CreateOrderAsync should populate the shipping address from the customer when no shipping fields were supplied")]
+    public async Task CreateOrderAsync_PopulatesShippingAddressFromCustomerWhenBlank()
+    {
+        Mock<IOrderRepo> orderRepoMock = new();
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IOrder> orderMock = new();
+        Guid customerId = Guid.NewGuid();
+        Mock<ICustomer> customerMock = new();
+        customerMock.Setup(c => c.DefaultShippingAddress1).Returns("456 Elm St");
+        customerMock.Setup(c => c.DefaultShippingAddress2).Returns("Suite 2");
+        customerMock.Setup(c => c.DefaultShippingCity).Returns("Dallas");
+        customerMock.Setup(c => c.DefaultShippingStateCode).Returns("TX");
+        customerMock.Setup(c => c.DefaultShippingZipCode).Returns("75201");
+        Mock<ICreateOrder> requestMock = new();
+        requestMock.SetupProperty(r => r.CustomerId, (Guid?)customerId);
+        requestMock.SetupProperty(r => r.BillingAddress1, string.Empty);
+        requestMock.SetupProperty(r => r.BillingAddress2, string.Empty);
+        requestMock.SetupProperty(r => r.BillingCity, string.Empty);
+        requestMock.SetupProperty(r => r.BillingStateCode, string.Empty);
+        requestMock.SetupProperty(r => r.BillingZipCode, string.Empty);
+        requestMock.SetupProperty(r => r.ShippingAddress1, string.Empty);
+        requestMock.SetupProperty(r => r.ShippingAddress2, string.Empty);
+        requestMock.SetupProperty(r => r.ShippingCity, string.Empty);
+        requestMock.SetupProperty(r => r.ShippingStateCode, string.Empty);
+        requestMock.SetupProperty(r => r.ShippingZipCode, string.Empty);
+        customerRepoMock.Setup(r => r.GetCustomerByIdAsync(customerId, It.IsAny<CancellationToken>())).ReturnsAsync(customerMock.Object);
+        orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
+        orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(orderMock.Object);
+
+        await sut.CreateOrderAsync(requestMock.Object, CancellationToken.None);
+
+        requestMock.Object.ShippingAddress1.Should().Be("456 Elm St");
+        requestMock.Object.ShippingAddress2.Should().Be("Suite 2");
+        requestMock.Object.ShippingCity.Should().Be("Dallas");
+        requestMock.Object.ShippingStateCode.Should().Be("TX");
+        requestMock.Object.ShippingZipCode.Should().Be("75201");
+    }
+
+    [Test, Description("CreateOrderAsync should not touch a billing address that was partly supplied, but should still fill a blank shipping address")]
+    public async Task CreateOrderAsync_DoesNotOverwriteSuppliedBillingAddressButFillsBlankShipping()
+    {
+        Mock<IOrderRepo> orderRepoMock = new();
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IOrder> orderMock = new();
+        Guid customerId = Guid.NewGuid();
+        Mock<ICustomer> customerMock = new();
+        customerMock.Setup(c => c.DefaultBillingAddress1).Returns("123 Main St");
+        customerMock.Setup(c => c.DefaultBillingAddress2).Returns("Apt 1");
+        customerMock.Setup(c => c.DefaultBillingCity).Returns("Austin");
+        customerMock.Setup(c => c.DefaultBillingStateCode).Returns("TX");
+        customerMock.Setup(c => c.DefaultBillingZipCode).Returns("78701");
+        customerMock.Setup(c => c.DefaultShippingAddress1).Returns("456 Elm St");
+        customerMock.Setup(c => c.DefaultShippingCity).Returns("Dallas");
+        customerMock.Setup(c => c.DefaultShippingStateCode).Returns("TX");
+        customerMock.Setup(c => c.DefaultShippingZipCode).Returns("75201");
+        Mock<ICreateOrder> requestMock = new();
+        requestMock.SetupProperty(r => r.CustomerId, (Guid?)customerId);
+        requestMock.SetupProperty(r => r.BillingAddress1, string.Empty);
+        requestMock.SetupProperty(r => r.BillingAddress2, string.Empty);
+        requestMock.SetupProperty(r => r.BillingCity, "Houston");
+        requestMock.SetupProperty(r => r.BillingStateCode, string.Empty);
+        requestMock.SetupProperty(r => r.BillingZipCode, string.Empty);
+        requestMock.SetupProperty(r => r.ShippingAddress1, string.Empty);
+        requestMock.SetupProperty(r => r.ShippingAddress2, string.Empty);
+        requestMock.SetupProperty(r => r.ShippingCity, string.Empty);
+        requestMock.SetupProperty(r => r.ShippingStateCode, string.Empty);
+        requestMock.SetupProperty(r => r.ShippingZipCode, string.Empty);
+        customerRepoMock.Setup(r => r.GetCustomerByIdAsync(customerId, It.IsAny<CancellationToken>())).ReturnsAsync(customerMock.Object);
+        orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
+        orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(orderMock.Object);
+
+        await sut.CreateOrderAsync(requestMock.Object, CancellationToken.None);
+
+        requestMock.Object.BillingCity.Should().Be("Houston", "the supplied billing city must be kept");
+        requestMock.Object.BillingAddress1.Should().BeEmpty("a partly supplied billing address must not be mixed with the customer's default");
+        requestMock.Object.BillingAddress2.Should().BeEmpty();
+        requestMock.Object.BillingStateCode.Should().BeEmpty();
+        requestMock.Object.BillingZipCode.Should().BeEmpty();
+        requestMock.Object.ShippingAddress1.Should().Be("456 Elm St", "the blank shipping address is filled independently of billing");
+        requestMock.Object.ShippingCity.Should().Be("Dallas");
+    }
+
+    [Test, Description("CreateOrderAsync should not touch a shipping address that was supplied, but should still fill a blank billing address")]
+    public async Task CreateOrderAsync_DoesNotOverwriteSuppliedShippingAddressButFillsBlankBilling()
+    {
+        Mock<IOrderRepo> orderRepoMock = new();
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IOrder> orderMock = new();
+        Guid customerId = Guid.NewGuid();
+        Mock<ICustomer> customerMock = new();
+        customerMock.Setup(c => c.DefaultBillingAddress1).Returns("123 Main St");
+        customerMock.Setup(c => c.DefaultBillingCity).Returns("Austin");
+        customerMock.Setup(c => c.DefaultBillingStateCode).Returns("TX");
+        customerMock.Setup(c => c.DefaultBillingZipCode).Returns("78701");
+        customerMock.Setup(c => c.DefaultShippingAddress1).Returns("456 Elm St");
+        customerMock.Setup(c => c.DefaultShippingCity).Returns("Dallas");
+        customerMock.Setup(c => c.DefaultShippingStateCode).Returns("TX");
+        customerMock.Setup(c => c.DefaultShippingZipCode).Returns("75201");
+        Mock<ICreateOrder> requestMock = new();
+        requestMock.SetupProperty(r => r.CustomerId, (Guid?)customerId);
+        requestMock.SetupProperty(r => r.BillingAddress1, string.Empty);
+        requestMock.SetupProperty(r => r.BillingAddress2, string.Empty);
+        requestMock.SetupProperty(r => r.BillingCity, string.Empty);
+        requestMock.SetupProperty(r => r.BillingStateCode, string.Empty);
+        requestMock.SetupProperty(r => r.BillingZipCode, string.Empty);
+        requestMock.SetupProperty(r => r.ShippingAddress1, "789 Oak Ave");
+        requestMock.SetupProperty(r => r.ShippingAddress2, string.Empty);
+        requestMock.SetupProperty(r => r.ShippingCity, "Houston");
+        requestMock.SetupProperty(r => r.ShippingStateCode, "TX");
+        requestMock.SetupProperty(r => r.ShippingZipCode, "77001");
+        customerRepoMock.Setup(r => r.GetCustomerByIdAsync(customerId, It.IsAny<CancellationToken>())).ReturnsAsync(customerMock.Object);
+        orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
+        orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(orderMock.Object);
+
+        await sut.CreateOrderAsync(requestMock.Object, CancellationToken.None);
+
+        requestMock.Object.ShippingAddress1.Should().Be("789 Oak Ave");
+        requestMock.Object.ShippingAddress2.Should().BeEmpty("the supplied shipping address must not receive the customer's address line 2");
+        requestMock.Object.ShippingCity.Should().Be("Houston");
+        requestMock.Object.ShippingStateCode.Should().Be("TX");
+        requestMock.Object.ShippingZipCode.Should().Be("77001");
+        requestMock.Object.BillingAddress1.Should().Be("123 Main St", "the blank billing address is filled independently of shipping");
+        requestMock.Object.BillingCity.Should().Be("Austin");
+    }
+
+    [Test, Description("CreateOrderAsync should treat whitespace-only address fields as not populated")]
+    public async Task CreateOrderAsync_TreatsWhitespaceAddressFieldsAsBlank()
+    {
+        Mock<IOrderRepo> orderRepoMock = new();
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IOrder> orderMock = new();
+        Guid customerId = Guid.NewGuid();
+        Mock<ICustomer> customerMock = new();
+        customerMock.Setup(c => c.DefaultBillingAddress1).Returns("123 Main St");
+        customerMock.Setup(c => c.DefaultBillingCity).Returns("Austin");
+        customerMock.Setup(c => c.DefaultBillingStateCode).Returns("TX");
+        customerMock.Setup(c => c.DefaultBillingZipCode).Returns("78701");
+        Mock<ICreateOrder> requestMock = new();
+        requestMock.SetupProperty(r => r.CustomerId, (Guid?)customerId);
+        requestMock.SetupProperty(r => r.BillingAddress1, "   ");
+        requestMock.SetupProperty(r => r.BillingAddress2, string.Empty);
+        requestMock.SetupProperty(r => r.BillingCity, "\t");
+        requestMock.SetupProperty(r => r.BillingStateCode, string.Empty);
+        requestMock.SetupProperty(r => r.BillingZipCode, " ");
+        requestMock.SetupProperty(r => r.ShippingAddress1, string.Empty);
+        requestMock.SetupProperty(r => r.ShippingAddress2, string.Empty);
+        requestMock.SetupProperty(r => r.ShippingCity, string.Empty);
+        requestMock.SetupProperty(r => r.ShippingStateCode, string.Empty);
+        requestMock.SetupProperty(r => r.ShippingZipCode, string.Empty);
+        customerRepoMock.Setup(r => r.GetCustomerByIdAsync(customerId, It.IsAny<CancellationToken>())).ReturnsAsync(customerMock.Object);
+        orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
+        orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(orderMock.Object);
+
+        await sut.CreateOrderAsync(requestMock.Object, CancellationToken.None);
+
+        requestMock.Object.BillingAddress1.Should().Be("123 Main St");
+        requestMock.Object.BillingCity.Should().Be("Austin");
+        requestMock.Object.BillingStateCode.Should().Be("TX");
+        requestMock.Object.BillingZipCode.Should().Be("78701");
+    }
+
+    [Test, Description("CreateOrderAsync should leave addresses unchanged and still create the order when the customer is not found")]
+    public async Task CreateOrderAsync_LeavesAddressesUnchangedWhenCustomerNotFound()
+    {
+        Mock<IOrderRepo> orderRepoMock = new();
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IOrder> orderMock = new();
+        Guid customerId = Guid.NewGuid();
+        Mock<ICreateOrder> requestMock = new();
+        requestMock.SetupProperty(r => r.CustomerId, (Guid?)customerId);
+        requestMock.SetupProperty(r => r.BillingAddress1, string.Empty);
+        requestMock.SetupProperty(r => r.BillingCity, string.Empty);
+        requestMock.SetupProperty(r => r.ShippingAddress1, string.Empty);
+        requestMock.SetupProperty(r => r.ShippingCity, string.Empty);
+        customerRepoMock.Setup(r => r.GetCustomerByIdAsync(customerId, It.IsAny<CancellationToken>())).ReturnsAsync((ICustomer?)null);
+        orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
+        orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(orderMock.Object);
+
+        IOrder result = await sut.CreateOrderAsync(requestMock.Object, CancellationToken.None);
+
+        result.Should().BeSameAs(orderMock.Object, "a missing customer must not stop the order being created");
+        requestMock.Object.BillingAddress1.Should().BeEmpty();
+        requestMock.Object.BillingCity.Should().BeEmpty();
+        requestMock.Object.ShippingAddress1.Should().BeEmpty();
+        requestMock.Object.ShippingCity.Should().BeEmpty();
+    }
+
+    [Test, Description("CreateOrderAsync should leave addresses unchanged when the customer has no default addresses")]
+    public async Task CreateOrderAsync_LeavesAddressesUnchangedWhenCustomerHasNoDefaults()
+    {
+        Mock<IOrderRepo> orderRepoMock = new();
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IOrder> orderMock = new();
+        Guid customerId = Guid.NewGuid();
+        Mock<ICustomer> customerMock = new();
+        Mock<ICreateOrder> requestMock = new();
+        requestMock.SetupProperty(r => r.CustomerId, (Guid?)customerId);
+        requestMock.SetupProperty(r => r.BillingAddress1, string.Empty);
+        requestMock.SetupProperty(r => r.BillingCity, string.Empty);
+        requestMock.SetupProperty(r => r.ShippingAddress1, string.Empty);
+        requestMock.SetupProperty(r => r.ShippingCity, string.Empty);
+        customerRepoMock.Setup(r => r.GetCustomerByIdAsync(customerId, It.IsAny<CancellationToken>())).ReturnsAsync(customerMock.Object);
+        orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
+        orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(orderMock.Object);
+
+        await sut.CreateOrderAsync(requestMock.Object, CancellationToken.None);
+
+        requestMock.Object.BillingAddress1.Should().BeEmpty();
+        requestMock.Object.BillingCity.Should().BeEmpty();
+        requestMock.Object.ShippingAddress1.Should().BeEmpty();
+        requestMock.Object.ShippingCity.Should().BeEmpty();
+    }
+
+    [Test, Description("CreateOrderAsync should pass the populated addresses to the order repo")]
+    public async Task CreateOrderAsync_PassesPopulatedAddressesToOrderRepo()
+    {
+        Mock<IOrderRepo> orderRepoMock = new();
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IOrder> orderMock = new();
+        Guid customerId = Guid.NewGuid();
+        Mock<ICustomer> customerMock = new();
+        customerMock.Setup(c => c.DefaultBillingAddress1).Returns("123 Main St");
+        customerMock.Setup(c => c.DefaultBillingCity).Returns("Austin");
+        customerMock.Setup(c => c.DefaultShippingAddress1).Returns("456 Elm St");
+        customerMock.Setup(c => c.DefaultShippingCity).Returns("Dallas");
+        Mock<ICreateOrder> requestMock = new();
+        requestMock.SetupProperty(r => r.CustomerId, (Guid?)customerId);
+        requestMock.SetupProperty(r => r.BillingAddress1, string.Empty);
+        requestMock.SetupProperty(r => r.BillingCity, string.Empty);
+        requestMock.SetupProperty(r => r.ShippingAddress1, string.Empty);
+        requestMock.SetupProperty(r => r.ShippingCity, string.Empty);
+        string? billingAddress1AtRepoCall = null;
+        string? shippingCityAtRepoCall = null;
+        customerRepoMock.Setup(r => r.GetCustomerByIdAsync(customerId, It.IsAny<CancellationToken>())).ReturnsAsync(customerMock.Object);
+        orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
+        orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .Callback<ICreateOrder, int, bool, CancellationToken>((createRequest, _, _, _) =>
+            {
+                billingAddress1AtRepoCall = createRequest.BillingAddress1;
+                shippingCityAtRepoCall = createRequest.ShippingCity;
+            })
+            .ReturnsAsync(orderMock.Object);
+
+        await sut.CreateOrderAsync(requestMock.Object, CancellationToken.None);
+
+        billingAddress1AtRepoCall.Should().Be("123 Main St", "the addresses must be populated before the order is saved");
+        shippingCityAtRepoCall.Should().Be("Dallas");
+    }
+
+    [Test, Description("CreateOrderAsync should propagate a customer lookup failure without consuming an order number")]
+    public async Task CreateOrderAsync_PropagatesCustomerLookupFailureBeforeConsumingOrderNumber()
+    {
+        Mock<IOrderRepo> orderRepoMock = new();
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Guid customerId = Guid.NewGuid();
+        Mock<ICreateOrder> requestMock = new();
+        requestMock.SetupProperty(r => r.CustomerId, (Guid?)customerId);
+        customerRepoMock.Setup(r => r.GetCustomerByIdAsync(customerId, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("customer lookup failed"));
+
+        Func<Task> act = async () => await sut.CreateOrderAsync(requestMock.Object, CancellationToken.None);
+
+        await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("customer lookup failed");
+        orderRepoMock.Verify(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>()), Times.Never, "a failed lookup must not burn an order number");
+        orderRepoMock.Verify(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 }

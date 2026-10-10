@@ -25,5 +25,6 @@ public static class DataDi
 
         services.AddScoped<IStateRepo, StateRepo>();
         services.AddScoped<IOrderRepo, OrderRepo>();
+        services.AddScoped<ICustomerRepo, CustomerRepo>();
     }
 }

@@ -10,9 +10,10 @@ namespace OI.Business.Managers;
 /// <summary>
 /// Manages order-related business logic.
 /// </summary>
-internal class OrderManager(IOrderRepo orderRepo, ILogger<OrderManager> logger) : IOrderManager
+internal class OrderManager(IOrderRepo orderRepo, ICustomerRepo customerRepo, ILogger<OrderManager> logger) : IOrderManager
 {
     private readonly IOrderRepo _orderRepo = orderRepo ?? throw new ArgumentNullException(nameof(orderRepo));
+    private readonly ICustomerRepo _customerRepo = customerRepo ?? throw new ArgumentNullException(nameof(customerRepo));
     private readonly ILogger<OrderManager> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
     /// <inheritdoc />
@@ -20,6 +21,7 @@ internal class OrderManager(IOrderRepo orderRepo, ILogger<OrderManager> logger) 
     {
         request ??= new DefaultCreateOrder();
         _logger.LogInformation("Creating order for customer {CustomerId}", request.CustomerId);
+        await ApplyCustomerDefaultAddressesAsync(request, cancellationToken);
         request.OrderDate ??= DateTime.UtcNow;
         request.Shipping ??= decimal.Zero;
         request.Tax ??= decimal.Zero;
@@ -64,6 +66,54 @@ internal class OrderManager(IOrderRepo orderRepo, ILogger<OrderManager> logger) 
         IOrder order = await _orderRepo.CreateOrderAsync(request, orderNumber, IS_PENDING, cancellationToken);
         _logger.LogInformation("Created order {OrderNumber}", order.OrderNumber);
         return order;
+    }
+
+    /// <summary>
+    /// When the request names an existing customer, fills in the billing and/or shipping address from the customer's defaults.
+    /// Each address is treated as a unit: it is only filled in when none of its fields were supplied on the request,
+    /// so a partly supplied address is never mixed with the customer's default.
+    /// </summary>
+    private async Task ApplyCustomerDefaultAddressesAsync(ICreateOrder request, CancellationToken cancellationToken)
+    {
+        if (request.CustomerId is not { } customerId || customerId == Guid.Empty)
+        {
+            return;
+        }
+        ICustomer? customer = await _customerRepo.GetCustomerByIdAsync(customerId, cancellationToken);
+        if (customer == null)
+        {
+            _logger.LogInformation("Customer {CustomerId} was not found; using the addresses on the request as supplied", customerId);
+            return;
+        }
+
+        bool billingSupplied = HasAnyValue(request.BillingAddress1, request.BillingAddress2, request.BillingCity, request.BillingStateCode, request.BillingZipCode);
+        bool customerHasBilling = HasAnyValue(customer.DefaultBillingAddress1, customer.DefaultBillingAddress2, customer.DefaultBillingCity, customer.DefaultBillingStateCode, customer.DefaultBillingZipCode);
+        if (!billingSupplied && customerHasBilling)
+        {
+            request.BillingAddress1 = customer.DefaultBillingAddress1 ?? string.Empty;
+            request.BillingAddress2 = customer.DefaultBillingAddress2 ?? string.Empty;
+            request.BillingCity = customer.DefaultBillingCity ?? string.Empty;
+            request.BillingStateCode = customer.DefaultBillingStateCode ?? string.Empty;
+            request.BillingZipCode = customer.DefaultBillingZipCode ?? string.Empty;
+            _logger.LogInformation("Populated the billing address from the defaults of customer {CustomerId}", customerId);
+        }
+
+        bool shippingSupplied = HasAnyValue(request.ShippingAddress1, request.ShippingAddress2, request.ShippingCity, request.ShippingStateCode, request.ShippingZipCode);
+        bool customerHasShipping = HasAnyValue(customer.DefaultShippingAddress1, customer.DefaultShippingAddress2, customer.DefaultShippingCity, customer.DefaultShippingStateCode, customer.DefaultShippingZipCode);
+        if (!shippingSupplied && customerHasShipping)
+        {
+            request.ShippingAddress1 = customer.DefaultShippingAddress1 ?? string.Empty;
+            request.ShippingAddress2 = customer.DefaultShippingAddress2 ?? string.Empty;
+            request.ShippingCity = customer.DefaultShippingCity ?? string.Empty;
+            request.ShippingStateCode = customer.DefaultShippingStateCode ?? string.Empty;
+            request.ShippingZipCode = customer.DefaultShippingZipCode ?? string.Empty;
+            _logger.LogInformation("Populated the shipping address from the defaults of customer {CustomerId}", customerId);
+        }
+    }
+
+    private static bool HasAnyValue(params string?[] values)
+    {
+        return values.Any(value => !string.IsNullOrWhiteSpace(value));
     }
 
     private sealed class DefaultCreateOrder : ICreateOrder
