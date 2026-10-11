@@ -412,7 +412,8 @@ public class OrderManagerTests
 
         Func<Task> act = async () => await sut.CreateOrderAsync(requestMock.Object, CancellationToken.None);
 
-        await act.Should().ThrowAsync<RequestException>("an order item must reference a product");
+        await act.Should().ThrowAsync<RequestException>("an order item must reference a product")
+            .WithMessage("Order item 1 has no ProductId. Every order item must reference a product.");
     }
 
     [Test,
@@ -445,7 +446,8 @@ public class OrderManagerTests
 
         Func<Task> act = async () => await sut.CreateOrderAsync(requestMock.Object, CancellationToken.None);
 
-        await act.Should().ThrowAsync<RequestException>("every item is validated, not just the first");
+        await act.Should().ThrowAsync<RequestException>("every item is validated, not just the first")
+            .WithMessage("Order item 2 has no ProductId. Every order item must reference a product.");
     }
 
     [Test,
@@ -1208,5 +1210,75 @@ public class OrderManagerTests
         await sut.CreateOrderAsync(requestMock.Object, CancellationToken.None);
 
         customerIdAtRepoCall.Should().Be(customerId, "a real customer must stay linked to the order");
+    }
+
+    [Test, Description("CreateOrderAsync should name the position of the invalid item when it is the third of three")]
+    public async Task CreateOrderAsync_ProductIdMessageNamesThirdItem()
+    {
+        Mock<IOrderRepo> orderRepoMock = new();
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IOrder> orderMock = new();
+        Mock<ICreateOrderItem> item1 = new();
+        item1.Setup(i => i.ProductId).Returns(Guid.NewGuid());
+        item1.Setup(i => i.Price).Returns(10m);
+        item1.Setup(i => i.Quantity).Returns(1);
+        Mock<ICreateOrderItem> item2 = new();
+        item2.Setup(i => i.ProductId).Returns(Guid.NewGuid());
+        item2.Setup(i => i.Price).Returns(5m);
+        item2.Setup(i => i.Quantity).Returns(1);
+        Mock<ICreateOrderItem> item3 = new();
+        item3.Setup(i => i.ProductId).Returns(Guid.Empty);
+        item3.Setup(i => i.Price).Returns(2m);
+        item3.Setup(i => i.Quantity).Returns(1);
+        Mock<ICreateOrder> requestMock = new();
+        requestMock.SetupProperty(r => r.SubTotal, (decimal?)null);
+        requestMock.SetupProperty(r => r.Shipping, (decimal?)0m);
+        requestMock.SetupProperty(r => r.Tax, (decimal?)0m);
+        requestMock.SetupProperty(r => r.Total, (decimal?)null);
+        requestMock.Setup(r => r.OrderItems).Returns(new[] { item1.Object, item2.Object, item3.Object });
+        orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
+        orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(orderMock.Object);
+
+        Func<Task> act = async () => await sut.CreateOrderAsync(requestMock.Object, CancellationToken.None);
+
+        await act.Should().ThrowAsync<RequestException>()
+            .WithMessage("Order item 3 has no ProductId. Every order item must reference a product.");
+    }
+
+    [Test, Description("CreateOrderAsync should report the first invalid item when several items have an empty ProductId")]
+    public async Task CreateOrderAsync_ProductIdMessageReportsFirstInvalidItem()
+    {
+        Mock<IOrderRepo> orderRepoMock = new();
+        Mock<ICustomerRepo> customerRepoMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IOrder> orderMock = new();
+        Mock<ICreateOrderItem> item1 = new();
+        item1.Setup(i => i.ProductId).Returns(Guid.NewGuid());
+        item1.Setup(i => i.Price).Returns(10m);
+        item1.Setup(i => i.Quantity).Returns(1);
+        Mock<ICreateOrderItem> item2 = new();
+        item2.Setup(i => i.ProductId).Returns(Guid.Empty);
+        item2.Setup(i => i.Price).Returns(5m);
+        item2.Setup(i => i.Quantity).Returns(1);
+        Mock<ICreateOrderItem> item3 = new();
+        item3.Setup(i => i.ProductId).Returns(Guid.Empty);
+        item3.Setup(i => i.Price).Returns(2m);
+        item3.Setup(i => i.Quantity).Returns(1);
+        Mock<ICreateOrder> requestMock = new();
+        requestMock.SetupProperty(r => r.SubTotal, (decimal?)null);
+        requestMock.SetupProperty(r => r.Shipping, (decimal?)0m);
+        requestMock.SetupProperty(r => r.Tax, (decimal?)0m);
+        requestMock.SetupProperty(r => r.Total, (decimal?)null);
+        requestMock.Setup(r => r.OrderItems).Returns(new[] { item1.Object, item2.Object, item3.Object });
+        orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
+        orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(orderMock.Object);
+
+        Func<Task> act = async () => await sut.CreateOrderAsync(requestMock.Object, CancellationToken.None);
+
+        await act.Should().ThrowAsync<RequestException>()
+            .WithMessage("Order item 2 has no ProductId. Every order item must reference a product.");
     }
 }

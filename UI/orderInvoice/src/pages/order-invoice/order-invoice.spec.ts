@@ -32,7 +32,7 @@ describe('OrderInvoice', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).not.toContain('Shipping Address');
 
-    configurationSubject.next({ HideShippingAddress: true, EnableCustomProducts: false });
+    configurationSubject.next({ HideShippingAddress: true, EnableCustomProducts: false, productApiUrl: '' });
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).not.toContain('Shipping Address');
   });
@@ -41,7 +41,7 @@ describe('OrderInvoice', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).not.toContain('Shipping Address');
 
-    configurationSubject.next({ HideShippingAddress: false, EnableCustomProducts: false });
+    configurationSubject.next({ HideShippingAddress: false, EnableCustomProducts: false, productApiUrl: '' });
     expect(component.configuration()?.HideShippingAddress).toBe(false);
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Shipping Address');

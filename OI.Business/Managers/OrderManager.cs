@@ -36,11 +36,13 @@ internal class OrderManager(IOrderRepo orderRepo, ICustomerRepo customerRepo, IL
         if (request.OrderItems != null && request.OrderItems.Any())
         {
             decimal calculatedSubTotal = decimal.Zero;
+            int itemNumber = 0;
             foreach (ICreateOrderItem createOrderItemRequest in request.OrderItems)
             {
+                itemNumber++;
                 if (createOrderItemRequest.ProductId.IsEmpty())
                 {
-                    throw new RequestException(nameof(ICreateOrderItem.ProductId));
+                    throw new RequestException($"Order item {itemNumber} has no {nameof(ICreateOrderItem.ProductId)}. Every order item must reference a product.");
                 }
                 createOrderItemRequest.Price ??= decimal.Zero;
                 createOrderItemRequest.Quantity ??= 0;
