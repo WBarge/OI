@@ -1,0 +1,86 @@
+  <div class="order-details">
+    <span>
+      <label for="number">{{this.oiMode}} Number: </label>
+      <span>{{this.orderNumber}}</span>
+    </span>
+    <span>
+      <label for="orderDate">{{this.oiMode}} Date: </label>
+      <p-datepicker
+                    id="dateRange"
+                    selectionMode="single"
+                    appendTo="body"
+                    [(ngModel)]= "orderDate"
+                  />
+    </span>
+  </div>
+<p-divider />
+<p-fieldset legend="Customer" class="customerDetails">
+    <span class="fieldOnSide">
+      <label for="customerName">Name: </label>
+      <input id="customerName" type="text" pInputText [(ngModel)]="customerName"/>
+    </span>
+    <span class="fieldOnSide">
+      <label >Phone Number: </label>
+      <input pInputText id="phone" pInputMask="(999) 999-9999" placeholder="(999) 999-9999" [(ngModel)]="customerPhone  "/>
+    </span>
+  </p-fieldset>
+<div class="address-panels">
+	<address-panel [AddressData]="billingAddress" Header="Billing Address"></address-panel>
+  <p-divider layout="vertical" />
+  @if (configuration(); as config) {
+    <address-panel [AddressData]="shippingAddress" Header="Shipping Address" [isHidden]="config.HideShippingAddress"></address-panel>
+  }
+</div>
+<p-divider />
+<p-table id="itemsTable" [value]="items" (dblclick)="onOrderItemsDoubleClick($event)">
+  <ng-template #header>
+    <tr>
+      <th colspan="7" class="gridHeader" >Items Ordered</th>
+    </tr>
+    <tr>
+      <th>SKU</th>
+      <th>Name</th>
+      <th>Description</th>
+      <th>Price</th>
+      <th>Quantity</th>
+      <th>Total</th>
+      <th></th>
+    </tr>
+  </ng-template>
+  <ng-template #body let-item>
+    <tr>
+      <td>{{item.sku}}</td>
+      <td>{{item.name}}</td>
+      <td>{{item.description}}</td>
+      <td>{{item.price | currency}}</td>
+      <td>{{item.quantity}}</td>
+      <td>{{item.total | currency}}</td>
+      <td>
+        <div class="rightAlign">
+          <button pButton (click)="delete(item)" iconOnly="true" ><svg data-p-icon="trash"></svg></button>
+        </div>
+
+      </td>
+    </tr>
+  </ng-template>
+</p-table>
+
+<p-fieldset class="totals" legend="Totals">
+  <div class="totalRow">
+    <span>Subtotal:</span>
+    <span>{{subtotal | currency}}</span>
+  </div>
+  <div class="totalRow">
+    <span>Shipping:</span>
+    <span>{{shipping | currency}}</span>
+  </div>
+  <div class="totalRow">
+    <span>Tax:</span>
+    <span>{{tax | currency}}</span>
+  </div>
+  <div class="totalRow">
+    <span>Total:</span>
+    <span>{{total | currency}}</span>
+  </div>
+</p-fieldset>
+

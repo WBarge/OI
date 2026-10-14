@@ -1,0 +1,5 @@
+{
+  "HideShippingAddress": false,
+  "EnableCustomProducts": false,
+  "productApiUrl": "https://localhost:7253/"
+}
