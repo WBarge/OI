@@ -28,6 +28,7 @@ export class ConfigService {
           returnValue.HideShippingAddress = config.HideShippingAddress;
           returnValue.EnableCustomProducts = config.EnableCustomProducts;
           returnValue.productApiUrl = config.productApiUrl;
+          returnValue.customerApiUrl = config.customerApiUrl;
           return returnValue;
         }),
         catchError(this.httpErrorHandler.handleError<Configuration>('getConfiguration')),

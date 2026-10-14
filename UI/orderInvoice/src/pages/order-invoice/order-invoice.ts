@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 
 import { Address } from '../../model/address';
 import { AddressPanel } from '../../components/address-panel/address-panel';
+import { CusomterSelection } from '../../components/cusomter-selection/cusomter-selection';
 
 import { ConfigService } from '../../services/config-service';
 import { Configuration } from '../../model/configuration';
@@ -20,10 +21,13 @@ import { LabelModule } from 'primeng/label';
 import { DividerModule } from 'primeng/divider';
 import { TableModule } from 'primeng/table';
 import { Trash } from '@primeicons/angular/trash';
+import { DialogModule } from 'primeng/dialog';
+import { ButtonModule } from 'primeng/button';
 
 
 @Component({
   imports: [AddressPanel,
+    CusomterSelection,
     FieldsetModule,
     DatePickerModule,
     CurrencyPipe,
@@ -34,6 +38,8 @@ import { Trash } from '@primeicons/angular/trash';
     DividerModule,
     TableModule,
     Trash,
+    DialogModule,
+    ButtonModule,
     FormsModule],
   selector: 'app-order-invoice',
   // providers:[ProductService],
@@ -47,7 +53,7 @@ export class OrderInvoice implements OnInit {
 
   public configuration = signal<Configuration | null>(null);
   public oiMode: string = "Order";
-
+  public showCustomerDialog:boolean = false;
 
   public orderNumber: string = "12323123";
   public orderDate:Date = new Date();
@@ -110,6 +116,14 @@ export class OrderInvoice implements OnInit {
 
   public onOrderItemsDoubleClick(event: MouseEvent): void {
     console.log("Double clicked on order items: ", event);
+  }
+
+  public onCustomerDoubleClick(event: MouseEvent): void {
+    console.log("Double clicked on customer area: ", event);
+    this.showCustomerDialog = true;
+  }
+  public clickCustomerDialogButton(){
+    this.showCustomerDialog = false;
   }
 
   calculateTotals() {

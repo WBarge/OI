@@ -14,14 +14,14 @@
     </span>
   </div>
 <p-divider />
-<p-fieldset legend="Customer" class="customerDetails">
+<p-fieldset legend="Customer" class="customerDetails" (dblclick)="onCustomerDoubleClick($event)">
     <span class="fieldOnSide">
       <label for="customerName">Name: </label>
-      <input id="customerName" type="text" pInputText [(ngModel)]="customerName"/>
+      <input id="customerName" type="text" readonly pInputText [(ngModel)]="customerName"/>
     </span>
     <span class="fieldOnSide">
       <label >Phone Number: </label>
-      <input pInputText id="phone" pInputMask="(999) 999-9999" placeholder="(999) 999-9999" [(ngModel)]="customerPhone  "/>
+      <input pInputText id="phone" pInputMask="(999) 999-9999" readonly placeholder="(999) 999-9999" [(ngModel)]="customerPhone  "/>
     </span>
   </p-fieldset>
 <div class="address-panels">
@@ -83,4 +83,14 @@
     <span>{{total | currency}}</span>
   </div>
 </p-fieldset>
+
+
+
+<p-dialog header="Please select a customer" [(visible)]="showCustomerDialog" [modal]="true" [closable]="true" >
+  <app-cusomter-selection></app-cusomter-selection>
+  <ng-template #footer>
+      <button type="button" pButton (click)="clickCustomerDialogButton()" label="Close">Close</button>
+  </ng-template>
+</p-dialog>
+
 
