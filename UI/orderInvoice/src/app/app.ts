@@ -1,10 +1,8 @@
-import { Component, signal,ChangeDetectionStrategy,inject } from '@angular/core';
+import { Component, signal,ChangeDetectionStrategy } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { MenubarModule} from 'primeng/menubar';
 import { ToastModule } from 'primeng/toast';
-import { ConfigService } from '../services/config-service';
-import { Configuration } from '../model/configuration';
 
 
 @Component({
@@ -17,8 +15,6 @@ import { Configuration } from '../model/configuration';
 export class App {
   protected readonly title = signal('orderInvoice');
   public items: MenuItem[];
-  private configService = inject(ConfigService);
-  public configuration!:Configuration;
 
   constructor() {
     this.items = [
@@ -26,8 +22,5 @@ export class App {
       {label:'Invoice',routerLink:'/invoice'},
       {label:'About',routerLink:'/about'}
     ];
-    // Load the configuration from the config.json file
-    this.configService.getConfiguration()
-      .subscribe((config) => {this.configuration = config;});
   }
 }

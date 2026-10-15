@@ -2,14 +2,26 @@ import { Component, inject,OnInit, signal } from '@angular/core';
 import {CurrencyPipe} from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
-import { Address } from '../../model/address';
-import { AddressPanel } from '../../components/address-panel/address-panel';
-import { CusomterSelection } from '../../components/cusomter-selection/cusomter-selection';
+
+
 
 import { ConfigService } from '../../services/config-service';
-import { Configuration } from '../../model/configuration';
 
+
+
+
+import { AddressPanel } from '../../components/address-panel/address-panel';
+import { CustomerSelection } from '../../components/customer-selection/customer-selection';
+
+import { Configuration } from '../../model/configuration';
+import { Address } from '../../model/address';
+import { CustomerSearch } from '../../model/results/customer-search';
+import { Customer } from '../../model/results/customer';
 import { ProductOrdered } from '../../model/results/product-ordered';
+import { PhoneFormatPipe } from '../../pipes/phone-format-pipe';
+
+
+import { CustomerService } from '../../services/customer-service';
 // import { ProductService } from '../../services/product.service';
 
 import { FieldsetModule } from 'primeng/fieldset';
@@ -27,7 +39,8 @@ import { ButtonModule } from 'primeng/button';
 
 @Component({
   imports: [AddressPanel,
-    CusomterSelection,
+    CustomerSelection,
+    PhoneFormatPipe,
     FieldsetModule,
     DatePickerModule,
     CurrencyPipe,
@@ -42,13 +55,15 @@ import { ButtonModule } from 'primeng/button';
     ButtonModule,
     FormsModule],
   selector: 'app-order-invoice',
-  // providers:[ProductService],
+  providers:[CustomerService],
   styleUrl: './order-invoice.css',
   templateUrl: './order-invoice.html',
 })
 export class OrderInvoice implements OnInit {
 
-  private configService = inject(ConfigService);
+    private configService = inject(ConfigService);
+    private customerService = inject(CustomerService);
+
   // private productService = inject(ProductService);
 
   public configuration = signal<Configuration | null>(null);
@@ -68,11 +83,10 @@ export class OrderInvoice implements OnInit {
   public total: number = 0;
 
   constructor() {
-    this.configService.getConfiguration()
-      .subscribe((config) => {this.configuration.set(config);});
   }
 
   ngOnInit(): void {
+    this.configuration.set(this.configService.config);
     this.loadMockOrder();
   }
 
@@ -122,9 +136,27 @@ export class OrderInvoice implements OnInit {
     console.log("Double clicked on customer area: ", event);
     this.showCustomerDialog = true;
   }
-  public clickCustomerDialogButton(){
-    this.showCustomerDialog = false;
+
+  public ProcessSelectedCustomer(customer:CustomerSearch){
+      this.customerService.getCustomer(customer.idValue)
+          .subscribe((result:Customer)=>{
+            this.customerName = result.firstName+" "+result.lastName;
+            this.customerPhone = result.phoneNumber;
+            this.billingAddress = new Address();
+            this.billingAddress.address1 = result.defaultBillingAddress1;
+            this.billingAddress.address2 = result.defaultBillingAddress2;
+            this.billingAddress.city = result.defaultBillingCity;
+            this.billingAddress.stateCode = result.defaultBillingStateCode;
+            this.billingAddress.zipCode = result.defaultBillingZipCode;
+            this.shippingAddress = new Address();
+            this.shippingAddress.address1 = result.defaultShippingAddress1;
+            this.shippingAddress.address2 = result.defaultShippingAddress2;
+            this.shippingAddress.city = result.defaultShippingCity;
+            this.shippingAddress.stateCode = result.defaultShippingStateCode;
+            this.shippingAddress.zipCode = result.defaultShippingZipCode;
+          });
   }
+
 
   calculateTotals() {
     this.subtotal = this.items.reduce((acc, item) => acc + item.total, 0);

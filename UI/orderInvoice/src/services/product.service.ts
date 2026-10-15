@@ -29,13 +29,10 @@ export class ProductService {
 
 
   constructor() {
-    this.configService.getConfiguration()
-      .subscribe((config: Configuration) => {
-        this.productsServiceLocation = config.productApiUrl + 'Products';
-        this.productServiceLocation = config.productApiUrl + 'Product';
+        this.productsServiceLocation = this.configService.config.productApiUrl + 'Products';
+        this.productServiceLocation = this.configService.config.productApiUrl + 'Product';
         this.productCharacteristicSubLocation = "Characteristic"
         this.productOptionSubLocation = "Option";
-      });
 
     this.handleError = this.httpErrorHandler.createHandleError('ProductService');
   }

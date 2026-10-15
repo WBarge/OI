@@ -1,7 +1,10 @@
-import { ApplicationConfig } from '@angular/core';
+import { ApplicationConfig,provideAppInitializer,inject  } from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import {provideHttpClient} from '@angular/common/http';
+
 import { routes } from './app.routes';
+import { ConfigService } from '../services/config-service';
+
 import { providePrimeNG } from 'primeng/config';
 import {definePreset} from '@primeuix/themes';
 import Lara from '@primeuix/themes/lara';
@@ -42,5 +45,6 @@ export const appConfig: ApplicationConfig = {
                 license: 'eyJpZCI6IjgxYmZmNTc5LTBjOGItNDFmYS1iZWZlLTkzMTMxZDc1ZTExYiIsInByb2R1Y3QiOiJwcmltZXVpIiwidGllciI6ImNvbW11bml0eSIsInR5cGUiOiJkZXYiLCJpYXQiOjE3ODcyNzMyNjQsImV4cCI6MTgxODgwOTI2NH0.uKb3JsOGna6TXt89RUwLsDpXohO5YuDjOkFE9WOhzpCL4CT6S3LIhcNaxT3qYs_6isvQ-AkjByTYfI5WkOQkCg'
               }),
               provideHttpClient(),
+              provideAppInitializer(() => inject(ConfigService).load()),
               MessageService]
 };

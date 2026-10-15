@@ -64,6 +64,13 @@ public static class Program
 
         app.UseUiExceptionHandler();
 
+        app.UseCors(policyBuilder =>
+        {
+            policyBuilder.AllowAnyOrigin();
+            policyBuilder.AllowAnyMethod();
+            policyBuilder.AllowAnyHeader();
+        });
+
         app.UseHttpsRedirection();
 
         app.UseAuthorization();

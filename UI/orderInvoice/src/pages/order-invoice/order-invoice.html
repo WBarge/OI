@@ -21,7 +21,7 @@
     </span>
     <span class="fieldOnSide">
       <label >Phone Number: </label>
-      <input pInputText id="phone" pInputMask="(999) 999-9999" readonly placeholder="(999) 999-9999" [(ngModel)]="customerPhone  "/>
+      <input pInputText id="phone" readonly [value]="customerPhone|phoneFormat"/>
     </span>
   </p-fieldset>
 <div class="address-panels">
@@ -84,12 +84,12 @@
   </div>
 </p-fieldset>
 
-
-
-<p-dialog header="Please select a customer" [(visible)]="showCustomerDialog" [modal]="true" [closable]="true" >
-  <app-cusomter-selection></app-cusomter-selection>
+<p-dialog header="Please select a customer" [style]="{ width: '75vw',height:'75vw' }" [(visible)]="showCustomerDialog" (onShow)="customerSelection.refresh()" [modal]="true" [closable]="false" >
+  <app-customer-selection #customerSelection (selectedCustomer)="ProcessSelectedCustomer($event)">
+  </app-customer-selection>
   <ng-template #footer>
-      <button type="button" pButton (click)="clickCustomerDialogButton()" label="Close">Close</button>
+      <button type="button" pButton (click)="customerSelection.refresh()" label="Refresh">Refresh</button>
+      <button type="button" pButton (click)="showCustomerDialog = false" label="Close">Close</button>
   </ng-template>
 </p-dialog>
 

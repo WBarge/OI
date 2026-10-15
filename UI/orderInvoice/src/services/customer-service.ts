@@ -5,13 +5,13 @@ import { catchError, map, Observable } from 'rxjs';
 import { ErrorHandlerService, HandleError } from './error-handler.service';
 
 import { ConfigService } from './config-service';
-import { Configuration } from '../model/configuration';
+
 
 import { CustomerListResult } from '../model/results/customer-list-result';
 import { FilterDetail, FilterDictionary } from '../model/requests/filter-detail';
 import { ListRequest } from '../model/requests/list-request';
 import { CustomerSearch } from '../model/results/customer-search';
-
+import { Customer } from '../model/results/customer';
 
 @Service()
 export class CustomerService {
@@ -25,10 +25,8 @@ export class CustomerService {
   private handleError: HandleError;
 
   constructor(){
-    this.configService.getConfiguration().subscribe((config:Configuration) => {
-        this.customerServiceLocation = config.customerApiUrl + 'Customer';
-        this.customersServiceLocation = config.customerApiUrl + 'Customers';
-    });
+        this.customerServiceLocation = this.configService.config.customerApiUrl + 'Customer';
+        this.customersServiceLocation = this.configService.config.customerApiUrl + 'Customers';
     this.handleError = this.httpErrorHandler.createHandleError('CustomerService');
   }
 
@@ -56,16 +54,54 @@ export class CustomerService {
             const returnValue = new CustomerListResult();
             returnValue.totalRecordSize = results.totalRecordSize;
             returnValue.data = results.data.map((customer:any) => {
-              const tempProduct = new CustomerSearch();
-              tempProduct.idValue = customer.id;
-              tempProduct.firstName = customer.firstName;
-              tempProduct.lastName = customer.lastName;
-              tempProduct.phoneNumber = customer.phoneNumber;
-              return tempProduct;
+              const tempCustomer = new CustomerSearch();
+              tempCustomer.idValue = customer.id;
+              tempCustomer.firstName = customer.firstName;
+              tempCustomer.lastName = customer.lastName;
+              tempCustomer.phoneNumber = customer.phoneNumber;
+              return tempCustomer;
             });
             return returnValue;
           }),
           catchError(this.handleError<CustomerListResult>('getCustomers'))
         );
-    }
+  }
+
+  getCustomer(idValue:string):Observable<Customer>{
+    var requestUrl = this.customerServiceLocation+'/'+idValue;
+    return this.http.get<Customer>(requestUrl)
+    .pipe(
+      map((customer:any)=>{
+        const tempCustomer = new Customer();
+        tempCustomer.idValue = customer.id;
+        tempCustomer.firstName = customer.firstName;
+        tempCustomer.lastName = customer.lastName;
+        tempCustomer.phoneNumber = customer.phoneNumber;
+        tempCustomer.defaultBillingAddress1 = customer.defaultBillingAddress1;
+        tempCustomer.defaultBillingAddress2 = customer.defaultBillingAddress2;
+        tempCustomer.defaultBillingCity = customer.defaultBillingCity;
+        tempCustomer.defaultBillingStateCode = customer.defaultBillingStateCode;
+        tempCustomer.defaultBillingZipCode = customer.defaultBillingZipCode;
+        tempCustomer.defaultShippingAddress1 = customer.defaultShippingAddress1;
+        tempCustomer.defaultShippingAddress2 = customer.defaultShippingAddress2;
+        tempCustomer.defaultShippingCity = customer.defaultShippingCity;
+        tempCustomer.defaultShippingStateCode = customer.defaultShippingStateCode;
+        tempCustomer.defaultShippingZipCode = customer.defaultShippingZipCode;
+        return tempCustomer;
+      }),
+    catchError(this.handleError<Customer>('this.getCustomer'))
+    );
+  }
+
+  createCustomer(custToCreate:Customer):Observable<any>{
+     return this.http.post(this.customerServiceLocation,custToCreate)
+    .pipe(
+      catchError(this.handleError<any>('createCustomer'))
+    );
+  }
+
+  updateCustomer(custToUpdate:Customer):Observable<any>{
+    throw new Error("Not Implemented!");
+  }
+
 }
