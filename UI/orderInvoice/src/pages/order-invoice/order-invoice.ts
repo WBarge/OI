@@ -141,6 +141,7 @@ export class OrderInvoice implements OnInit {
       this.customerService.getCustomer(customer.idValue)
           .subscribe((result:Customer)=>{
             this.customerName = result.firstName+" "+result.lastName;
+            this.customerName = this.customerName.trim();
             this.customerPhone = result.phoneNumber;
             this.billingAddress = new Address();
             this.billingAddress.address1 = result.defaultBillingAddress1;
