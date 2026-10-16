@@ -89,7 +89,7 @@ export class CustomerService {
         tempCustomer.defaultShippingZipCode = customer.defaultShippingZipCode;
         return tempCustomer;
       }),
-    catchError(this.handleError<Customer>('this.getCustomer'))
+    catchError(this.handleError<Customer>('getCustomer'))
     );
   }
 
