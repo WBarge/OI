@@ -2,5 +2,5 @@ export class Configuration {
   public HideShippingAddress: boolean = false;
   public EnableCustomProducts: boolean = false;
   public productApiUrl: string = "";
-  public customerApiUrl:string = "";
+  public oiApiUrl:string = "";
 }

@@ -1,5 +1,5 @@
 import { Service,inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { catchError, map, Observable } from 'rxjs';
 
 import { ErrorHandlerService, HandleError } from './error-handler.service';
@@ -25,8 +25,8 @@ export class CustomerService {
   private handleError: HandleError;
 
   constructor(){
-        this.customerServiceLocation = this.configService.config.customerApiUrl + 'Customer';
-        this.customersServiceLocation = this.configService.config.customerApiUrl + 'Customers';
+        this.customerServiceLocation = this.configService.config.oiApiUrl + 'Customer';
+        this.customersServiceLocation = this.configService.config.oiApiUrl + 'Customers';
     this.handleError = this.httpErrorHandler.createHandleError('CustomerService');
   }
 

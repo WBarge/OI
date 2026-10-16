@@ -2,5 +2,5 @@
   "HideShippingAddress": false,
   "EnableCustomProducts": false,
   "productApiUrl": "https://localhost:7253/api/",
-  "customerApiUrl": "https://localhost:7128/api/"
+  "oiApiUrl": "https://localhost:7128/api/"
 }
