@@ -16,11 +16,10 @@
     <label for="state">State</label>
     <p-select
         id="state"
-        [options]="states"
+        [options]="states()"
         optionLabel="name"
         optionValue="code"
         placeholder="Select a State"
-        autoDisplayFirst="false"
         [(ngModel)]="data.stateCode"
     />
   </span>
