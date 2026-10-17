@@ -16,12 +16,12 @@ describe('CustomerService', () => {
   let httpTestingController: HttpTestingController;
   let messageService: MessageService;
 
-  const apiUrl = 'https://customers.test/api/';
+  const apiUrl = 'https://oi.test/api/';
   const customersUrl = `${apiUrl}Customers`;
   const customerUrl = `${apiUrl}Customer`;
 
   beforeEach(() => {
-    const configuration = Object.assign(new Configuration(), { customerApiUrl: apiUrl });
+    const configuration = Object.assign(new Configuration(), { oiApiUrl: apiUrl });
 
     TestBed.configureTestingModule({
       providers: [
@@ -219,11 +219,7 @@ describe('CustomerService', () => {
       expect(next).toHaveBeenCalledWith({});
     });
 
-    // KNOWN BUG in customer-service.ts: the operation name is the string 'this.getCustomer' (a stray "this."),
-    // so the toast reads "CustomerService: this.getCustomer failed: ...".
-    // it.fails passes while the bug exists; once it is fixed this test will fail,
-    // which is the signal to change `it.fails` to `it`.
-    it.fails('should name the operation getCustomer in the error toast', () => {
+    it('should name the operation getCustomer in the error toast', () => {
       const addSpy = vi.spyOn(messageService, 'add');
 
       service.getCustomer('missing').subscribe();

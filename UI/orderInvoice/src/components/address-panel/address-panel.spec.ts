@@ -1,11 +1,28 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { MessageService } from 'primeng/api';
+import { vi } from 'vitest';
 import { AddressPanel } from './address-panel';
 import { Address } from '../../model/address';
+import { State } from '../../model/results/state';
+import { ConfigService } from '../../services/config-service';
+import { Configuration } from '../../model/configuration';
 
 describe('AddressPanel', () => {
   let component: AddressPanel;
   let fixture: ComponentFixture<AddressPanel>;
   let element: HTMLElement;
+  let httpTestingController: HttpTestingController;
+
+  const apiUrl = 'https://oi.test/api/';
+  const statesUrl = `${apiUrl}States`;
+  // deliberately out of order: the StateService is responsible for sorting them
+  const serverStates: State[] = [
+    { name: 'Texas', code: 'TX' },
+    { name: 'Arizona', code: 'AZ' },
+    { name: 'Oregon', code: 'OR' },
+  ];
 
   async function render() {
     fixture.detectChanges();
@@ -13,14 +30,32 @@ describe('AddressPanel', () => {
   }
 
   beforeEach(async () => {
+    const configuration = Object.assign(new Configuration(), { oiApiUrl: apiUrl });
+
     await TestBed.configureTestingModule({
       imports: [AddressPanel],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        MessageService,
+        { provide: ConfigService, useValue: { config: configuration } },
+      ],
     }).compileComponents();
 
+    httpTestingController = TestBed.inject(HttpTestingController);
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    // the component asks for the states as soon as it is constructed
     fixture = TestBed.createComponent(AddressPanel);
     component = fixture.componentInstance;
     element = fixture.nativeElement;
+    httpTestingController.expectOne(statesUrl).flush(serverStates);
     await fixture.whenStable();
+  });
+
+  afterEach(() => {
+    httpTestingController.verify();
+    vi.restoreAllMocks();
   });
 
   it('should create', () => {
@@ -34,22 +69,45 @@ describe('AddressPanel', () => {
   });
 
   describe('states', () => {
-    it('should offer the 50 states plus the District of Columbia', () => {
-      expect(component.states).toHaveLength(51);
-      expect(component.states).toContainEqual({ name: 'District of Columbia', code: 'DC' });
+    it('should request the states from the API when it is created', () => {
+      // the request was already answered in beforeEach, so create a second panel to see it
+      TestBed.createComponent(AddressPanel);
+
+      const request = httpTestingController.expectOne(statesUrl);
+      expect(request.request.method).toBe('GET');
+      request.flush([]);
+    });
+
+    it('should have no states until the API has answered', () => {
+      const pending = TestBed.createComponent(AddressPanel);
+
+      expect(pending.componentInstance.states()).toEqual([]);
+      httpTestingController.expectOne(statesUrl).flush(serverStates);
+    });
+
+    it('should expose the states returned by the service', () => {
+      expect(component.states()).toHaveLength(serverStates.length);
+      expect(component.states()).toContainEqual({ name: 'Oregon', code: 'OR' });
+    });
+
+    it('should list the states alphabetically by name', () => {
+      const names = component.states().map(state => state.name);
+
+      expect(names).toEqual(['Arizona', 'Oregon', 'Texas']);
     });
 
     it('should have a unique two letter code for every state', () => {
-      const codes = component.states.map(state => state.code);
+      const codes = component.states().map(state => state.code);
 
       expect(new Set(codes).size).toBe(codes.length);
       codes.forEach(code => expect(code).toMatch(/^[A-Z]{2}$/));
     });
 
-    it('should list the states alphabetically by name', () => {
-      const names = component.states.map(state => state.name);
+    it('should show the states once they arrive', () => {
+      const pending = TestBed.createComponent(AddressPanel);
+      httpTestingController.expectOne(statesUrl).flush(serverStates);
 
-      expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)));
+      expect(pending.componentInstance.states().map(state => state.code)).toEqual(['AZ', 'OR', 'TX']);
     });
   });
 

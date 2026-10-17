@@ -4,6 +4,8 @@ import { TableLazyLoadEvent, TablePageEvent, TableRowSelectEvent } from 'primeng
 import { NEVER, of } from 'rxjs';
 import { vi } from 'vitest';
 import { CustomerSelection } from './customer-selection';
+import { AddressPanel } from '../address-panel/address-panel';
+import { StateService } from '../../services/state-service';
 import { ConfigService } from '../../services/config-service';
 import { CustomerService } from '../../services/customer-service';
 import { FilterTransformerService } from '../../services/transformers/filter-transformer.service';
@@ -41,6 +43,10 @@ describe('CustomerSelection', () => {
       // the component declares its own CustomerService provider, so that is the one to replace
       .overrideComponent(CustomerSelection, {
         set: { providers: [{ provide: CustomerService, useValue: { getCustomers, createCustomer } }, FilterTransformerService] }
+      })
+      // the address panels inside create their own StateService, keep them away from the network
+      .overrideComponent(AddressPanel, {
+        set: { providers: [{ provide: StateService, useValue: { getStates: () => of([]) } }] }
       })
       .compileComponents();
 

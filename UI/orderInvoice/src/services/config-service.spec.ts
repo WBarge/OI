@@ -15,7 +15,7 @@ describe('ConfigService', () => {
     HideShippingAddress: true,
     EnableCustomProducts: true,
     productApiUrl: 'https://products.test/api/',
-    customerApiUrl: 'https://customers.test/api/'
+    oiApiUrl: 'https://oi.test/api/'
   };
 
   beforeEach(() => {
@@ -64,7 +64,7 @@ describe('ConfigService', () => {
       expect(config.HideShippingAddress).toBe(true);
       expect(config.EnableCustomProducts).toBe(true);
       expect(config.productApiUrl).toBe('https://products.test/api/');
-      expect(config.customerApiUrl).toBe('https://customers.test/api/');
+      expect(config.oiApiUrl).toBe('https://oi.test/api/');
     });
 
     it('should fall back to the defaults for settings missing from the file', async () => {
@@ -75,7 +75,7 @@ describe('ConfigService', () => {
       expect(service.config.HideShippingAddress).toBe(true);
       expect(service.config.EnableCustomProducts).toBe(false);
       expect(service.config.productApiUrl).toBe('');
-      expect(service.config.customerApiUrl).toBe('');
+      expect(service.config.oiApiUrl).toBe('');
     });
 
     it('should hand back the same configuration object on every read', async () => {

@@ -28,7 +28,7 @@ export class StateService {
     return this.http.get<State[]>(this.stateServiceLocation)
       .pipe(
         map(states => [...states].sort((a, b) => a.name.localeCompare(b.name))),
-        catchError(this.handleError<State[]>('getStates'))
+        catchError(this.handleError<State[]>('getStates', []))
       );
   }
 }

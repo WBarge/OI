@@ -55,14 +55,14 @@ describe('appConfig', () => {
         HideShippingAddress: true,
         EnableCustomProducts: false,
         productApiUrl: 'https://products.test/api/',
-        customerApiUrl: 'https://customers.test/api/'
+        oiApiUrl: 'https://oi.test/api/'
       });
       await initStatus.donePromise;
 
       const config = TestBed.inject(ConfigService).config;
       expect(config.HideShippingAddress).toBe(true);
       expect(config.productApiUrl).toBe('https://products.test/api/');
-      expect(config.customerApiUrl).toBe('https://customers.test/api/');
+      expect(config.oiApiUrl).toBe('https://oi.test/api/');
     });
   });
 });

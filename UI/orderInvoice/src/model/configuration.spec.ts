@@ -11,6 +11,6 @@ describe('Configuration', () => {
     expect(config.HideShippingAddress).toBe(false);
     expect(config.EnableCustomProducts).toBe(false);
     expect(config.productApiUrl).toBe('');
-    expect(config.customerApiUrl).toBe('');
+    expect(config.oiApiUrl).toBe('');
   });
 });

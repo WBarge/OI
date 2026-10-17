@@ -13,6 +13,8 @@ import { ConfigService } from '../../services/config-service';
 import { CustomerService } from '../../services/customer-service';
 import { FilterTransformerService } from '../../services/transformers/filter-transformer.service';
 import { OrderInvoice } from './order-invoice';
+import { AddressPanel } from '../../components/address-panel/address-panel';
+import { StateService } from '../../services/state-service';
 
 describe('OrderInvoice', () => {
   let component: OrderInvoice;
@@ -44,6 +46,10 @@ describe('OrderInvoice', () => {
       // the customer picker lives inside the (closed) dialog but is still created, keep it away from the network
       .overrideComponent(CustomerSelection, {
         set: { providers: [{ provide: CustomerService, useValue: { getCustomers } }, FilterTransformerService] }
+      })
+      // the address panels inside create their own StateService, keep them away from the network
+      .overrideComponent(AddressPanel, {
+        set: { providers: [{ provide: StateService, useValue: { getStates: () => of([]) } }] }
       })
       .compileComponents();
 
