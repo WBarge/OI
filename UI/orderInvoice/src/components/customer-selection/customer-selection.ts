@@ -22,14 +22,17 @@ import { InputMaskModule } from 'primeng/inputmask';
 import { LabelModule } from 'primeng/label';
 import { CheckboxModule } from 'primeng/checkbox';
 
-
-
-
 import { CustomerSearch } from '../../model/results/customer-search';
 import { CustomerListResult } from '../../model/results/customer-list-result';
 import { Configuration } from '../../model/configuration';
 import { Address } from '../../model/address';
 import { Customer } from '../../model/results/customer';
+
+
+
+//currently does not support update functionality
+//may want to add it here or in a seperate page that the menu shows
+
 
 @Component({
   selector: 'app-customer-selection',
@@ -127,7 +130,7 @@ export class CustomerSelection implements OnInit{
   doneWithWithNewCustomerClicked(){
     this.showNewCustomerDialog = false;
     if (isEmpty(this.customerLastName) || isEmpty(this.customerPhone))    {
-      this.sendMessage("error","Invalid Customer","The customer last name and phone number are both required to create a new customer!")
+      this.sendMessage("warning","Invalid Customer","The customer last name and phone number are both required to create a new customer!")
       return;
     }
     const custToCreate = new Customer();

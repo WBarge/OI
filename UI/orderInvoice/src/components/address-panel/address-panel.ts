@@ -30,6 +30,7 @@ import { LabelModule } from 'primeng/label';
 export class AddressPanel  {
    @Input('Header') headingTest: string = "";
    @Input('AddressData')data:Address = new Address();
+
   readonly isHidden = input(false);
 
   private stateService:StateService = inject(StateService);

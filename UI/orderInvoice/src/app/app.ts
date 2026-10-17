@@ -18,8 +18,8 @@ export class App {
 
   constructor() {
     this.items = [
-      {label:'Order',routerLink:'/order'},
-      {label:'Invoice',routerLink:'/invoice'},
+      {label:'Orders',},
+      {label:'Invoices',},
       {label:'About',routerLink:'/about'}
     ];
   }
