@@ -19,6 +19,7 @@ import { CustomerSearch } from '../../model/results/customer-search';
 import { Customer } from '../../model/results/customer';
 import { ProductOrdered } from '../../model/results/product-ordered';
 import { PhoneFormatPipe } from '../../pipes/phone-format-pipe';
+import { Product } from '../../model/results/product';
 
 
 import { CustomerService } from '../../services/customer-service';
@@ -28,6 +29,7 @@ import { FieldsetModule } from 'primeng/fieldset';
 import { DatePickerModule } from 'primeng/datepicker';
 import { PanelModule } from 'primeng/panel';
 import { InputTextModule } from 'primeng/inputtext';
+import { InputNumberModule } from 'primeng/inputnumber';
 import { InputMaskModule } from 'primeng/inputmask';
 import { LabelModule } from 'primeng/label';
 import { DividerModule } from 'primeng/divider';
@@ -35,6 +37,7 @@ import { TableModule } from 'primeng/table';
 import { Trash } from '@primeicons/angular/trash';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
+import { ProductSelection } from '../../components/product-selection/product-selection';
 
 
 @Component({
@@ -46,6 +49,7 @@ import { ButtonModule } from 'primeng/button';
     CurrencyPipe,
     PanelModule,
     InputTextModule,
+    InputNumberModule,
     InputMaskModule,
     LabelModule,
     DividerModule,
@@ -53,7 +57,7 @@ import { ButtonModule } from 'primeng/button';
     Trash,
     DialogModule,
     ButtonModule,
-    FormsModule],
+    FormsModule, ProductSelection],
   selector: 'app-order-invoice',
   providers:[CustomerService],
   styleUrl: './order-invoice.css',
@@ -69,7 +73,7 @@ export class OrderInvoice implements OnInit {
   public configuration = signal<Configuration | null>(null);
   public oiMode: string = "Order";
   public showCustomerDialog:boolean = false;
-
+  public showProductDialog:boolean = false;
   public orderNumber: string = "12323123";
   public orderDate:Date = new Date();
   public customerName: string = "";
@@ -122,6 +126,15 @@ export class OrderInvoice implements OnInit {
     this.calculateTotals();
   };
 
+  onQuantityChange(event:any,item:any){
+    if (event != null && event != undefined){
+      item.total = item.price * event;
+    }
+    else{
+      item.total = 0;
+    }
+    this.calculateTotals();
+  }
 
   delete(productToDelete:ProductOrdered){
       this.items = this.items.filter(p=>p.idValue!= productToDelete.idValue);
@@ -129,15 +142,14 @@ export class OrderInvoice implements OnInit {
   }
 
   public onOrderItemsDoubleClick(event: MouseEvent): void {
-    console.log("Double clicked on order items: ", event);
+    this.showProductDialog = true;
   }
 
   public onCustomerDoubleClick(event: MouseEvent): void {
-    console.log("Double clicked on customer area: ", event);
     this.showCustomerDialog = true;
   }
 
-  public ProcessSelectedCustomer(customer:CustomerSearch){
+  public processSelectedCustomer(customer:CustomerSearch){
       this.customerService.getCustomer(customer.idValue)
           .subscribe((result:Customer)=>{
             this.customerName = result.firstName+" "+result.lastName;
@@ -158,10 +170,22 @@ export class OrderInvoice implements OnInit {
           });
   }
 
+  public processSelectedProduct(data:Product){
+    this.items.push({
+      idValue: data.idValue,
+      name: data.name,
+      description: data.shortDescription,
+      sku: data.sku,
+      price: data.price,
+      quantity: 1,
+      total: (data.price * 1)
+    });
+    this.calculateTotals();
+  }
 
   calculateTotals() {
     this.subtotal = this.items.reduce((acc, item) => acc + item.total, 0);
-    this.shipping = 5.00; // Assuming a flat shipping rate
+    this.shipping = 5.00; // Assuming a flat s hipping rate
     this.tax = this.subtotal * 0.07; // Assuming a 7% tax rate
     this.total = this.subtotal + this.shipping + this.tax;
   }

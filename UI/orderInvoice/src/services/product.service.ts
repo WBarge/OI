@@ -1,5 +1,5 @@
 import { Service,inject } from '@angular/core';
-import { ErrorHandlerService, HandleError } from './error-handler.service';
+import { ErrorHandlerService, HandleError } from '../utils/error-handler.service';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { ConfigService } from './config-service';
 import { Configuration } from '../model/configuration';

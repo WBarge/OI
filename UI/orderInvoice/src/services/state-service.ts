@@ -2,7 +2,7 @@ import { Service,inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { catchError, map, Observable } from 'rxjs';
 
-import { ErrorHandlerService, HandleError } from './error-handler.service';
+import { ErrorHandlerService, HandleError } from '../utils/error-handler.service';
 
 import { ConfigService } from './config-service';
 import { State } from '../model/results/state';

@@ -53,7 +53,7 @@
       <td>{{item.name}}</td>
       <td>{{item.description}}</td>
       <td>{{item.price | currency}}</td>
-      <td>{{item.quantity}}</td>
+      <td><p-inputnumber id="quantity"  [(ngModel)]="item.quantity" (ngModelChange)="onQuantityChange($event,item)" /></td>
       <td>{{item.total | currency}}</td>
       <td>
         <div class="rightAlign">
@@ -85,11 +85,18 @@
 </p-fieldset>
 
 <p-dialog header="Please select a customer" [style]="{ width: '75vw',height:'75vw' }" [(visible)]="showCustomerDialog" (onShow)="customerSelection.refresh()" [modal]="true" [closable]="false" >
-  <app-customer-selection #customerSelection (selectedCustomer)="ProcessSelectedCustomer($event)">
+  <app-customer-selection #customerSelection (selectedCustomer)="processSelectedCustomer($event)">
   </app-customer-selection>
   <ng-template #footer>
       <button type="button" pButton (click)="customerSelection.refresh()" label="Refresh">Refresh</button>
       <button type="button" pButton (click)="showCustomerDialog = false" label="Close">Close</button>
+  </ng-template>
+</p-dialog>
+
+<p-dialog header="Please select a product" [style]="{ width: '75vw',height:'75vw' }" [(visible)]="showProductDialog" [modal]="true" [closable]="false" >
+  <app-product-selection (selectedProduct)="processSelectedProduct($event)" ></app-product-selection>
+  <ng-template #footer>
+      <button type="button" pButton (click)="showProductDialog = false" label="Close">Close</button>
   </ng-template>
 </p-dialog>
 

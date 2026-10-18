@@ -1,8 +1,9 @@
 import { Component,inject,signal ,output,OnInit} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-import { CustomerService } from '../../services/customer-service';
 import { ConfigService } from '../../services/config-service';
+import { NotificationService } from '../../utils/notification-service';
+import { CustomerService } from '../../services/customer-service';
 import { FilterTransformerService } from '../../services/transformers/filter-transformer.service';
 
 import { PhoneFormatPipe } from '../../pipes/phone-format-pipe';
@@ -14,7 +15,7 @@ import { DialogModule } from 'primeng/dialog';
 import { DividerModule } from 'primeng/divider';
 import { TableLazyLoadEvent, TableModule, TablePageEvent, TableRowSelectEvent } from 'primeng/table';
 import { ButtonDirective  } from 'primeng/button';
-import { FilterMetadata, MessageService } from 'primeng/api';
+import { FilterMetadata } from 'primeng/api';
 import { FieldsetModule } from 'primeng/fieldset';
 import { ToolbarModule } from 'primeng/toolbar';
 import { InputTextModule } from 'primeng/inputtext';
@@ -55,13 +56,10 @@ import { Customer } from '../../model/results/customer';
 })
 export class CustomerSelection implements OnInit{
 
-  private msgService=inject(MessageService);
+  private notify=inject(NotificationService);
   private customerService = inject(CustomerService);
   private filterTransformer=inject(FilterTransformerService);
   private configService = inject(ConfigService);
-
-
-  // private productService = inject(ProductService);
 
   public configuration = signal<Configuration | null>(null);
   public showNewCustomerDialog:boolean = false;
@@ -85,7 +83,7 @@ export class CustomerSelection implements OnInit{
   public shippingSameAsBilling:boolean = false;
 
 
-    ngOnInit(): void {
+  ngOnInit(): void {
     this.configuration.set(this.configService.config);
   }
 
@@ -100,7 +98,7 @@ export class CustomerSelection implements OnInit{
   }
 
   refresh(){
-    this.sendMessage('info','System Message','Loading Customers');
+    this.notify.info('System Message','Loading Customers');
     this.loadCustomers();
   }
 
@@ -130,7 +128,7 @@ export class CustomerSelection implements OnInit{
   doneWithWithNewCustomerClicked(){
     this.showNewCustomerDialog = false;
     if (isEmpty(this.customerLastName) || isEmpty(this.customerPhone))    {
-      this.sendMessage("warning","Invalid Customer","The customer last name and phone number are both required to create a new customer!")
+      this.notify.warn("Invalid Customer","The customer last name and phone number are both required to create a new customer!")
       return;
     }
     const custToCreate = new Customer();
@@ -158,10 +156,6 @@ export class CustomerSelection implements OnInit{
     }
     this.customerService.createCustomer(custToCreate)
     .subscribe(()=>this.refresh());
-  }
-
-  private sendMessage(severity:string,summary:string,detail:string){
-    this.msgService.add({severity:severity,summary:summary,detail:detail});
   }
 
 }

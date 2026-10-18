@@ -3,7 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 
 import { Observable, of } from 'rxjs';
 
-import { MessageService } from 'primeng/api';
+import { MessageService } from 'primeng/api'; //want it coupled to the message service and not the notification service
 import { SystemError } from '../model/system-error';
 
 /** Type of the handleError function returned by HttpErrorHandler.createHandleError */
