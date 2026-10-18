@@ -44,10 +44,10 @@ describe('App', () => {
     expect(compiled.querySelector('router-outlet')).toBeTruthy();
   });
 
-  it('should offer Order, Invoice and About in the menu', () => {
+  it('should offer Orders, Invoices and About in the menu', () => {
     const app = TestBed.createComponent(App).componentInstance;
 
-    expect(app.items.map(item => item.label)).toEqual(['Order', 'Invoice', 'About']);
+    expect(app.items.map(item => item.label)).toEqual(['Orders', 'Invoices', 'About']);
   });
 
   it('should hand its menu items to the menubar', async () => {
@@ -65,21 +65,25 @@ describe('App', () => {
     await fixture.whenStable();
 
     const text = (fixture.nativeElement as HTMLElement).querySelector('p-menubar')?.textContent ?? '';
-    expect(text).toContain('Order');
-    expect(text).toContain('Invoice');
+    expect(text).toContain('Orders');
+    expect(text).toContain('Invoices');
     expect(text).toContain('About');
   });
 
-  // KNOWN BUG in app.ts: the menu links to '/order' and '/invoice', but app.routes.ts only defines
-  // 'orderInvoice' and 'about', so those two menu entries land on a route that does not exist.
-  // it.fails passes while the bug exists; once the links or the routes are fixed this test will fail,
-  // which is the signal to change `it.fails` to `it`.
-  it.fails('should only link to routes that exist', () => {
+  // Orders and Invoices are placeholder entries with no routerLink yet (their pages are still to come),
+  // so only the entries that do link somewhere have to point at a defined route.
+  it('should only link to routes that exist', () => {
     const app = TestBed.createComponent(App).componentInstance;
     const definedPaths = routes.map(route => route.path);
 
-    for (const item of app.items) {
+    for (const item of app.items.filter(entry => entry.routerLink)) {
       expect(definedPaths).toContain((item.routerLink as string).replace(/^\//, ''));
     }
+  });
+
+  it('should link About to the about page', () => {
+    const app = TestBed.createComponent(App).componentInstance;
+
+    expect(app.items.find(item => item.label === 'About')?.routerLink).toBe('/about');
   });
 });

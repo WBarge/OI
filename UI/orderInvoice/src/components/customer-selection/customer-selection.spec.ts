@@ -346,7 +346,7 @@ describe('CustomerSelection', () => {
 
         expectRejected();
         expect(addSpy).toHaveBeenCalledWith({
-          severity: 'error',
+          severity: 'warn',
           summary: 'Invalid Customer',
           detail: 'The customer last name and phone number are both required to create a new customer!'
         });
@@ -361,7 +361,7 @@ describe('CustomerSelection', () => {
       });
 
       // By design: the dialog's only button is Done, so it always closes. When the customer is invalid the
-      // user is told why with an error toast and decides for themselves whether to try again.
+      // user is told why with a warning toast and decides for themselves whether to try again.
       it('should still close the dialog, because Done is its only way out', () => {
         fillIn();
         component.customerLastName = '';

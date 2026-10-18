@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { MessageService } from 'primeng/api';
 import { NEVER, of } from 'rxjs';
 import { vi } from 'vitest';
@@ -7,10 +8,13 @@ import { Customer } from '../../model/results/customer';
 import { CustomerListResult } from '../../model/results/customer-list-result';
 import { CustomerSearch } from '../../model/results/customer-search';
 import { ProductOrdered } from '../../model/results/product-ordered';
+import { Product } from '../../model/results/product';
 import { Address } from '../../model/address';
 import { CustomerSelection } from '../../components/customer-selection/customer-selection';
 import { ConfigService } from '../../services/config-service';
 import { CustomerService } from '../../services/customer-service';
+import { ProductService } from '../../services/product.service';
+import { ProductSelection } from '../../components/product-selection/product-selection';
 import { FilterTransformerService } from '../../services/transformers/filter-transformer.service';
 import { OrderInvoice } from './order-invoice';
 import { AddressPanel } from '../../components/address-panel/address-panel';
@@ -21,6 +25,7 @@ describe('OrderInvoice', () => {
   let fixture: ComponentFixture<OrderInvoice>;
   let getCustomer: ReturnType<typeof vi.fn>;
   let getCustomers: ReturnType<typeof vi.fn>;
+  let getProducts: ReturnType<typeof vi.fn>;
 
   const customerPage = Object.assign(new CustomerListResult(), { data: [], totalRecordSize: 0 });
 
@@ -31,6 +36,7 @@ describe('OrderInvoice', () => {
   async function setup(config: Partial<Configuration> = {}) {
     getCustomer = vi.fn();
     getCustomers = vi.fn().mockReturnValue(NEVER);
+    getProducts = vi.fn().mockReturnValue(NEVER);
 
     await TestBed.configureTestingModule({
       imports: [OrderInvoice],
@@ -46,6 +52,10 @@ describe('OrderInvoice', () => {
       // the customer picker lives inside the (closed) dialog but is still created, keep it away from the network
       .overrideComponent(CustomerSelection, {
         set: { providers: [{ provide: CustomerService, useValue: { getCustomers } }, FilterTransformerService] }
+      })
+      // same for the product picker in the (closed) product dialog
+      .overrideComponent(ProductSelection, {
+        set: { providers: [{ provide: ProductService, useValue: { getProducts } }, FilterTransformerService] }
       })
       // the address panels inside create their own StateService, keep them away from the network
       .overrideComponent(AddressPanel, {
@@ -237,14 +247,6 @@ describe('OrderInvoice', () => {
   });
 
   describe('customer dialog', () => {
-    beforeEach(() => {
-      vi.spyOn(console, 'log').mockImplementation(() => undefined);
-    });
-
-    afterEach(() => {
-      vi.restoreAllMocks();
-    });
-
     it('should be closed to begin with', () => {
       expect(component.showCustomerDialog).toBe(false);
     });
@@ -264,7 +266,7 @@ describe('OrderInvoice', () => {
       expect(component.showCustomerDialog).toBe(true);
     });
 
-    it('should not change the dialog when the order items are double clicked', () => {
+    it('should not open when the order items are double clicked', () => {
       component.onOrderItemsDoubleClick(new MouseEvent('dblclick'));
 
       expect(component.showCustomerDialog).toBe(false);
@@ -309,7 +311,174 @@ describe('OrderInvoice', () => {
     });
   });
 
-  describe('ProcessSelectedCustomer', () => {
+  describe('product dialog', () => {
+    it('should be closed to begin with', () => {
+      expect(component.showProductDialog).toBe(false);
+    });
+
+    it('should open when the order items are double clicked', () => {
+      component.onOrderItemsDoubleClick(new MouseEvent('dblclick'));
+
+      expect(component.showProductDialog).toBe(true);
+    });
+
+    it('should open when the items table is double clicked in the page', () => {
+      fixture.detectChanges();
+      const table = (fixture.nativeElement as HTMLElement).querySelector('#itemsTable') as HTMLElement;
+
+      table.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+
+      expect(component.showProductDialog).toBe(true);
+    });
+
+    it('should not open the customer dialog', () => {
+      component.onOrderItemsDoubleClick(new MouseEvent('dblclick'));
+
+      expect(component.showCustomerDialog).toBe(false);
+    });
+
+    it('should show the product picker with a Close button once it is open', async () => {
+      component.showProductDialog = true;
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const body = document.body.textContent ?? '';
+      expect(body).toContain('Please select a product');
+      expect(body).toContain('Close');
+    });
+
+    it('should close when the Close button is clicked', async () => {
+      component.showProductDialog = true;
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const close = Array.from(document.body.querySelectorAll<HTMLButtonElement>('button'))
+        .find(button => button.textContent?.trim() === 'Close');
+      close?.click();
+
+      expect(component.showProductDialog).toBe(false);
+    });
+  });
+
+  describe('processSelectedProduct', () => {
+    const gadget = Object.assign(new Product(), {
+      idValue: '9', sku: 'G-200', name: 'Gadget', shortDescription: 'A large gadget', price: 20
+    });
+
+    beforeEach(() => {
+      fixture.detectChanges();
+    });
+
+    it('should add the product to the order with a quantity of one', () => {
+      component.processSelectedProduct(gadget);
+
+      expect(component.items).toHaveLength(4);
+      expect(component.items[3]).toEqual({
+        idValue: '9', name: 'Gadget', description: 'A large gadget', sku: 'G-200', price: 20, quantity: 1, total: 20
+      });
+    });
+
+    it('should use the short description as the description of the item', () => {
+      component.processSelectedProduct(Object.assign(new Product(), gadget, { description: 'The long one' }));
+
+      expect(component.items[3].description).toBe('A large gadget');
+    });
+
+    it('should recalculate the totals', () => {
+      component.processSelectedProduct(gadget);
+
+      // 2 x 10.99 + 1 x 5.49 + 3 x 15.75 + 1 x 20
+      expect(component.subtotal).toBeCloseTo(94.72);
+      expect(component.total).toBeCloseTo(94.72 * 1.07 + 5);
+    });
+
+    it('should add a row to the items table', async () => {
+      component.processSelectedProduct(gadget);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const rows = (fixture.nativeElement as HTMLElement).querySelectorAll('#itemsTable tbody tr');
+      expect(rows).toHaveLength(4);
+      expect(rows[3].textContent).toContain('G-200');
+    });
+
+    it('should add the first item to an order that is empty', () => {
+      component.items = [];
+
+      component.processSelectedProduct(gadget);
+
+      expect(component.items.map(item => item.sku)).toEqual(['G-200']);
+      expect(component.subtotal).toBe(20);
+    });
+
+    it('should add the product when the product picker emits one', async () => {
+      component.showProductDialog = true; // the dialog only creates the picker once it is open
+      fixture.detectChanges();
+      await fixture.whenStable();
+      const picker = fixture.debugElement.query(By.directive(ProductSelection)).componentInstance as ProductSelection;
+
+      picker.selectedProduct.emit(gadget);
+
+      expect(component.items.map(item => item.sku)).toEqual(['SKU1', 'SKU2', 'SKU3', 'G-200']);
+    });
+  });
+
+  describe('onQuantityChange', () => {
+    beforeEach(() => {
+      fixture.detectChanges();
+    });
+
+    it('should work out the total of the item from its price and the new quantity', () => {
+      const item = component.items[0];
+
+      component.onQuantityChange(5, item);
+
+      expect(item.total).toBeCloseTo(10.99 * 5);
+    });
+
+    it('should recalculate the totals of the order', () => {
+      component.onQuantityChange(5, component.items[0]);
+
+      // 5 x 10.99 + 1 x 5.49 + 3 x 15.75
+      expect(component.subtotal).toBeCloseTo(107.69);
+      expect(component.total).toBeCloseTo(107.69 * 1.07 + 5);
+    });
+
+    it('should make the item free when the quantity is zero', () => {
+      const item = component.items[0];
+
+      component.onQuantityChange(0, item);
+
+      expect(item.total).toBe(0);
+    });
+
+    it('should zero the item when the quantity is cleared', () => {
+      const item = component.items[0];
+
+      component.onQuantityChange(null, item);
+
+      expect(item.total).toBe(0);
+      expect(component.subtotal).toBeCloseTo(5.49 + 15.75 * 3);
+    });
+
+    it('should leave the other items alone', () => {
+      component.onQuantityChange(4, component.items[1]);
+
+      expect(component.items[0].total).toBeCloseTo(10.99 * 2);
+      expect(component.items[2].total).toBeCloseTo(15.75 * 3);
+    });
+
+    it('should show a quantity input for every item', async () => {
+      await fixture.whenStable();
+      fixture.detectChanges(); // ngModel writes the quantities one tick after the first render
+      await fixture.whenStable();
+
+      const inputs = (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLInputElement>('#itemsTable tbody p-inputnumber input');
+      expect(Array.from(inputs).map(input => input.value)).toEqual(['2', '1', '3']);
+    });
+  });
+
+  describe('processSelectedCustomer', () => {
     const picked = Object.assign(new CustomerSearch(), { idValue: 'c-7', firstName: 'Ada', lastName: 'Lovelace', phoneNumber: '5551234567' });
     const fullCustomer = Object.assign(new Customer(), {
       idValue: 'c-7', firstName: 'Ada', lastName: 'Lovelace', phoneNumber: '5551234567',
@@ -325,21 +494,21 @@ describe('OrderInvoice', () => {
     });
 
     it('should load the full customer by the id of the one that was picked', () => {
-      component.ProcessSelectedCustomer(picked);
+      component.processSelectedCustomer(picked);
 
       expect(getCustomer).toHaveBeenCalledTimes(1);
       expect(getCustomer).toHaveBeenCalledWith('c-7');
     });
 
     it('should show the name and the phone number of the customer', () => {
-      component.ProcessSelectedCustomer(picked);
+      component.processSelectedCustomer(picked);
 
       expect(component.customerName).toBe('Ada Lovelace');
       expect(component.customerPhone).toBe('5551234567');
     });
 
     it('should fill the billing address from the default billing address', () => {
-      component.ProcessSelectedCustomer(picked);
+      component.processSelectedCustomer(picked);
 
       expect(component.billingAddress).toEqual(Object.assign(new Address(), {
         address1: '1 Bill St', address2: 'Apt 1', city: 'Billtown', stateCode: 'AZ', zipCode: '85001'
@@ -347,7 +516,7 @@ describe('OrderInvoice', () => {
     });
 
     it('should fill the shipping address from the default shipping address', () => {
-      component.ProcessSelectedCustomer(picked);
+      component.processSelectedCustomer(picked);
 
       expect(component.shippingAddress).toEqual(Object.assign(new Address(), {
         address1: '2 Ship St', address2: 'Apt 2', city: 'Shipville', stateCode: 'CA', zipCode: '90001'
@@ -358,7 +527,7 @@ describe('OrderInvoice', () => {
       const oldBilling = component.billingAddress;
       const oldShipping = component.shippingAddress;
 
-      component.ProcessSelectedCustomer(picked);
+      component.processSelectedCustomer(picked);
 
       expect(component.billingAddress).not.toBe(oldBilling);
       expect(component.shippingAddress).not.toBe(oldShipping);
@@ -366,7 +535,7 @@ describe('OrderInvoice', () => {
     });
 
     it('should show the picked customer on the page', async () => {
-      component.ProcessSelectedCustomer(picked);
+      component.processSelectedCustomer(picked);
       fixture.detectChanges();
       await fixture.whenStable();
 
@@ -378,7 +547,7 @@ describe('OrderInvoice', () => {
     it('should leave the order alone when the customer cannot be loaded', () => {
       getCustomer.mockReturnValue(NEVER);
 
-      component.ProcessSelectedCustomer(picked);
+      component.processSelectedCustomer(picked);
 
       expect(component.customerName).toBe('John Doe');
     });
