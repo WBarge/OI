@@ -52,6 +52,7 @@ describe('appConfig', () => {
       expect(initStatus.done).toBe(false);
 
       httpTestingController.expectOne(isConfigRequest).flush({
+        disableAddresses: true,
         HideShippingAddress: true,
         EnableCustomProducts: false,
         productApiUrl: 'https://products.test/api/',
@@ -60,6 +61,7 @@ describe('appConfig', () => {
       await initStatus.donePromise;
 
       const config = TestBed.inject(ConfigService).config;
+      expect(config.disableAddresses).toBe(true);
       expect(config.HideShippingAddress).toBe(true);
       expect(config.productApiUrl).toBe('https://products.test/api/');
       expect(config.oiApiUrl).toBe('https://oi.test/api/');

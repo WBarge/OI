@@ -397,6 +397,53 @@ describe('CustomerSelection', () => {
     });
   });
 
+  describe('address configuration', () => {
+    const openNewCustomerDialog = async () => {
+      component.showNewCustomerDialog = true;
+      fixture.detectChanges();
+      await fixture.whenStable();
+    };
+
+    it('should show the addresses in the new customer dialog by default', async () => {
+      await openNewCustomerDialog();
+
+      expect(component.configuration()?.disableAddresses).toBe(false);
+      expect(document.body.textContent).toContain('Billing Address');
+      expect(document.body.textContent).toContain('Shipping Address');
+      expect(document.body.textContent).toContain('Shipping is the same Billing');
+    });
+
+    it('should not show any address in the new customer dialog when addresses are disabled', async () => {
+      TestBed.resetTestingModule();
+      await setup({ disableAddresses: true });
+      await openNewCustomerDialog();
+
+      expect(component.configuration()?.disableAddresses).toBe(true);
+      expect(document.body.textContent).not.toContain('Billing Address');
+      expect(document.body.textContent).not.toContain('Shipping Address');
+      expect(document.body.querySelector('.address-panels')).toBeNull();
+    });
+
+    it('should not offer to copy billing to shipping when addresses are disabled', async () => {
+      TestBed.resetTestingModule();
+      await setup({ disableAddresses: true });
+      await openNewCustomerDialog();
+
+      expect(document.body.textContent).not.toContain('Shipping is the same Billing');
+      expect(document.body.querySelector('#shipNbill')).toBeNull();
+    });
+
+    it('should still ask for the name and the phone number when addresses are disabled', async () => {
+      TestBed.resetTestingModule();
+      await setup({ disableAddresses: true });
+      await openNewCustomerDialog();
+
+      expect(document.body.querySelector('#customerFirstName')).not.toBeNull();
+      expect(document.body.querySelector('#customerLastName')).not.toBeNull();
+      expect(document.body.textContent).toContain('Done');
+    });
+  });
+
   describe('rendering', () => {
     it('should list the loaded customers with a formatted phone number', async () => {
       component.loadCustomers();

@@ -12,6 +12,7 @@ describe('ConfigService', () => {
   const isConfigRequest = (req: { url: string }) => /^\/config\.json\?v=\d+$/.test(req.url);
 
   const serverConfig = {
+    disableAddresses: true,
     HideShippingAddress: true,
     EnableCustomProducts: true,
     productApiUrl: 'https://products.test/api/',
@@ -54,13 +55,14 @@ describe('ConfigService', () => {
       await loading;
     });
 
-    it('should keep the response as a Configuration instance with all four settings', async () => {
+    it('should keep the response as a Configuration instance with all of its settings', async () => {
       const loading = service.load();
       httpTestingController.expectOne(isConfigRequest).flush(serverConfig);
       await loading;
 
       const config = service.config;
       expect(config).toBeInstanceOf(Configuration);
+      expect(config.disableAddresses).toBe(true);
       expect(config.HideShippingAddress).toBe(true);
       expect(config.EnableCustomProducts).toBe(true);
       expect(config.productApiUrl).toBe('https://products.test/api/');
@@ -73,9 +75,20 @@ describe('ConfigService', () => {
       await loading;
 
       expect(service.config.HideShippingAddress).toBe(true);
+      expect(service.config.disableAddresses).toBe(false);
       expect(service.config.EnableCustomProducts).toBe(false);
       expect(service.config.productApiUrl).toBe('');
       expect(service.config.oiApiUrl).toBe('');
+    });
+
+    it('should leave addresses enabled when the file does not mention them', async () => {
+      const { disableAddresses, ...withoutAddressSetting } = serverConfig; // a key missing from the json, not undefined
+      const loading = service.load();
+      httpTestingController.expectOne(isConfigRequest).flush(withoutAddressSetting);
+      await loading;
+
+      expect(disableAddresses).toBe(true); // the full config does disable them, so the false below is the default
+      expect(service.config.disableAddresses).toBe(false);
     });
 
     it('should hand back the same configuration object on every read', async () => {
@@ -107,6 +120,19 @@ describe('ConfigService', () => {
       await loading;
 
       expect(service.config.HideShippingAddress).toBe(false);
+    });
+
+    it('should pick up a change to disableAddresses when it is loaded again', async () => {
+      let loading = service.load();
+      httpTestingController.expectOne(isConfigRequest).flush(serverConfig);
+      await loading;
+      expect(service.config.disableAddresses).toBe(true);
+
+      loading = service.load();
+      httpTestingController.expectOne(isConfigRequest).flush({ ...serverConfig, disableAddresses: false });
+      await loading;
+
+      expect(service.config.disableAddresses).toBe(false);
     });
 
     it('should reject, and leave the configuration unavailable, when the file cannot be loaded', async () => {
