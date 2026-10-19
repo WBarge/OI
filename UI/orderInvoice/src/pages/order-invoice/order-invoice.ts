@@ -1,4 +1,5 @@
 import { Component, inject,OnInit, signal } from '@angular/core';
+import { Router,ActivatedRoute } from '@angular/router';
 import {CurrencyPipe} from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -21,9 +22,7 @@ import { ProductOrdered } from '../../model/results/product-ordered';
 import { PhoneFormatPipe } from '../../pipes/phone-format-pipe';
 import { Product } from '../../model/results/product';
 
-
 import { CustomerService } from '../../services/customer-service';
-// import { ProductService } from '../../services/product.service';
 
 import { FieldsetModule } from 'primeng/fieldset';
 import { DatePickerModule } from 'primeng/datepicker';
@@ -65,16 +64,18 @@ import { ProductSelection } from '../../components/product-selection/product-sel
 })
 export class OrderInvoice implements OnInit {
 
-    private configService = inject(ConfigService);
-    private customerService = inject(CustomerService);
+  private configService = inject(ConfigService);
+  private customerService = inject(CustomerService);
+  private route = inject(ActivatedRoute);
 
-  // private productService = inject(ProductService);
+
 
   public configuration = signal<Configuration | null>(null);
   public oiMode: string = "Order";
   public showCustomerDialog:boolean = false;
   public showProductDialog:boolean = false;
-  public orderNumber: string = "12323123";
+  public orderId:string|null = null;
+  public orderNumber: string = "";
   public orderDate:Date = new Date();
   public customerName: string = "";
   public customerPhone: string = "555-555-5555";
@@ -86,11 +87,27 @@ export class OrderInvoice implements OnInit {
   public tax: number = 0;
   public total: number = 0;
 
+  public mode: OrderMode = OrderMode.New;
+
   constructor() {
   }
 
-  ngOnInit(): void {
+  ngOnInit() {
     this.configuration.set(this.configService.config);
+
+    this.route.paramMap.subscribe(params => {
+      this.orderId = params.get('id');
+       const isReadOnlyRoute = this.route.snapshot.data['readOnly'];
+      // Determine mode based on the presence of the ID
+      if (isReadOnlyRoute) {
+        this.mode = OrderMode.View
+      }else  if (this.orderId) {
+        this.mode = OrderMode.Edit;
+      } else {
+        this.mode = OrderMode.New;
+      }
+    });
+
   }
 
   onQuantityChange(event:any,item:any){
@@ -166,4 +183,10 @@ export class OrderInvoice implements OnInit {
     this.tax = this.subtotal * 0.07; // Assuming a 7% tax rate
     this.total = this.subtotal + this.shipping + this.tax;
   }
+}
+
+enum OrderMode {
+  New = 'NEW',
+  Edit = 'EDIT',
+  View = 'VIEW' // Example of why enums are better than booleans
 }
