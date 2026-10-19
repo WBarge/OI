@@ -91,40 +91,7 @@ export class OrderInvoice implements OnInit {
 
   ngOnInit(): void {
     this.configuration.set(this.configService.config);
-    this.loadMockOrder();
   }
-
-  loadMockOrder() {
-    this.customerName = "John Doe";
-    this.customerPhone = "555-555-5555";
-
-    this.billingAddress.address1 = "123 Main St";
-    this.billingAddress.address2 = "Apt 4B";
-    this.billingAddress.city = "Anytown";
-    this.billingAddress.stateCode = "AZ";
-    this.billingAddress.zipCode = "12345";
-
-    this.shippingAddress.address1 = "456 Oak St";
-    this.shippingAddress.city = "Othertown";
-    this.shippingAddress.stateCode = "AZ";
-    this.shippingAddress.zipCode = "67890";
-
-    this.items = [
-      {
-        idValue: '1', name: 'Product 1', description: 'Description 1', sku: 'SKU1', price: 10.99, quantity: 2,
-        total: (10.99 * 2)
-      },
-      {
-        idValue: '2', name: 'Product 2', description: 'Description 2', sku: 'SKU2', price: 5.49, quantity: 1,
-        total: (5.49 * 1)
-      },
-      {
-        idValue: '3', name: 'Product 3', description: 'Description 3', sku: 'SKU3', price: 15.75, quantity: 3,
-        total: (15.75 * 3)
-      }
-    ];
-    this.calculateTotals();
-  };
 
   onQuantityChange(event:any,item:any){
     if (event != null && event != undefined){
@@ -137,7 +104,7 @@ export class OrderInvoice implements OnInit {
   }
 
   delete(productToDelete:ProductOrdered){
-      this.items = this.items.filter(p=>p.idValue!= productToDelete.idValue);
+      this.items = this.items.filter(p=>p.productId != productToDelete.productId);
       this.calculateTotals();
   }
 
@@ -171,16 +138,26 @@ export class OrderInvoice implements OnInit {
   }
 
   public processSelectedProduct(data:Product){
-    this.items.push({
-      idValue: data.idValue,
-      name: data.name,
-      description: data.shortDescription,
-      sku: data.sku,
-      price: data.price,
-      quantity: 1,
-      total: (data.price * 1)
-    });
-    this.calculateTotals();
+    const searchProduct = this.items.find(element => element.productId === data.idValue);
+    if (searchProduct) {
+      searchProduct.quantity += 1;
+      searchProduct.total = searchProduct.price * searchProduct.quantity;
+      this.calculateTotals();
+      return;
+    }
+    else{
+      const tempItem:ProductOrdered = new ProductOrdered();
+      tempItem.idValue = "";
+      tempItem.productId = data.idValue;
+      tempItem.name= data.name;
+      tempItem.description= data.shortDescription;
+      tempItem.sku= data.sku;
+      tempItem.price= data.price;
+      tempItem.quantity= 1;
+      tempItem.total= (data.price * 1);
+      this.items.push(tempItem);
+      this.calculateTotals();
+    }
   }
 
   calculateTotals() {

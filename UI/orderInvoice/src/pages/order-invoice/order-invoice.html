@@ -24,13 +24,20 @@
       <input pInputText id="phone" readonly [value]="customerPhone|phoneFormat"/>
     </span>
   </p-fieldset>
-<div class="address-panels">
-	<address-panel [AddressData]="billingAddress" Header="Billing Address"></address-panel>
-  <p-divider layout="vertical" />
-  @if (configuration(); as config) {
-    <address-panel [AddressData]="shippingAddress" Header="Shipping Address" [isHidden]="config.HideShippingAddress"></address-panel>
+@if (configuration(); as config) {
+  @if (!config.disableAddresses) {
+    <div class="address-panels">
+      <address-panel [AddressData]="billingAddress" Header="Billing Address"></address-panel>
+      <p-divider layout="vertical" />
+      <address-panel
+        [AddressData]="shippingAddress"
+        Header="Shipping Address"
+        [isHidden]="config.HideShippingAddress">
+      </address-panel>
+    </div>
   }
-</div>
+}
+
 <p-divider />
 <p-table id="itemsTable" [value]="items" (dblclick)="onOrderItemsDoubleClick($event)">
   <ng-template #header>

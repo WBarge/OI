@@ -1,5 +1,6 @@
 export class ProductOrdered {
   idValue!: string;
+  productId!:string;
   name!: string;
   description!: string;
   sku!: string;

@@ -58,17 +58,20 @@ currentPageReportTemplate="{first}-{last} of {totalRecords}"
       <input pInputText id="phone" pInputMask="(999) 999-9999" placeholder="(999) 999-9999" [(ngModel)]="customerPhone"/>
     </span>
   </p-fieldset>
-  <span class="fieldOnSide">
-      <p-checkbox id="shipNbill" [(ngModel)]="shippingSameAsBilling" [binary]="true" [hidden]="configuration()?.HideShippingAddress"/>
-      <label pLabel for="shipNbill" class="text-sm" [hidden]="configuration()?.HideShippingAddress">Shipping is the same Billing</label>
-  </span>
-  <div class="address-panels">
-	  <address-panel  [AddressData]="billingAddress" Header="Billing Address"></address-panel>
-    <p-divider layout="vertical" />
-    @if (configuration(); as config) {
-      <address-panel [AddressData]="shippingAddress" Header="Shipping Address" [isHidden]="config.HideShippingAddress"></address-panel>
-    }
-  </div>
+  @if (configuration(); as config) {
+  @if (!config.disableAddresses) {
+    <span class="fieldOnSide">
+        <p-checkbox id="shipNbill" [(ngModel)]="shippingSameAsBilling" [binary]="true" [hidden]="configuration()?.HideShippingAddress"/>
+        <label pLabel for="shipNbill" class="text-sm" [hidden]="configuration()?.HideShippingAddress">Shipping is the same Billing</label>
+    </span>
+    <div class="address-panels">
+      <address-panel  [AddressData]="billingAddress" Header="Billing Address"></address-panel>
+      <p-divider layout="vertical" />
+      @if (configuration(); as config) {
+        <address-panel [AddressData]="shippingAddress" Header="Shipping Address" [isHidden]="config.HideShippingAddress"></address-panel>
+      }
+    </div>
+  }}
   <ng-template #footer>
       <button type="button" pButton (click)="doneWithWithNewCustomerClicked()">Done</button>
   </ng-template>

@@ -1,4 +1,5 @@
 {
+  "disableAddresses":true,
   "HideShippingAddress": false,
   "EnableCustomProducts": false,
   "productApiUrl": "https://localhost:7253/api/",
