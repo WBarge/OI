@@ -13,7 +13,7 @@ public class FilterMetaData : IFilterMetaData
     public string? SearchValue { get; set; }
 
     /// <summary>Gets or sets the match mode, e.g. equals, startsWith, contains.</summary>
-    [JsonProperty(PropertyName = "searchValue")]
+    [JsonProperty(PropertyName = "matchMode")]
     public string? MatchMode { get; set; }
 
     /// <summary>Gets or sets the logical operator used to combine this condition with the previous one, e.g. and, or.</summary>

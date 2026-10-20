@@ -12,11 +12,11 @@ namespace OI.Service.Controllers
     /// </summary>
     [Route("api/[controller]")]
     [ApiController]
-    public class OrdersController(IOrderManager orderManager,ILogger<ICustomerManager> logger) : ControllerBase
+    public class OrdersController(IOrderManager orderManager,ILogger<IOrderManager> logger) : ControllerBase
     {
 
         private readonly IOrderManager _orderManager = orderManager ?? throw new ArgumentNullException(nameof(orderManager));
-        private readonly ILogger<ICustomerManager> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        private readonly ILogger<IOrderManager> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
         /// <summary>
         /// Retrieves a paginated list of orders using the requested filters and pagination settings.

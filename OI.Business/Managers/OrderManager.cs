@@ -92,7 +92,7 @@ internal class OrderManager(IOrderRepo orderRepo, ICustomerRepo customerRepo, IL
     {
         int pageNumber = page is null or < 1 ? 1 : page.Value;
         int size = pageSize is null or < 1 ? DEFAULT_PAGE_SIZE : pageSize.Value;
-        _logger.LogInformation("Listing customers, page {Page} with page size {PageSize}", pageNumber, size);
+        _logger.LogInformation("Listing orders, page {Page} with page size {PageSize}", pageNumber, size);
 
         // Run one after the other: both queries use the same DbContext, which cannot run two queries at once.
         IEnumerable<IOrderSearch> data =

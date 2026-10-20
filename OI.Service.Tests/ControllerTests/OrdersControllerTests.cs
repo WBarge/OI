@@ -21,7 +21,7 @@ public class OrdersControllerTests
     [Test, Description("Constructor should throw when orderManager is null")]
     public void Constructor_ThrowsWhenOrderManagerIsNull()
     {
-        Action act = () => _ = new OrdersController(null!, NullLogger<ICustomerManager>.Instance);
+        Action act = () => _ = new OrdersController(null!, NullLogger<IOrderManager>.Instance);
         act.Should().Throw<ArgumentNullException>().WithParameterName("orderManager");
     }
 
@@ -42,7 +42,7 @@ public class OrdersControllerTests
             CreateOrder(1001, "John Jones", "214-555-0101")
         ];
         Mock<IOrderManager> orderManagerMock = CreateManagerMock(new PagedResult<IOrderSearch>(orders, 42L));
-        OrdersController sut = new(orderManagerMock.Object, NullLogger<ICustomerManager>.Instance);
+        OrdersController sut = new(orderManagerMock.Object, NullLogger<IOrderManager>.Instance);
 
         IActionResult result = await sut.GetOrders(CancellationToken.None, new ListRequest());
 
@@ -57,7 +57,7 @@ public class OrdersControllerTests
     {
         IEnumerable<IOrderSearch> onePage = [CreateOrder(1000, "Jane Smith", "512-555-0100")];
         Mock<IOrderManager> orderManagerMock = CreateManagerMock(new PagedResult<IOrderSearch>(onePage, 500L));
-        OrdersController sut = new(orderManagerMock.Object, NullLogger<ICustomerManager>.Instance);
+        OrdersController sut = new(orderManagerMock.Object, NullLogger<IOrderManager>.Instance);
 
         IActionResult result = await sut.GetOrders(CancellationToken.None, new ListRequest { Page = 1, PageSize = 1 });
 
@@ -70,7 +70,7 @@ public class OrdersControllerTests
     public async Task GetOrders_ReturnsEmptyDataAndZeroTotal_WhenNoOrders()
     {
         Mock<IOrderManager> orderManagerMock = CreateManagerMock(new PagedResult<IOrderSearch>([], 0L));
-        OrdersController sut = new(orderManagerMock.Object, NullLogger<ICustomerManager>.Instance);
+        OrdersController sut = new(orderManagerMock.Object, NullLogger<IOrderManager>.Instance);
 
         IActionResult result = await sut.GetOrders(CancellationToken.None, new ListRequest());
 
@@ -83,7 +83,7 @@ public class OrdersControllerTests
     public async Task GetOrders_PassesNothing_WhenRequestIsNull()
     {
         Mock<IOrderManager> orderManagerMock = CreateManagerMock();
-        OrdersController sut = new(orderManagerMock.Object, NullLogger<ICustomerManager>.Instance);
+        OrdersController sut = new(orderManagerMock.Object, NullLogger<IOrderManager>.Instance);
 
         IActionResult result = await sut.GetOrders(CancellationToken.None, null!);
 
@@ -99,7 +99,7 @@ public class OrdersControllerTests
     public async Task GetOrders_PassesNullFilters_WhenRequestHasNoFilters()
     {
         Mock<IOrderManager> orderManagerMock = CreateManagerMock();
-        OrdersController sut = new(orderManagerMock.Object, NullLogger<ICustomerManager>.Instance);
+        OrdersController sut = new(orderManagerMock.Object, NullLogger<IOrderManager>.Instance);
 
         await sut.GetOrders(CancellationToken.None, new ListRequest { Page = 2, PageSize = 10 });
 
@@ -114,7 +114,7 @@ public class OrdersControllerTests
     public async Task GetOrders_PassesRequestValuesToManager()
     {
         Mock<IOrderManager> orderManagerMock = CreateManagerMock();
-        OrdersController sut = new(orderManagerMock.Object, NullLogger<ICustomerManager>.Instance);
+        OrdersController sut = new(orderManagerMock.Object, NullLogger<IOrderManager>.Instance);
         FilterMetaData customerNameFilter = new() { SearchValue = "Smith", MatchMode = "contains", LogicalOperator = "and" };
         FilterMetaData phoneFilter = new() { SearchValue = "512", MatchMode = "startsWith", LogicalOperator = "or" };
         ListRequest request = new()
@@ -147,7 +147,7 @@ public class OrdersControllerTests
     public async Task GetOrders_CallsManagerOnce()
     {
         Mock<IOrderManager> orderManagerMock = CreateManagerMock();
-        OrdersController sut = new(orderManagerMock.Object, NullLogger<ICustomerManager>.Instance);
+        OrdersController sut = new(orderManagerMock.Object, NullLogger<IOrderManager>.Instance);
 
         await sut.GetOrders(CancellationToken.None, new ListRequest());
 
@@ -160,7 +160,7 @@ public class OrdersControllerTests
     {
         using CancellationTokenSource cts = new();
         Mock<IOrderManager> orderManagerMock = CreateManagerMock();
-        OrdersController sut = new(orderManagerMock.Object, NullLogger<ICustomerManager>.Instance);
+        OrdersController sut = new(orderManagerMock.Object, NullLogger<IOrderManager>.Instance);
 
         await sut.GetOrders(cts.Token, new ListRequest());
 
@@ -175,7 +175,7 @@ public class OrdersControllerTests
         orderManagerMock.Setup(m => m.GetOrdersPagedAsync(
                 It.IsAny<Dictionary<string, IFilterMetaData[]>>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("boom"));
-        OrdersController sut = new(orderManagerMock.Object, NullLogger<ICustomerManager>.Instance);
+        OrdersController sut = new(orderManagerMock.Object, NullLogger<IOrderManager>.Instance);
 
         Func<Task> act = () => sut.GetOrders(CancellationToken.None, new ListRequest());
 
