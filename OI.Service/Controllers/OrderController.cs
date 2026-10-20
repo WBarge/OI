@@ -1,3 +1,4 @@
+using CrossCutting.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using OI.Glue.Managers;
 using OI.Glue.Models;
@@ -18,17 +19,54 @@ public class OrderController(IOrderManager orderManager, ILogger<OrderController
     /// <summary>
     /// Creates a new order.
     /// </summary>
-    /// <param name="request">The create order request.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
+    /// <param name="request">The create order request.</param>
     /// <returns>The created order.</returns>
     [HttpPost]
     [ProducesResponseType(typeof(IOrder), StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> CreateOrder([FromBody] CreateOrder? request, CancellationToken cancellationToken)
+    public async Task<IActionResult> CreateOrder(CancellationToken cancellationToken, [FromBody] CreateOrder? request)
     {
-        _logger.LogInformation("POST api/orders called");
+        _logger.LogInformation("POST api/order called");
         IOrder order = await _orderManager.CreateOrderAsync(request, cancellationToken);
         _logger.LogInformation("Created order {OrderNumber}", order.OrderNumber);
         return CreatedAtAction(nameof(CreateOrder), new { id = order.Id }, order);
+    }
+
+    /// <summary>
+    /// Updates the order
+    /// </summary>
+    /// <param name="cancellationToken"></param>
+    /// <param name="request"></param>
+    /// <returns></returns>
+    /// <exception cref="BadHttpRequestException"></exception>
+    [HttpPut]
+    [ProducesResponseType( StatusCodes.Status201Created)]
+    [ProducesResponseType( StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> UpdateOrder(CancellationToken cancellationToken, [FromBody] UpdateOrder request)
+    {
+        _logger.LogInformation("PUT api/order called");
+        if (request == null)
+        {
+            return new BadRequestResult();
+        }
+
+        if (request.Id.IsEmpty())
+        {
+            throw new BadHttpRequestException("The id of the order is required.");
+        }
+
+        if (request.OrderDate.IsEmpty())
+        {
+            throw new BadHttpRequestException("The order date is required");
+        }
+
+        if (request.OrderNumber.IsEmpty())
+        {
+            throw new BadHttpRequestException("Invalid order number");
+        }
+
+        await _orderManager.UpdateOrderAsync(request, cancellationToken);
+        _logger.LogInformation("{OrderNumber} was updated",request.OrderNumber);
+        return Ok();
     }
 }

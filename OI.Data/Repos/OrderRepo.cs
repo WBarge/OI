@@ -1,18 +1,32 @@
+using CrossCutting.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using OI.Data.Helpers;
 using OI.Data.Model;
 using OI.Data.Translators;
-using OI.Data.Translators.Internal_Models;
 using OI.Glue.Models;
 using OI.Glue.Repos;
-using Customer = OI.Data.Model.Customer;
-using Order = OI.Data.Model.Order;
-using OrderItem = OI.Data.Model.OrderItem;
 
 namespace OI.Data.Repos;
 
 internal class OrderRepo(OiDbContext dbContext) : BaseEfRepo<Order>(dbContext), IOrderRepo
 {
+    /// <summary>
+    /// gets an order from the persistence store
+    /// </summary>
+    /// <param name="orderId"></param>
+    /// <param name="token"></param>
+    /// <returns></returns>
+    public async Task<IOrder?> GetOrderAsync(Guid orderId, CancellationToken token = default)
+    {
+        Order? result = await base.FindByIdAsync(orderId, token);
+        return result.Translate();
+    }
+
+    /// <summary>
+    /// gets the next available order number
+    /// </summary>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     public async Task<int> GetNextOrderNumberAsync(CancellationToken cancellationToken = default)
     {
         OrderCounter counter = await DbContext.OrderCounters.FirstAsync(cancellationToken);
@@ -69,11 +83,18 @@ internal class OrderRepo(OiDbContext dbContext) : BaseEfRepo<Order>(dbContext), 
             await DbContext.Entry(order).Reference(o => o.Customer).LoadAsync(cancellationToken);
         }
 
-        return order.Translate();
+        return order.Translate()!;
     }
 
-    public async Task<IEnumerable<IOrderSearch>> FindPagedOrderRecordsAsync(        Dictionary<string, IFilterMetaData[]>? filterCriteria = null,
-        int pageNumber = 1, int pageSize = 10, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// gets a limited order view based on the criteria passed in
+    /// </summary>
+    /// <param name="filterCriteria"></param>
+    /// <param name="pageNumber"></param>
+    /// <param name="pageSize"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    public async Task<IEnumerable<IOrderSearch>> FindPagedOrderRecordsAsync(Dictionary<string, IFilterMetaData[]>? filterCriteria = null, int pageNumber = 1, int pageSize = 10, CancellationToken cancellationToken = default)
     {
         pageNumber = Math.Max(pageNumber, 1);
         pageSize = Math.Max(pageSize, 1);
@@ -94,13 +115,68 @@ internal class OrderRepo(OiDbContext dbContext) : BaseEfRepo<Order>(dbContext), 
         return orders;
 
     }
-
+    /// <summary>
+    /// gets the number of records in the system that meet the criteria passed in
+    /// </summary>
+    /// <param name="filterCriteria"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     public async Task<long> GetOrdersCountAsync(Dictionary<string, IFilterMetaData[]>? filterCriteria = null,CancellationToken cancellationToken = default)
     {
         IQueryable<Order> filtered = await DbContext.Orders.BuildFilterQueryAsync(filterCriteria!, cancellationToken);
         return await filtered.LongCountAsync(cancellationToken);
     }
 
+    /// <summary>
+    /// updates the order
+    /// </summary>
+    /// <param name="request"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    /// <exception cref="RequiredObjectException"></exception>
+    public async Task UpdateOrder(IUpdateOrder request, CancellationToken cancellationToken = default)
+    {
+        Order? order = await base.FindByIdAsync(request.Id, cancellationToken);
+        if (order == null)
+        {
+            throw new RequiredObjectException("invalid order id");
+        }
+
+        order.OrderDate = request.OrderDate ?? DateTime.UtcNow;
+        order.CustomerId = request.CustomerId;
+        order.BillingAddress1 = request.BillingAddress1;
+        order.BillingAddress2 = request.BillingAddress2;
+        order.BillingCity = request.BillingCity;
+        order.BillingStateCode = request.BillingStateCode;
+        order.BillingZipCode = request.BillingZipCode;
+        order.ShippingAddress1 = request.ShippingAddress1;
+        order.ShippingAddress2 = request.ShippingAddress2;
+        order.ShippingCity = request.ShippingCity;
+        order.ShippingStateCode = request.ShippingStateCode;
+        order.ShippingZipCode = request.ShippingZipCode;
+        order.SubTotal = request.SubTotal ?? 0m;
+        order.Shipping = request.Shipping ?? 0m;
+        order.Tax = request.Tax ?? 0m;
+        order.Total = request.Total ?? 0m;
+        order.Modified = DateTime.UtcNow;
+
+        if (request.OrderItems != null && request.OrderItems.Any())
+        {
+            order.OrderItems = [];
+            foreach (ICreateOrderItem createOrderItemRequest in request.OrderItems)
+            {
+                OrderItem newItem = CreateOrderItem(createOrderItemRequest, order.Id);
+                order.OrderItems.Add(newItem);
+            }
+        }
+    }
+
+    /// <summary>
+    /// creates an order
+    /// </summary>
+    /// <param name="request"></param>
+    /// <param name="orderId"></param>
+    /// <returns></returns>
     private OrderItem CreateOrderItem(ICreateOrderItem request, Guid orderId)
     {
         return new OrderItem()

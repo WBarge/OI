@@ -37,7 +37,7 @@ public class OrderTranslatorTests
             Created = DateTime.UtcNow
         };
 
-        IOrder result = order.Translate();
+        IOrder result = order.Translate()!;
 
         result.Should().NotBeNull();
     }
@@ -74,7 +74,7 @@ public class OrderTranslatorTests
             Created = DateTime.UtcNow
         };
 
-        IOrder result = order.Translate();
+        IOrder result = order.Translate()!;
 
         result.Id.Should().Be(orderId);
         result.OrderNumber.Should().Be(1234);
@@ -111,7 +111,7 @@ public class OrderTranslatorTests
             Created = DateTime.UtcNow
         };
 
-        IOrder result = order.Translate();
+        IOrder result = order.Translate()!;
 
         result.BillingAddress1.Should().Be("123 Main St");
         result.BillingAddress2.Should().Be("Apt 1");
@@ -149,7 +149,7 @@ public class OrderTranslatorTests
             Created = DateTime.UtcNow
         };
 
-        IOrder result = order.Translate();
+        IOrder result = order.Translate()!;
 
         result.ShippingAddress1.Should().Be("456 Elm St");
         result.ShippingAddress2.Should().Be("Suite 2");
@@ -187,7 +187,7 @@ public class OrderTranslatorTests
             Created = DateTime.UtcNow
         };
 
-        IOrder result = order.Translate();
+        IOrder result = order.Translate()!;
 
         result.SubTotal.Should().Be(49.99m);
         result.Shipping.Should().Be(5.99m);
@@ -224,7 +224,7 @@ public class OrderTranslatorTests
             Created = DateTime.UtcNow
         };
 
-        IOrder result = order.Translate();
+        IOrder result = order.Translate()!;
 
         result.IsPending.Should().BeTrue();
     }
@@ -258,7 +258,7 @@ public class OrderTranslatorTests
             Created = DateTime.UtcNow
         };
 
-        IOrder result = order.Translate();
+        IOrder result = order.Translate()!;
 
         result.IsPending.Should().BeFalse();
     }
@@ -293,7 +293,7 @@ public class OrderTranslatorTests
             Created = DateTime.UtcNow
         };
 
-        IOrder result = order.Translate();
+        IOrder result = order.Translate()!;
 
         result.CompletedDate.Should().Be(completedDate);
     }
@@ -327,7 +327,7 @@ public class OrderTranslatorTests
             Created = DateTime.UtcNow
         };
 
-        IOrder result = order.Translate();
+        IOrder result = order.Translate()!;
 
         result.CompletedDate.Should().Be(DateTime.MinValue, "an uncompleted order uses DateTime.MinValue as its sentinel");
     }
@@ -361,7 +361,7 @@ public class OrderTranslatorTests
             Created = DateTime.UtcNow
         };
 
-        IOrder result = order.Translate();
+        IOrder result = order.Translate()!;
 
         result.BillingAddress1.Should().Be(string.Empty);
         result.BillingAddress2.Should().Be(string.Empty);
@@ -399,7 +399,7 @@ public class OrderTranslatorTests
             Created = DateTime.UtcNow
         };
 
-        IOrder result = order.Translate();
+        IOrder result = order.Translate()!;
 
         result.ShippingAddress1.Should().Be(string.Empty);
         result.ShippingAddress2.Should().Be(string.Empty);
@@ -437,7 +437,7 @@ public class OrderTranslatorTests
             Created = DateTime.UtcNow
         };
 
-        IOrder result = order.Translate();
+        IOrder result = order.Translate()!;
 
         result.BillingAddress2.Should().BeEmpty();
         result.ShippingAddress2.Should().BeEmpty();
@@ -472,8 +472,8 @@ public class OrderTranslatorTests
             Created = DateTime.UtcNow
         };
 
-        IOrder first = order.Translate();
-        IOrder second = order.Translate();
+        IOrder first = order.Translate()!;
+        IOrder second = order.Translate()!;
 
         first.Should().NotBeSameAs(second, "each translation produces its own model");
     }
@@ -513,7 +513,7 @@ public class OrderTranslatorTests
             Created = DateTime.UtcNow
         };
 
-        IOrder result = order.Translate();
+        IOrder result = order.Translate()!;
 
         List<IOrderItem> items = result.OrderItems.ToList();
         items.Should().HaveCount(2);
@@ -561,7 +561,7 @@ public class OrderTranslatorTests
             Created = DateTime.UtcNow
         };
 
-        IOrder result = order.Translate();
+        IOrder result = order.Translate()!;
 
         result.OrderItems.Should().NotBeNull().And.BeEmpty("a missing items collection should not surface as null");
     }
@@ -595,7 +595,7 @@ public class OrderTranslatorTests
             Created = DateTime.UtcNow
         };
 
-        IOrder result = order.Translate();
+        IOrder result = order.Translate()!;
 
         result.OrderItems.Should().NotBeNull().And.BeEmpty();
     }
@@ -631,7 +631,7 @@ public class OrderTranslatorTests
             Created = DateTime.UtcNow
         };
 
-        IOrder result = order.Translate();
+        IOrder result = order.Translate()!;
 
         result.Customer.Should().NotBeNull();
         result.Customer!.Id.Should().Be(customerId);
@@ -670,7 +670,7 @@ public class OrderTranslatorTests
             Created = DateTime.UtcNow
         };
 
-        IOrder result = order.Translate();
+        IOrder result = order.Translate()!;
 
         result.Customer.Should().BeNull("Translate does not load or invent a customer");
     }

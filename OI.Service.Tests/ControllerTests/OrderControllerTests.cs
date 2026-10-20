@@ -41,7 +41,7 @@ public class OrderControllerTests
         orderManagerMock.Setup(m => m.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(orderMock.Object);
 
-        IActionResult result = await sut.CreateOrder(request, TestContext.CurrentContext.CancellationToken);
+        IActionResult result = await sut.CreateOrder(TestContext.CurrentContext.CancellationToken, request);
 
         CreatedAtActionResult createdResult = result.Should().BeOfType<CreatedAtActionResult>().Subject;
         createdResult.StatusCode.Should().Be(StatusCodes.Status201Created);
@@ -60,7 +60,7 @@ public class OrderControllerTests
         orderManagerMock.Setup(m => m.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(orderMock.Object);
 
-        await sut.CreateOrder(request, TestContext.CurrentContext.CancellationToken);
+        await sut.CreateOrder(TestContext.CurrentContext.CancellationToken, request);
 
         orderManagerMock.Verify(m => m.CreateOrderAsync(request, It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -76,7 +76,7 @@ public class OrderControllerTests
         orderManagerMock.Setup(m => m.CreateOrderAsync(It.IsAny<ICreateOrder?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(orderMock.Object);
 
-        IActionResult result = await sut.CreateOrder(null, TestContext.CurrentContext.CancellationToken);
+        IActionResult result = await sut.CreateOrder(TestContext.CurrentContext.CancellationToken, null);
 
         CreatedAtActionResult createdResult = result.Should().BeOfType<CreatedAtActionResult>().Subject;
         createdResult.StatusCode.Should().Be(StatusCodes.Status201Created);
@@ -95,7 +95,7 @@ public class OrderControllerTests
         orderManagerMock.Setup(m => m.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(orderMock.Object);
 
-        IActionResult result = await sut.CreateOrder(request, TestContext.CurrentContext.CancellationToken);
+        IActionResult result = await sut.CreateOrder(TestContext.CurrentContext.CancellationToken, request);
 
         CreatedAtActionResult createdResult = result.Should().BeOfType<CreatedAtActionResult>().Subject;
         createdResult.ActionName.Should().Be(nameof(OrderController.CreateOrder));
@@ -116,7 +116,7 @@ public class OrderControllerTests
         orderManagerMock.Setup(m => m.CreateOrderAsync(It.IsAny<ICreateOrder?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(orderMock.Object);
 
-        await sut.CreateOrder(null, TestContext.CurrentContext.CancellationToken);
+        await sut.CreateOrder(TestContext.CurrentContext.CancellationToken, null);
 
         orderManagerMock.Verify(
             m => m.CreateOrderAsync(It.Is<ICreateOrder?>(r => r == null), It.IsAny<CancellationToken>()), Times.Once,
@@ -136,7 +136,7 @@ public class OrderControllerTests
         orderManagerMock.Setup(m => m.CreateOrderAsync(It.IsAny<ICreateOrder>(), cts.Token))
             .ReturnsAsync(orderMock.Object);
 
-        await sut.CreateOrder(request, cts.Token);
+        await sut.CreateOrder(cts.Token, request);
 
         orderManagerMock.Verify(m => m.CreateOrderAsync(request, cts.Token), Times.Once);
     }
@@ -150,7 +150,7 @@ public class OrderControllerTests
         orderManagerMock.Setup(m => m.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("manager failed"));
 
-        Func<Task> act = async () => await sut.CreateOrder(request, TestContext.CurrentContext.CancellationToken);
+        Func<Task> act = async () => await sut.CreateOrder(TestContext.CurrentContext.CancellationToken, request);
 
         await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("manager failed");
     }

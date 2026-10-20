@@ -5,8 +5,12 @@ namespace OI.Data.Translators;
 
 internal static class OrderTranslator
 {
-    public static IOrder Translate(this OI.Data.Model.Order order)
+    public static IOrder? Translate(this Order? order)
     {
+        if (order == null)
+        {
+            return null;
+        }
         return new OI.Data.Translators.Internal_Models.Order
         {
             Id = order.Id,

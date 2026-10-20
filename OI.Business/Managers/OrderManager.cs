@@ -1,6 +1,7 @@
 using CrossCutting.Exceptions;
 using CrossCutting.Extensions;
 using Microsoft.Extensions.Logging;
+using Microsoft.VisualBasic;
 using OI.Glue.Managers;
 using OI.Glue.Models;
 using OI.Glue.Repos;
@@ -15,6 +16,7 @@ internal class OrderManager(IOrderRepo orderRepo, ICustomerRepo customerRepo, IL
     private readonly IOrderRepo _orderRepo = orderRepo ?? throw new ArgumentNullException(nameof(orderRepo));
     private readonly ICustomerRepo _customerRepo = customerRepo ?? throw new ArgumentNullException(nameof(customerRepo));
     private readonly ILogger<OrderManager> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
 
     internal const int DEFAULT_PAGE_SIZE = 100000;
 
@@ -78,8 +80,15 @@ internal class OrderManager(IOrderRepo orderRepo, ICustomerRepo customerRepo, IL
         return order;
     }
 
-    public async Task<PagedResult<IOrderSearch>> GetOrdersPagedAsync(Dictionary<string, IFilterMetaData[]> filters, int? page, int? pageSize,
-        CancellationToken cancellationToken)
+    /// <summary>
+    /// get a limited view of orders in the system based on the criteria passed in
+    /// </summary>
+    /// <param name="filters"></param>
+    /// <param name="page"></param>
+    /// <param name="pageSize"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    public async Task<PagedResult<IOrderSearch>> GetOrdersPagedAsync(Dictionary<string, IFilterMetaData[]> filters, int? page, int? pageSize, CancellationToken cancellationToken)
     {
         int pageNumber = page is null or < 1 ? 1 : page.Value;
         int size = pageSize is null or < 1 ? DEFAULT_PAGE_SIZE : pageSize.Value;
@@ -91,6 +100,46 @@ internal class OrderManager(IOrderRepo orderRepo, ICustomerRepo customerRepo, IL
         long totalRecordSize = await _orderRepo.GetOrdersCountAsync(filters, cancellationToken);
         return new PagedResult<IOrderSearch>(data, totalRecordSize);
 
+    }
+
+    /// <summary>
+    /// Updates the order in the system
+    /// </summary>
+    /// <param name="request"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    /// <exception cref="RequiredObjectException"></exception>
+    public async Task UpdateOrderAsync(IUpdateOrder request, CancellationToken cancellationToken)
+    {
+        if (request.IsEmpty() || request.Id.IsEmpty())
+        {
+            throw new RequiredObjectException();
+        }
+
+        IOrder? preexistingOrder = await _orderRepo.GetOrderAsync(request.Id, cancellationToken);
+        if (preexistingOrder.IsEmpty())
+        {
+            throw new RequiredObjectException("The id is not a valid order id");
+        }
+
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+        if (request.CustomerId.IsEmpty() && preexistingOrder.CustomerId.IsNotEmpty())
+        {
+            request.CustomerId = preexistingOrder.CustomerId;
+        }
+
+        if (request.OrderDate.IsEmpty() && preexistingOrder.OrderDate.IsNotEmpty())
+        {
+            request.OrderDate = preexistingOrder.OrderDate;
+        }
+
+        if (request.OrderNumber.IsEmpty() && preexistingOrder.OrderNumber.IsNotEmpty())
+        {
+            request.OrderNumber = preexistingOrder.OrderNumber;
+        }
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
+
+        await _orderRepo.UpdateOrder(request, cancellationToken);
     }
 
     /// <summary>
