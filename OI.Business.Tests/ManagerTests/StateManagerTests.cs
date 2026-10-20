@@ -69,6 +69,47 @@ public class StateManagerTests
         result.Should().BeEmpty();
     }
 
+    [Test, Description("ListStatesAsync should return the repo's states unchanged and in the same order")]
+    public async Task ListStatesAsync_ReturnsStatesInRepoOrder()
+    {
+        Mock<IStateRepo> stateRepoMock = new();
+        StateManager sut = new(stateRepoMock.Object, NullLogger<StateManager>.Instance);
+        List<IState> states = [CreateState("Texas", "TX"), CreateState("Arizona", "AZ"), CreateState("California", "CA")];
+        stateRepoMock.Setup(r => r.ListStatesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(states);
+
+        IEnumerable<IState> result = await sut.ListStatesAsync(TestContext.CurrentContext.CancellationToken);
+
+        result.Should().Equal(states);
+    }
+
+    [Test, Description("ListStatesAsync should forward the cancellation token to the repo")]
+    public async Task ListStatesAsync_ForwardsCancellationToken()
+    {
+        using CancellationTokenSource cts = new();
+        Mock<IStateRepo> stateRepoMock = new();
+        StateManager sut = new(stateRepoMock.Object, NullLogger<StateManager>.Instance);
+        stateRepoMock.Setup(r => r.ListStatesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        await sut.ListStatesAsync(cts.Token);
+
+        stateRepoMock.Verify(r => r.ListStatesAsync(cts.Token), Times.Once);
+    }
+
+    [Test, Description("ListStatesAsync should not swallow exceptions thrown by the repo")]
+    public async Task ListStatesAsync_PropagatesRepoException()
+    {
+        Mock<IStateRepo> stateRepoMock = new();
+        StateManager sut = new(stateRepoMock.Object, NullLogger<StateManager>.Instance);
+        stateRepoMock.Setup(r => r.ListStatesAsync(It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("boom"));
+
+        Func<Task> act = () => sut.ListStatesAsync(TestContext.CurrentContext.CancellationToken);
+
+        await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("boom");
+    }
+
     private static IState CreateState(string name, string code)
     {
         Mock<IState> mock = new();

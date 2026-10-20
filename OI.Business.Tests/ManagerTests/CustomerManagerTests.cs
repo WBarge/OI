@@ -516,6 +516,75 @@ public class CustomerManagerTests
         await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("boom");
     }
 
+    [Test, Description("GetCustomersPagedAsync should not swallow an exception thrown by the count")]
+    public async Task GetCustomersPagedAsync_PropagatesCountException()
+    {
+        Mock<ICustomerRepo> customerRepoMock = new();
+        CustomerManager sut = new(customerRepoMock.Object, NullLogger<CustomerManager>.Instance);
+        customerRepoMock.Setup(r => r.FindPagedCustomerRecordsAsync(It.IsAny<Dictionary<string, IFilterMetaData[]>?>(),
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+        customerRepoMock.Setup(r => r.GetCustomerCountAsync(It.IsAny<Dictionary<string, IFilterMetaData[]>?>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("count failed"));
+
+        Func<Task> act = () => sut.GetCustomersPagedAsync(null, 1, 10, TestContext.CurrentContext.CancellationToken);
+
+        await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("count failed");
+    }
+
+    [Test, Description("GetCustomersPagedAsync should not count when the search failed")]
+    public async Task GetCustomersPagedAsync_DoesNotCountWhenFindFails()
+    {
+        Mock<ICustomerRepo> customerRepoMock = new();
+        CustomerManager sut = new(customerRepoMock.Object, NullLogger<CustomerManager>.Instance);
+        customerRepoMock.Setup(r => r.FindPagedCustomerRecordsAsync(It.IsAny<Dictionary<string, IFilterMetaData[]>?>(),
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("find failed"));
+
+        Func<Task> act = () => sut.GetCustomersPagedAsync(null, 1, 10, TestContext.CurrentContext.CancellationToken);
+
+        await act.Should().ThrowAsync<InvalidOperationException>();
+        customerRepoMock.Verify(r => r.GetCustomerCountAsync(It.IsAny<Dictionary<string, IFilterMetaData[]>?>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test, Description("GetCustomersPagedAsync should run the search and the count one after the other because they share one DbContext")]
+    public async Task GetCustomersPagedAsync_RunsSearchAndCountOneAfterTheOther()
+    {
+        TaskCompletionSource<IEnumerable<ICustomerSearch>> findGate = new();
+        Mock<ICustomerRepo> customerRepoMock = new();
+        CustomerManager sut = new(customerRepoMock.Object, NullLogger<CustomerManager>.Instance);
+        customerRepoMock.Setup(r => r.FindPagedCustomerRecordsAsync(It.IsAny<Dictionary<string, IFilterMetaData[]>?>(),
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .Returns(findGate.Task);
+        customerRepoMock.Setup(r => r.GetCustomerCountAsync(It.IsAny<Dictionary<string, IFilterMetaData[]>?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1L);
+
+        Task<PagedResult<ICustomerSearch>> pending = sut.GetCustomersPagedAsync(null, 1, 10, CancellationToken.None);
+
+        // The search has not finished, so a sequential implementation cannot have started the count yet.
+        customerRepoMock.Verify(r => r.GetCustomerCountAsync(It.IsAny<Dictionary<string, IFilterMetaData[]>?>(), It.IsAny<CancellationToken>()), Times.Never);
+
+        findGate.SetResult([]);
+        PagedResult<ICustomerSearch> result = await pending;
+
+        customerRepoMock.Verify(r => r.GetCustomerCountAsync(It.IsAny<Dictionary<string, IFilterMetaData[]>?>(), It.IsAny<CancellationToken>()), Times.Once);
+        result.TotalRecordSize.Should().Be(1L);
+    }
+
+    [TestCaseSource(nameof(LengthLimits))]
+    [Description("CreateCustomerAsync should measure the length after trimming, so a maximum-length value padded with spaces is accepted")]
+    public async Task CreateCustomerAsync_Accepts_MaximumLengthValuePaddedWithSpaces(string propertyName, int maxLength)
+    {
+        StubCreateCustomer request = ValidRequest();
+        SetProperty(request, propertyName, "  " + new string('x', maxLength) + "  ");
+        Mock<ICustomerRepo> customerRepoMock = SetupRepoToSucceed();
+        CustomerManager sut = new(customerRepoMock.Object, NullLogger<CustomerManager>.Instance);
+
+        await sut.CreateCustomerAsync(request, TestContext.CurrentContext.CancellationToken);
+
+        customerRepoMock.Verify(r => r.CreateCustomerAsync(request, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
     private static StubCreateCustomer ValidRequest() => new() { LastName = LAST_NAME, PhoneNumber = PHONE_NUMBER };
 
     private static Mock<ICustomerRepo> SetupRepoToSucceed()

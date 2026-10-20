@@ -34,11 +34,11 @@ internal static class FilteringEngine
     /// <param name="cancellationToken">The cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <returns>Task&lt;IQueryable&lt;T&gt;&gt;.</returns>
     public static Task<IQueryable<T>> BuildFilterQueryAsync<T>(this DbSet<T> dbSet,
-        Dictionary<string, IFilterMetaData[]> filterCriteria = null!, 
+        Dictionary<string, IFilterMetaData[]> filterCriteria = null!,
         CancellationToken cancellationToken = default) where T : class
     {
         IQueryable<T> finalQuery = dbSet.AsQueryable();
-        Task task = Task.Run( () =>
+        Task task = Task.Run(() =>
         {
             IQueryable<T> query = dbSet.AsQueryable();
 
@@ -63,7 +63,7 @@ internal static class FilteringEngine
         Task.WaitAll(task);
         return Task.FromResult(finalQuery);
     }
-   
+
     /// <summary>
     /// Builds the lambda expression used in a where clause on a collection like a List&lt;T&gt;>.
     /// </summary>
@@ -88,11 +88,12 @@ internal static class FilteringEngine
         ParameterExpression pe = Expression.Parameter(dataType, dataType.Name[..1]);
         Expression e1 = BuildExpressions(pe, filters);
 
-        Type func = typeof(Func<T,bool>);
+        Type func = typeof(Func<T, bool>);
         if (e1.IsEmpty())
         {
             e1 = Expression.Constant(true);
         }
+
         LambdaExpression predicate = Expression.Lambda(func, e1, pe);
         return predicate;
     }
@@ -106,22 +107,28 @@ internal static class FilteringEngine
     private static Expression BuildExpressions(ParameterExpression pe, Dictionary<string, IFilterMetaData[]> filters)
     {
         Expression returnValue = null!;
-        Expression propertyExpression = null!;
         foreach (string propertyName in filters.Keys)
         {
             IFilterMetaData[] propertyFilters = filters[propertyName];
-            for (int filterSub =0;filterSub<propertyFilters.Length;filterSub++ )
+            Expression propertyExpression = null!; 
+            foreach (IFilterMetaData propertyFilter in propertyFilters)
             {
-                IFilterMetaData propertyFilter = propertyFilters[filterSub];
-                if ((propertyFilter.LogicalOperator ?? string.Empty).IsEmpty() || (propertyFilter.MatchMode ?? string.Empty).IsEmpty() ||
+                if ((propertyFilter.LogicalOperator ?? string.Empty).IsEmpty() ||
+                    (propertyFilter.MatchMode ?? string.Empty).IsEmpty() ||
                     (propertyFilter.SearchValue ?? string.Empty).IsEmpty())
                 {
                     continue;
                 }
-                Expression nodeExpression = BuildPropertyExpression(pe, propertyName, propertyFilter.MatchMode!, propertyFilter.SearchValue!);
-                if (filterSub > 0 && propertyFilters.Length > 1)
+
+                Expression nodeExpression = BuildPropertyExpression(pe, propertyName, propertyFilter.MatchMode!,
+                    propertyFilter.SearchValue!);
+
+                if (propertyExpression == null)
                 {
-                    // ReSharper disable once ConvertSwitchStatementToSwitchExpression
+                    propertyExpression = nodeExpression;
+                }
+                else
+                {
                     switch (propertyFilter.LogicalOperator)
                     {
                         case AND_LOGICAL_OPERATOR:
@@ -132,20 +139,14 @@ internal static class FilteringEngine
                             break;
                     }
                 }
-                else
-                {
-                    propertyExpression = nodeExpression;
-                }
             }
 
-            if (returnValue != null)
+            if (propertyExpression == null)
             {
-                returnValue = Expression.And(propertyExpression, returnValue);
+                continue;
             }
-            else
-            {
-                returnValue = propertyExpression;
-            }
+
+            returnValue = returnValue != null ? Expression.And(propertyExpression, returnValue) : propertyExpression;
         }
 
         return returnValue;
@@ -159,7 +160,8 @@ internal static class FilteringEngine
     /// <param name="comparisonOperation">The comparison operation.</param>
     /// <param name="compareValue">The compare value.</param>
     /// <returns>Expression.</returns>
-    private static Expression BuildPropertyExpression(Expression pe, string incomingProperty, string comparisonOperation, object compareValue)
+    private static Expression BuildPropertyExpression(Expression pe, string incomingProperty,
+        string comparisonOperation, object compareValue)
     {
 #pragma warning disable IDE0059
         Expression returnValue = null!;
@@ -177,7 +179,8 @@ internal static class FilteringEngine
     /// <param name="comparisonOperation">The comparison operation.</param>
     /// <param name="compareValue">The compare value.</param>
     /// <returns>Expression.</returns>
-    private static Expression BuildValueExpression(Expression workingExpression, string propertyName, string comparisonOperation, object compareValue)
+    private static Expression BuildValueExpression(Expression workingExpression, string propertyName,
+        string comparisonOperation, object compareValue)
     {
         workingExpression = Expression.Property(workingExpression, propertyName);
         Expression valueExpression = BuildValueExpression(compareValue, ref workingExpression);
@@ -196,19 +199,27 @@ internal static class FilteringEngine
         Expression valueExpression;
         if (workingExpression.Type == typeof(decimal))
         {
-            valueExpression = Expression.Constant(decimal.Parse(compareValue.ToString() ?? throw new InvalidOperationException())); // this will be the value
+            valueExpression =
+                Expression.Constant(decimal.Parse(compareValue.ToString() ??
+                                                  throw new InvalidOperationException())); // this will be the value
         }
         else if (workingExpression.Type == typeof(DateTime))
         {
-            valueExpression = Expression.Constant(DateTime.Parse(compareValue.ToString() ?? throw new InvalidOperationException())); // this will be the value
+            valueExpression =
+                Expression.Constant(DateTime.Parse(compareValue.ToString() ??
+                                                   throw new InvalidOperationException())); // this will be the value
         }
         else if (workingExpression.Type == typeof(int))
         {
-            valueExpression = Expression.Constant(int.Parse(compareValue.ToString() ?? throw new InvalidOperationException())); // this will be the value
+            valueExpression =
+                Expression.Constant(int.Parse(compareValue.ToString() ??
+                                              throw new InvalidOperationException())); // this will be the value
         }
         else if (workingExpression.Type == typeof(string))
         {
-            valueExpression = Expression.Constant(compareValue.ToString(), typeof(string));//Expression.Constant(0); // this will be the value
+            valueExpression =
+                Expression.Constant(compareValue.ToString(),
+                    typeof(string)); //Expression.Constant(0); // this will be the value
         }
         else if (workingExpression.Type == typeof(bool))
         {
@@ -236,7 +247,8 @@ internal static class FilteringEngine
     /// <returns>Expression.</returns>
     /// <exception cref="Exception">Malformed comparison</exception>
     /// <exception cref="ArgumentOutOfRangeException">comparisonOperation - null</exception>
-    private static Expression BuildComparisonExpression(string comparisonOperation, Expression workingExpression, Expression valueExpression)
+    private static Expression BuildComparisonExpression(string comparisonOperation, Expression workingExpression,
+        Expression valueExpression)
     {
         Expression returnValue;
         Expression left;
@@ -265,6 +277,7 @@ internal static class FilteringEngine
                 {
                     returnValue = Expression.Constant(true);
                 }
+
                 break;
             case CONTAINS_COMPARISON:
                 if (valueExpression.Type == typeof(string))
@@ -280,6 +293,7 @@ internal static class FilteringEngine
                 {
                     returnValue = Expression.Constant(true);
                 }
+
                 break;
             case NOT_CONTAINS_COMPARISON:
                 if (valueExpression.Type == typeof(string))
@@ -295,6 +309,7 @@ internal static class FilteringEngine
                 {
                     returnValue = Expression.Constant(true);
                 }
+
                 break;
             case ENDS_WITH_COMPARISON:
                 if (valueExpression.Type == typeof(string))
@@ -310,6 +325,7 @@ internal static class FilteringEngine
                 {
                     returnValue = Expression.Constant(true);
                 }
+
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(comparisonOperation), comparisonOperation, null);

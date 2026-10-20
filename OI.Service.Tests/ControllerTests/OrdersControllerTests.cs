@@ -8,7 +8,6 @@ using OI.Glue.Managers;
 using OI.Glue.Models;
 using OI.Service.Controllers;
 using OI.Service.Models.Requests;
-#pragma warning disable CS8604 // Possible null reference argument.
 
 namespace OI.Service.Tests.ControllerTests;
 
@@ -90,7 +89,7 @@ public class OrdersControllerTests
 
         result.Should().BeOfType<OkObjectResult>();
         orderManagerMock.Verify(m => m.GetOrdersPagedAsync(
-            It.Is<Dictionary<string, IFilterMetaData[]>?>(f => f == null),
+            It.Is<Dictionary<string, IFilterMetaData[]>?>(f => f == null)!,
             null,
             null,
             It.IsAny<CancellationToken>()), Times.Once);
@@ -105,7 +104,7 @@ public class OrdersControllerTests
         await sut.GetOrders(CancellationToken.None, new ListRequest { Page = 2, PageSize = 10 });
 
         orderManagerMock.Verify(m => m.GetOrdersPagedAsync(
-            It.Is<Dictionary<string, IFilterMetaData[]>?>(f => f == null),
+            It.Is<Dictionary<string, IFilterMetaData[]>?>(f => f == null)!,
             2,
             10,
             It.IsAny<CancellationToken>()), Times.Once);
@@ -138,7 +137,7 @@ public class OrdersControllerTests
                 && f["CustomerName"].Length == 1
                 && ReferenceEquals(f["CustomerName"][0], customerNameFilter)
                 && f["PhoneNumber"].Length == 1
-                && ReferenceEquals(f["PhoneNumber"][0], phoneFilter)),
+                && ReferenceEquals(f["PhoneNumber"][0], phoneFilter))!,
             3,
             25,
             It.IsAny<CancellationToken>()), Times.Once);

@@ -130,6 +130,63 @@ public class CustomersControllerTests
         await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("boom");
     }
 
+    [Test, Description("GetCustomers should pass no filters when the request has a page but no filters")]
+    public async Task GetCustomers_PassesNullFilters_WhenRequestHasNoFilters()
+    {
+        Mock<ICustomerManager> customerManagerMock = CreateManagerMock();
+        CustomersController sut = new(customerManagerMock.Object, NullLogger<CustomersController>.Instance);
+
+        await sut.GetCustomers(CancellationToken.None, new ListRequest { Page = 2, PageSize = 10 });
+
+        customerManagerMock.Verify(m => m.GetCustomersPagedAsync(
+            It.Is<Dictionary<string, IFilterMetaData[]>?>(f => f == null),
+            2,
+            10,
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test, Description("GetCustomers should report the total of all matching customers, not just the size of the page returned")]
+    public async Task GetCustomers_ReportsTotalRecordSizeIndependentOfPageContents()
+    {
+        IEnumerable<ICustomerSearch> onePage = [CreateCustomer("Jane", "Smith", "512-555-0100")];
+        Mock<ICustomerManager> customerManagerMock = CreateManagerMock(new PagedResult<ICustomerSearch>(onePage, 500L));
+        CustomersController sut = new(customerManagerMock.Object, NullLogger<CustomersController>.Instance);
+
+        IActionResult result = await sut.GetCustomers(CancellationToken.None, new ListRequest { Page = 1, PageSize = 1 });
+
+        OkObjectResult okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        GetValue<IEnumerable<ICustomerSearch>>(okResult.Value, "data").Should().HaveCount(1);
+        GetValue<long>(okResult.Value, "totalRecordSize").Should().Be(500L);
+    }
+
+    [Test, Description("CustomersController should be decorated with [ApiController]")]
+    public void CustomersController_IsDecoratedWithApiController()
+    {
+        typeof(CustomersController).GetCustomAttribute<ApiControllerAttribute>().Should().NotBeNull();
+    }
+
+    [Test, Description("CustomersController should be routed at api/[controller], which resolves to api/Customers")]
+    public void CustomersController_HasExpectedRouteTemplate()
+    {
+        RouteAttribute? attribute = typeof(CustomersController).GetCustomAttribute<RouteAttribute>();
+
+        // The [controller] token is the class name without "Controller", so the class name is part of the URL.
+        nameof(CustomersController).Should().Be("CustomersController");
+        attribute.Should().NotBeNull();
+        attribute!.Template.Should().Be("api/[controller]");
+    }
+
+    [Test, Description("GetCustomers should be exposed as an HTTP POST endpoint on the controller route")]
+    public void GetCustomers_IsDecoratedWithHttpPost()
+    {
+        MethodInfo? method = typeof(CustomersController).GetMethod(nameof(CustomersController.GetCustomers));
+
+        method.Should().NotBeNull();
+        HttpPostAttribute? attribute = method!.GetCustomAttribute<HttpPostAttribute>();
+        attribute.Should().NotBeNull("the filter body can only be sent with a POST");
+        attribute!.Template.Should().BeNull("the endpoint lives on the controller route itself");
+    }
+
     private static Mock<ICustomerManager> CreateManagerMock(PagedResult<ICustomerSearch>? result = null)
     {
         Mock<ICustomerManager> customerManagerMock = new();

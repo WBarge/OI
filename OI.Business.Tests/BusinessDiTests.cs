@@ -21,4 +21,16 @@ public class BusinessDiTests
             .Which.Should().Match<ServiceDescriptor>(d =>
                 d.ImplementationType == implementationType && d.Lifetime == ServiceLifetime.Scoped);
     }
+
+    [Test, Description("ConfigureDi should register the three managers and nothing else")]
+    public void ConfigureDi_RegistersOnlyTheThreeManagers()
+    {
+        ServiceCollection services = new();
+
+        BusinessDi.ConfigureDi(services);
+
+        List<Type> registered = services.Select(d => d.ServiceType).ToList();
+        registered.Should().HaveCount(3);
+        registered.Should().Contain(new[] { typeof(IStateManager), typeof(IOrderManager), typeof(ICustomerManager) });
+    }
 }

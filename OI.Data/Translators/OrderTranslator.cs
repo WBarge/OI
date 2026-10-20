@@ -44,6 +44,7 @@ internal static class OrderTranslator
         return orders.Select(c => new Internal_Models.OrderSearch
         {
             Id = c.Id,
+            OrderNumber = c.OrderNumber,
             CustomerName = (c.Customer != null ? c.Customer.FirstName+ " " : string.Empty)  + (c.Customer != null ? c.Customer.LastName : string.Empty),
             PhoneNumber = c.Customer != null ? c.Customer.PhoneNumber : string.Empty,
             OrderDate = c.OrderDate,
