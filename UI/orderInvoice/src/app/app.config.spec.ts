@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { PrimeNG } from 'primeng/config';
 import { appConfig } from './app.config';
+import { routes } from './app.routes';
 import { ConfigService } from '../services/config-service';
 
 describe('appConfig', () => {
@@ -26,7 +27,8 @@ describe('appConfig', () => {
   it('should provide the router with the application routes', () => {
     const router = TestBed.inject(Router);
 
-    expect(router.config.map(route => route.path)).toEqual(['', 'orderInvoice', 'about']);
+    // compared with the routes file rather than a copy of its paths, which app.routes.spec pins down
+    expect(router.config.map(route => route.path)).toEqual(routes.map(route => route.path));
     // the config request is made by the app initializer, answer it so nothing is left hanging
     httpTestingController.expectOne(isConfigRequest).flush({});
   });

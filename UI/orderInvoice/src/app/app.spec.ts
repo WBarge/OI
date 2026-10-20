@@ -44,10 +44,10 @@ describe('App', () => {
     expect(compiled.querySelector('router-outlet')).toBeTruthy();
   });
 
-  it('should offer Orders, Invoices and About in the menu', () => {
+  it('should offer Home and About in the menu', () => {
     const app = TestBed.createComponent(App).componentInstance;
 
-    expect(app.items.map(item => item.label)).toEqual(['Orders', 'Invoices', 'About']);
+    expect(app.items.map(item => item.label)).toEqual(['Home', 'About']);
   });
 
   it('should hand its menu items to the menubar', async () => {
@@ -65,13 +65,10 @@ describe('App', () => {
     await fixture.whenStable();
 
     const text = (fixture.nativeElement as HTMLElement).querySelector('p-menubar')?.textContent ?? '';
-    expect(text).toContain('Orders');
-    expect(text).toContain('Invoices');
+    expect(text).toContain('Home');
     expect(text).toContain('About');
   });
 
-  // Orders and Invoices are placeholder entries with no routerLink yet (their pages are still to come),
-  // so only the entries that do link somewhere have to point at a defined route.
   it('should only link to routes that exist', () => {
     const app = TestBed.createComponent(App).componentInstance;
     const definedPaths = routes.map(route => route.path);
@@ -79,6 +76,12 @@ describe('App', () => {
     for (const item of app.items.filter(entry => entry.routerLink)) {
       expect(definedPaths).toContain((item.routerLink as string).replace(/^\//, ''));
     }
+  });
+
+  it('should link Home to the root, which redirects to the home page', () => {
+    const app = TestBed.createComponent(App).componentInstance;
+
+    expect(app.items.find(item => item.label === 'Home')?.routerLink).toBe('/');
   });
 
   it('should link About to the about page', () => {

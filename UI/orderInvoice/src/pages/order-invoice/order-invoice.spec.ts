@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { NEVER, of } from 'rxjs';
 import { vi } from 'vitest';
@@ -32,8 +33,9 @@ describe('OrderInvoice', () => {
   /**
    * Builds the page. The configuration is read once when the page starts (ConfigService.config is synchronous
    * now), so every test that needs a different configuration builds its own page.
+   * The route decides whether the page is a new order, an order being edited or one that is only viewed.
    */
-  async function setup(config: Partial<Configuration> = {}) {
+  async function setup(config: Partial<Configuration> = {}, route: { id?: string; readOnly?: boolean } = {}) {
     getCustomer = vi.fn();
     getCustomers = vi.fn().mockReturnValue(NEVER);
     getProducts = vi.fn().mockReturnValue(NEVER);
@@ -42,7 +44,15 @@ describe('OrderInvoice', () => {
       imports: [OrderInvoice],
       providers: [
         MessageService,
-        { provide: ConfigService, useValue: { config: Object.assign(new Configuration(), config) } }
+        { provide: ConfigService, useValue: { config: Object.assign(new Configuration(), config) } },
+        // the page reads the order id and the read-only flag from its route, so the tests say which route they are on
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            paramMap: of(convertToParamMap(route.id ? { id: route.id } : {})),
+            snapshot: { data: route.readOnly ? { readOnly: true } : {} }
+          }
+        }
       ]
     })
       // the page declares its own CustomerService provider
@@ -90,6 +100,44 @@ describe('OrderInvoice', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  describe('order mode', () => {
+    it('should be a new order when the route has no order id', () => {
+      fixture.detectChanges();
+
+      expect(component.mode).toBe('NEW');
+      expect(component.orderId).toBeNull();
+    });
+
+    it('should be an order being edited when the route has an order id', async () => {
+      TestBed.resetTestingModule();
+      await setup({}, { id: 'order-123' });
+
+      fixture.detectChanges();
+
+      expect(component.mode).toBe('EDIT');
+      expect(component.orderId).toBe('order-123');
+    });
+
+    it('should only be viewed on the read-only route', async () => {
+      TestBed.resetTestingModule();
+      await setup({}, { id: 'order-123', readOnly: true });
+
+      fixture.detectChanges();
+
+      expect(component.mode).toBe('VIEW');
+      expect(component.orderId).toBe('order-123');
+    });
+
+    it('should be viewed rather than edited when the read-only flag is set, even without an order id', async () => {
+      TestBed.resetTestingModule();
+      await setup({}, { readOnly: true });
+
+      fixture.detectChanges();
+
+      expect(component.mode).toBe('VIEW');
+    });
   });
 
   describe('configuration', () => {
