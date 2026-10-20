@@ -5,7 +5,7 @@ namespace OI.Data.Translators;
 
 internal static class OrderTranslator
 {
-    public static IOrder Translate(this Order order)
+    public static IOrder Translate(this OI.Data.Model.Order order)
     {
         return new OI.Data.Translators.Internal_Models.Order
         {
@@ -33,4 +33,20 @@ internal static class OrderTranslator
             IsPending = order.IsPending
         };
     }
+
+    public static IQueryable<Internal_Models.OrderSearch> ToSearchResult(this IQueryable<Order> orders)
+    {
+        //the last name and phone number are required in the system but the code is to get the complier and IDE to shut up
+        return orders.Select(c => new Internal_Models.OrderSearch
+        {
+            Id = c.Id,
+            CustomerName = (c.Customer != null ? c.Customer.FirstName+ " " : string.Empty)  + (c.Customer != null ? c.Customer.LastName : string.Empty),
+            PhoneNumber = c.Customer != null ? c.Customer.PhoneNumber : string.Empty,
+            OrderDate = c.OrderDate,
+            CompletedDate = c.CompletedDate,
+            Total = c.Total,
+            IsPending = c.IsPending
+        });
+    }
+
 }

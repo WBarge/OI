@@ -1,34 +1,46 @@
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using OI.Glue.Managers;
 using OI.Glue.Models;
 using OI.Service.Models.Requests;
+using OI.Service.Models.Transformers;
 
-namespace OI.Service.Controllers;
-
-/// <summary>
-/// Controller for order-related endpoints.
-/// </summary>
-[Route("api/[controller]")]
-[ApiController]
-public class OrdersController(IOrderManager orderManager, ILogger<OrdersController> logger) : ControllerBase
+namespace OI.Service.Controllers
 {
-    private readonly IOrderManager _orderManager = orderManager ?? throw new ArgumentNullException(nameof(orderManager));
-    private readonly ILogger<OrdersController> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-
     /// <summary>
-    /// Creates a new order.
+    /// end points for dealing with multiple orders
     /// </summary>
-    /// <param name="request">The create order request.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>The created order.</returns>
-    [HttpPost]
-    [ProducesResponseType(typeof(IOrder), StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> CreateOrder([FromBody] CreateOrder? request, CancellationToken cancellationToken)
+    [Route("api/[controller]")]
+    [ApiController]
+    public class OrdersController(IOrderManager orderManager,ILogger<ICustomerManager> logger) : ControllerBase
     {
-        _logger.LogInformation("POST api/orders called");
-        IOrder order = await _orderManager.CreateOrderAsync(request, cancellationToken);
-        _logger.LogInformation("Created order {OrderNumber}", order.OrderNumber);
-        return CreatedAtAction(nameof(CreateOrder), new { id = order.Id }, order);
+
+        private readonly IOrderManager _orderManager = orderManager ?? throw new ArgumentNullException(nameof(orderManager));
+        private readonly ILogger<ICustomerManager> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
+        /// <summary>
+        /// Retrieves a paginated list of orders using the requested filters and pagination settings.
+        /// </summary>
+        /// <param name="cancellationToken">
+        /// A token used to cancel the asynchronous request.
+        /// </param>
+        /// <param name="request">
+        /// The filtering, page number, and page size settings. Defaults to an empty request when
+        /// <see langword="null"/>.
+        /// </param>
+        /// <returns>
+        /// An HTTP 200 response containing the matching orders and the total number of records.
+        /// </returns>
+        [HttpPost]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetOrders(CancellationToken cancellationToken, [FromBody] ListRequest request)
+        {
+            _logger.LogInformation("POST api/orders called");
+            request ??= new ListRequest();
+            Dictionary<string, IFilterMetaData[]>? filters = FilterTransformers.TransformFilters(request);
+            PagedResult<IOrderSearch> result =
+                await _orderManager.GetOrdersPagedAsync(filters, request.Page, request.PageSize, cancellationToken);
+            return Ok(new { data = result.Data, totalRecordSize = result.TotalRecordSize });
+        }
     }
 }

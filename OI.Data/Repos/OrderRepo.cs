@@ -1,8 +1,13 @@
 using Microsoft.EntityFrameworkCore;
+using OI.Data.Helpers;
 using OI.Data.Model;
 using OI.Data.Translators;
+using OI.Data.Translators.Internal_Models;
 using OI.Glue.Models;
 using OI.Glue.Repos;
+using Customer = OI.Data.Model.Customer;
+using Order = OI.Data.Model.Order;
+using OrderItem = OI.Data.Model.OrderItem;
 
 namespace OI.Data.Repos;
 
@@ -65,6 +70,35 @@ internal class OrderRepo(OiDbContext dbContext) : BaseEfRepo<Order>(dbContext), 
         }
 
         return order.Translate();
+    }
+
+    public async Task<IEnumerable<IOrderSearch>> FindPagedOrderRecordsAsync(        Dictionary<string, IFilterMetaData[]>? filterCriteria = null,
+        int pageNumber = 1, int pageSize = 10, CancellationToken cancellationToken = default)
+    {
+        pageNumber = Math.Max(pageNumber, 1);
+        pageSize = Math.Max(pageSize, 1);
+        int skip = (int)Math.Min((long)pageSize * (pageNumber - 1), int.MaxValue);
+
+        IQueryable<Order> filtered = await DbContext.Orders.BuildFilterQueryAsync(filterCriteria!, cancellationToken);
+        List<IOrderSearch> orders = await filtered
+            .Include(o=>o.Customer)
+            .Include(o=>o.OrderItems)
+            .OrderBy(c => c.Customer!.LastName)
+            .ThenBy(c => c.Customer!.FirstName)
+            .ThenBy(c => c.Id)
+            .Skip(skip)
+            .Take(pageSize)
+            .ToSearchResult()//rework this to not be the whole order object - just search result object
+            .Cast<IOrderSearch>()
+            .ToListAsync(cancellationToken);
+        return orders;
+
+    }
+
+    public async Task<long> GetOrdersCountAsync(Dictionary<string, IFilterMetaData[]>? filterCriteria = null,CancellationToken cancellationToken = default)
+    {
+        IQueryable<Order> filtered = await DbContext.Orders.BuildFilterQueryAsync(filterCriteria!, cancellationToken);
+        return await filtered.LongCountAsync(cancellationToken);
     }
 
     private OrderItem CreateOrderItem(ICreateOrderItem request, Guid orderId)

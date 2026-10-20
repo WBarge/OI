@@ -5,4 +5,6 @@ namespace OI.Glue.Managers;
 public interface IOrderManager
 {
     Task<IOrder> CreateOrderAsync(ICreateOrder? request, CancellationToken cancellationToken = default);
+    Task<PagedResult<IOrderSearch>> GetOrdersPagedAsync(Dictionary<string, IFilterMetaData[]> filters, int? requestPage,
+        int? requestPageSize, CancellationToken cancellationToken);
 }

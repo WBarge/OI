@@ -12,12 +12,12 @@ using System.Reflection;
 namespace OI.Service.Tests.ControllerTests;
 
 [TestFixture, Description("Tests for OrdersController")]
-public class OrdersControllerTests
+public class OrderControllerTests
 {
     [Test, Description("Constructor should throw when orderManager is null")]
     public void Constructor_ThrowsWhenOrderManagerIsNull()
     {
-        Action act = () => _ = new OrdersController(null!, NullLogger<OrdersController>.Instance);
+        Action act = () => _ = new OrderController(null!, NullLogger<OrderController>.Instance);
         act.Should().Throw<ArgumentNullException>().WithParameterName("orderManager");
     }
 
@@ -25,7 +25,7 @@ public class OrdersControllerTests
     public void Constructor_ThrowsWhenLoggerIsNull()
     {
         Mock<IOrderManager> orderManagerMock = new();
-        Action act = () => _ = new OrdersController(orderManagerMock.Object, null!);
+        Action act = () => _ = new OrderController(orderManagerMock.Object, null!);
         act.Should().Throw<ArgumentNullException>().WithParameterName("logger");
     }
 
@@ -33,7 +33,7 @@ public class OrdersControllerTests
     public async Task CreateOrder_Returns201CreatedWithOrder()
     {
         Mock<IOrderManager> orderManagerMock = new();
-        OrdersController sut = new(orderManagerMock.Object, NullLogger<OrdersController>.Instance);
+        OrderController sut = new(orderManagerMock.Object, NullLogger<OrderController>.Instance);
         Mock<IOrder> orderMock = new();
         orderMock.Setup(o => o.Id).Returns(Guid.NewGuid());
         orderMock.Setup(o => o.OrderNumber).Returns(1000);
@@ -52,7 +52,7 @@ public class OrdersControllerTests
     public async Task CreateOrder_PassesRequestToManager()
     {
         Mock<IOrderManager> orderManagerMock = new();
-        OrdersController sut = new(orderManagerMock.Object, NullLogger<OrdersController>.Instance);
+        OrderController sut = new(orderManagerMock.Object, NullLogger<OrderController>.Instance);
         Mock<IOrder> orderMock = new();
         orderMock.Setup(o => o.Id).Returns(Guid.NewGuid());
         orderMock.Setup(o => o.OrderNumber).Returns(1000);
@@ -69,7 +69,7 @@ public class OrdersControllerTests
     public async Task CreateOrder_Returns201CreatedWhenRequestIsNull()
     {
         Mock<IOrderManager> orderManagerMock = new();
-        OrdersController sut = new(orderManagerMock.Object, NullLogger<OrdersController>.Instance);
+        OrderController sut = new(orderManagerMock.Object, NullLogger<OrderController>.Instance);
         Mock<IOrder> orderMock = new();
         orderMock.Setup(o => o.Id).Returns(Guid.NewGuid());
         orderMock.Setup(o => o.OrderNumber).Returns(1000);
@@ -86,7 +86,7 @@ public class OrdersControllerTests
     public async Task CreateOrder_ReturnsCreatedAtActionWithOrderIdRouteValue()
     {
         Mock<IOrderManager> orderManagerMock = new();
-        OrdersController sut = new(orderManagerMock.Object, NullLogger<OrdersController>.Instance);
+        OrderController sut = new(orderManagerMock.Object, NullLogger<OrderController>.Instance);
         Guid orderId = Guid.NewGuid();
         Mock<IOrder> orderMock = new();
         orderMock.Setup(o => o.Id).Returns(orderId);
@@ -98,7 +98,7 @@ public class OrdersControllerTests
         IActionResult result = await sut.CreateOrder(request, TestContext.CurrentContext.CancellationToken);
 
         CreatedAtActionResult createdResult = result.Should().BeOfType<CreatedAtActionResult>().Subject;
-        createdResult.ActionName.Should().Be(nameof(OrdersController.CreateOrder));
+        createdResult.ActionName.Should().Be(nameof(OrderController.CreateOrder));
         createdResult.RouteValues.Should().NotBeNull();
         createdResult.RouteValues!.ContainsKey("id").Should()
             .BeTrue("the route values should carry the new order's id");
@@ -109,7 +109,7 @@ public class OrdersControllerTests
     public async Task CreateOrder_PassesNullRequestToManager()
     {
         Mock<IOrderManager> orderManagerMock = new();
-        OrdersController sut = new(orderManagerMock.Object, NullLogger<OrdersController>.Instance);
+        OrderController sut = new(orderManagerMock.Object, NullLogger<OrderController>.Instance);
         Mock<IOrder> orderMock = new();
         orderMock.Setup(o => o.Id).Returns(Guid.NewGuid());
         orderMock.Setup(o => o.OrderNumber).Returns(1000);
@@ -127,7 +127,7 @@ public class OrdersControllerTests
     public async Task CreateOrder_PassesCancellationTokenToManager()
     {
         Mock<IOrderManager> orderManagerMock = new();
-        OrdersController sut = new(orderManagerMock.Object, NullLogger<OrdersController>.Instance);
+        OrderController sut = new(orderManagerMock.Object, NullLogger<OrderController>.Instance);
         Mock<IOrder> orderMock = new();
         orderMock.Setup(o => o.Id).Returns(Guid.NewGuid());
         orderMock.Setup(o => o.OrderNumber).Returns(1000);
@@ -145,7 +145,7 @@ public class OrdersControllerTests
     public async Task CreateOrder_PropagatesManagerException()
     {
         Mock<IOrderManager> orderManagerMock = new();
-        OrdersController sut = new(orderManagerMock.Object, NullLogger<OrdersController>.Instance);
+        OrderController sut = new(orderManagerMock.Object, NullLogger<OrderController>.Instance);
         CreateOrder request = new() { CustomerId = Guid.NewGuid() };
         orderManagerMock.Setup(m => m.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("manager failed"));
@@ -158,7 +158,7 @@ public class OrdersControllerTests
     [Test, Description("OrdersController should be decorated with [ApiController]")]
     public void OrdersController_IsDecoratedWithApiController()
     {
-        Type controllerType = typeof(OrdersController);
+        Type controllerType = typeof(OrderController);
 
         ApiControllerAttribute? attribute = controllerType.GetCustomAttribute<ApiControllerAttribute>();
 
@@ -168,7 +168,7 @@ public class OrdersControllerTests
     [Test, Description("OrdersController should be routed at api/[controller]")]
     public void OrdersController_HasExpectedRouteTemplate()
     {
-        Type controllerType = typeof(OrdersController);
+        Type controllerType = typeof(OrderController);
 
         RouteAttribute? attribute = controllerType.GetCustomAttribute<RouteAttribute>();
 
@@ -179,7 +179,7 @@ public class OrdersControllerTests
     [Test, Description("CreateOrder should be exposed as an HTTP POST endpoint")]
     public void CreateOrder_IsDecoratedWithHttpPost()
     {
-        MethodInfo? method = typeof(OrdersController).GetMethod(nameof(OrdersController.CreateOrder));
+        MethodInfo? method = typeof(OrderController).GetMethod(nameof(OrderController.CreateOrder));
 
         method.Should().NotBeNull();
         method!.GetCustomAttribute<HttpPostAttribute>().Should().NotBeNull("creating an order must be a POST");

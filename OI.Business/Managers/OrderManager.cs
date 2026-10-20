@@ -16,6 +16,8 @@ internal class OrderManager(IOrderRepo orderRepo, ICustomerRepo customerRepo, IL
     private readonly ICustomerRepo _customerRepo = customerRepo ?? throw new ArgumentNullException(nameof(customerRepo));
     private readonly ILogger<OrderManager> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
+    internal const int DEFAULT_PAGE_SIZE = 100000;
+
     /// <summary>
     /// Creates an order in the system
     /// </summary>
@@ -74,6 +76,21 @@ internal class OrderManager(IOrderRepo orderRepo, ICustomerRepo customerRepo, IL
         IOrder order = await _orderRepo.CreateOrderAsync(request, orderNumber, IS_PENDING, cancellationToken);
         _logger.LogInformation("Created order {OrderNumber}", order.OrderNumber);
         return order;
+    }
+
+    public async Task<PagedResult<IOrderSearch>> GetOrdersPagedAsync(Dictionary<string, IFilterMetaData[]> filters, int? page, int? pageSize,
+        CancellationToken cancellationToken)
+    {
+        int pageNumber = page is null or < 1 ? 1 : page.Value;
+        int size = pageSize is null or < 1 ? DEFAULT_PAGE_SIZE : pageSize.Value;
+        _logger.LogInformation("Listing customers, page {Page} with page size {PageSize}", pageNumber, size);
+
+        // Run one after the other: both queries use the same DbContext, which cannot run two queries at once.
+        IEnumerable<IOrderSearch> data =
+            await _orderRepo.FindPagedOrderRecordsAsync(filters, pageNumber, size, cancellationToken);
+        long totalRecordSize = await _orderRepo.GetOrdersCountAsync(filters, cancellationToken);
+        return new PagedResult<IOrderSearch>(data, totalRecordSize);
+
     }
 
     /// <summary>
