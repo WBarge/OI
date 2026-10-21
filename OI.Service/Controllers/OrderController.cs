@@ -33,6 +33,21 @@ public class OrderController(IOrderManager orderManager, ILogger<OrderController
     }
 
     /// <summary>
+    /// Gets the order for the ID
+    /// </summary>
+    /// <param name="id">the unique id for the order</param>
+    /// <param name="token">the cancellation token</param>
+    /// <returns></returns>
+    [HttpGet]
+    [ProducesResponseType(typeof(IOrder), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetOrderAsync(Guid id, CancellationToken token)
+    {
+        _logger.LogInformation("Get api/order/{id} called",id);
+        IOrder? order = await _orderManager.GetOrderByIdAsync(id, token);
+        return Ok(order);
+    }
+
+    /// <summary>
     /// Updates the order
     /// </summary>
     /// <param name="cancellationToken"></param>

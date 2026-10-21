@@ -143,6 +143,19 @@ internal class OrderManager(IOrderRepo orderRepo, ICustomerRepo customerRepo, IL
     }
 
     /// <summary>
+    /// get the order for the passed in id
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="token"></param>
+    /// <returns>
+    ///     Will return null if the order is not found
+    /// </returns>
+    public async Task<IOrder?> GetOrderByIdAsync(Guid id, CancellationToken token = default)
+    {
+        return await _orderRepo.GetOrderAsync(id, token);
+    }
+
+    /// <summary>
     /// When the request names an existing customer, fills in the billing and/or shipping address from the customer's defaults.
     /// Each address is treated as a unit: it is only filled in when none of its fields were supplied on the request,
     /// so a partly supplied address is never mixed with the customer's default.

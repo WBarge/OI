@@ -1,1 +1,38 @@
-<p>order-selection works!</p>
+<p-table id="orderTable" #orderTable
+[value]="orders"
+selectionMode="single"
+(onRowSelect)="onSelect($event)"
+[paginator]="true"
+[alwaysShowPaginator]="true"
+[totalRecords]="totalItems"
+[lazy]="true"
+(onLazyLoad)="loadOrdersLazy($event)"
+(onPage)="pageChange($event)"
+[rowsPerPageOptions]="[10, 25, 50]"
+[rows]="pageSize"
+[showCurrentPageReport]="true"
+currentPageReportTemplate="{first}-{last} of {totalRecords}"
+>
+  <ng-template #header>
+    <tr>
+      <th>SKU
+        <p-column-filter type="text" field="sku" display="menu" />
+      </th>
+      <th>Name
+        <p-column-filter type="text" field="name" display="menu" />
+      </th>
+      <th>Description
+        <p-column-filter type="text" field="shortDescription" display="menu" />
+      </th>
+      <th>Price</th>
+    </tr>
+  </ng-template>
+  <ng-template #body let-product>
+    <tr [pSelectableRow]="product">
+      <td>{{product.sku}}</td>
+      <td>{{product.name}}</td>
+      <td>{{product.shortDescription}}</td>
+      <td>{{product.price | currency}}</td>
+    </tr>
+  </ng-template>
+</p-table>
