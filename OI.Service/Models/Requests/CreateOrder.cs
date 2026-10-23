@@ -22,15 +22,15 @@ public class CreateOrder : ICreateOrder
     /// <summary>Gets or sets the billing zip code.</summary>
     public string BillingZipCode { get; set; } = string.Empty;
     /// <summary>Gets or sets the shipping address line 1.</summary>
-    public string ShippingAddress1 { get; set; } = string.Empty;
+    public string? ShippingAddress1 { get; set; }
     /// <summary>Gets or sets the shipping address line 2.</summary>
-    public string ShippingAddress2 { get; set; } = string.Empty;
+    public string? ShippingAddress2 { get; set; }
     /// <summary>Gets or sets the shipping city.</summary>
-    public string ShippingCity { get; set; } = string.Empty;
+    public string? ShippingCity { get; set; }
     /// <summary>Gets or sets the shipping state code.</summary>
-    public string ShippingStateCode { get; set; } = string.Empty;
+    public string? ShippingStateCode { get; set; }
     /// <summary>Gets or sets the shipping zip code.</summary>
-    public string ShippingZipCode { get; set; } = string.Empty;
+    public string? ShippingZipCode { get; set; }
     /// <summary>Gets or sets the subtotal. If not provided, defaults to zero.</summary>
     public decimal? SubTotal { get; set; }
     /// <summary>Gets or sets the shipping cost. If not provided, defaults to zero.</summary>

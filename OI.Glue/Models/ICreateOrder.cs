@@ -9,11 +9,11 @@ public interface ICreateOrder
     string BillingCity { get; set; }
     string BillingStateCode { get; set; }
     string BillingZipCode { get; set; }
-    string ShippingAddress1 { get; set; }
-    string ShippingAddress2 { get; set; }
-    string ShippingCity { get; set; }
-    string ShippingStateCode { get; set; }
-    string ShippingZipCode { get; set; }
+    string? ShippingAddress1 { get; set; }
+    string? ShippingAddress2 { get; set; }
+    string? ShippingCity { get; set; }
+    string? ShippingStateCode { get; set; }
+    string? ShippingZipCode { get; set; }
     decimal? SubTotal { get; set; }
     decimal? Shipping { get; set; }
     decimal? Tax { get; set; }

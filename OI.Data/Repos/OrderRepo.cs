@@ -180,7 +180,8 @@ internal class OrderRepo(OiDbContext dbContext) : BaseEfRepo<Order>(dbContext), 
             foreach (ICreateOrderItem createOrderItemRequest in request.OrderItems)
             {
                 OrderItem convertedItem = CreateOrderItem(createOrderItemRequest, order.Id);
-                OrderItem? foundItem = order.OrderItems!.FirstOrDefault(o => o.ProductId == createOrderItemRequest.ProductId);
+                OrderItem? foundItem =
+                    order.OrderItems!.FirstOrDefault(o => o.ProductId == createOrderItemRequest.ProductId);
                 if (foundItem != null)
                 {
                     foundItem.Quantity = convertedItem.Quantity;
@@ -189,37 +190,34 @@ internal class OrderRepo(OiDbContext dbContext) : BaseEfRepo<Order>(dbContext), 
                 }
                 else
                 {
-                    await DbContext.OrderItems.AddAsync(convertedItem,cancellationToken);
+                    await DbContext.OrderItems.AddAsync(convertedItem, cancellationToken);
                 }
             }
         }
 
-        try
+        await SaveAsync(cancellationToken);
+        if (request.OrderItems!.Count() != order.OrderItems!.Count())
         {
-            await SaveAsync(cancellationToken);
-            if (request.OrderItems!.Count() != order.OrderItems!.Count())
+            order = await DbContext.Orders
+                .Where(o => o.Id == request.Id)
+                .Include(o => o.Customer)
+                .Include(o => o.OrderItems)
+                .FirstOrDefaultAsync(cancellationToken);
+            if (order!.OrderItems == null)
             {
-                order = await DbContext.Orders
-                    .Where(o => o.Id == request.Id)
-                    .Include(o => o.Customer)
-                    .Include(o => o.OrderItems)
-                    .FirstOrDefaultAsync(cancellationToken);
-                foreach (OrderItem orderOrderItem in order.OrderItems)
-                {
-                    bool missing = request.OrderItems!.FirstOrDefault(o => o.ProductId == orderOrderItem.ProductId) == null;
-                    if (missing)
-                    {
-                        order.OrderItems.Remove(orderOrderItem);
-                    }
-                }
-                await SaveAsync(cancellationToken);
+                return;
             }
 
+            foreach (OrderItem orderOrderItem in order!.OrderItems!)
+            {
+                bool missing = request.OrderItems!.FirstOrDefault(o => o.ProductId == orderOrderItem.ProductId) == null;
+                if (missing)
+                {
+                    order.OrderItems.Remove(orderOrderItem);
+                }
+            }
 
-        }
-        catch (Exception x)
-        {
-            throw x;
+            await SaveAsync(cancellationToken);
         }
     }
 

@@ -21,11 +21,11 @@ public class CreateOrderTests
         sut.BillingCity.Should().BeEmpty();
         sut.BillingStateCode.Should().BeEmpty();
         sut.BillingZipCode.Should().BeEmpty();
-        sut.ShippingAddress1.Should().BeEmpty();
-        sut.ShippingAddress2.Should().BeEmpty();
-        sut.ShippingCity.Should().BeEmpty();
-        sut.ShippingStateCode.Should().BeEmpty();
-        sut.ShippingZipCode.Should().BeEmpty();
+        sut.ShippingAddress1.Should().BeNullOrEmpty();
+        sut.ShippingAddress2.Should().BeNullOrEmpty();
+        sut.ShippingCity.Should().BeNullOrEmpty();
+        sut.ShippingStateCode.Should().BeNullOrEmpty();
+        sut.ShippingZipCode.Should().BeNullOrEmpty();
         sut.SubTotal.Should().BeNull();
         sut.Shipping.Should().BeNull();
         sut.Tax.Should().BeNull();
