@@ -123,11 +123,6 @@ internal class OrderManager(IOrderRepo orderRepo, ICustomerRepo customerRepo, IL
         }
 
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
-        if (request.CustomerId.IsEmpty() && preexistingOrder.CustomerId.IsNotEmpty())
-        {
-            request.CustomerId = preexistingOrder.CustomerId;
-        }
-
         if (request.OrderDate.IsEmpty() && preexistingOrder.OrderDate.IsNotEmpty())
         {
             request.OrderDate = preexistingOrder.OrderDate;
@@ -162,18 +157,12 @@ internal class OrderManager(IOrderRepo orderRepo, ICustomerRepo customerRepo, IL
     /// </summary>
     private async Task ApplyCustomerDefaultAddressesAsync(ICreateOrder request, CancellationToken cancellationToken)
     {
-        if (request.CustomerId is not { } customerId || customerId == Guid.Empty)
-        {
-            request.CustomerId = null;
-            return;
-        }
-        ICustomer? customer = await _customerRepo.GetCustomerByIdAsync(customerId, cancellationToken);
+        ICustomer? customer = await _customerRepo.GetCustomerByIdAsync(request.CustomerId, cancellationToken);
         if (customer == null)
         {
-            _logger.LogInformation("Customer {CustomerId} was not found; using the addresses on the request as supplied", customerId);
-            _logger.LogInformation("Setting the customer to empty");
-            request.CustomerId = null;
-            return;
+            _logger.LogError("Customer {CustomerId} was not found; using the addresses on the request as supplied", request.CustomerId);
+            _logger.LogError("Setting the customer to empty");
+            throw new RequiredObjectException("The customer was not found");
         }
 
         bool billingSupplied = HasAnyValue(request.BillingAddress1, request.BillingAddress2, request.BillingCity, request.BillingStateCode, request.BillingZipCode);
@@ -185,7 +174,7 @@ internal class OrderManager(IOrderRepo orderRepo, ICustomerRepo customerRepo, IL
             request.BillingCity = customer.DefaultBillingCity ?? string.Empty;
             request.BillingStateCode = customer.DefaultBillingStateCode ?? string.Empty;
             request.BillingZipCode = customer.DefaultBillingZipCode ?? string.Empty;
-            _logger.LogInformation("Populated the billing address from the defaults of customer {CustomerId}", customerId);
+            _logger.LogInformation("Populated the billing address from the defaults of customer {CustomerId}", request.CustomerId);
         }
 
         bool shippingSupplied = HasAnyValue(request.ShippingAddress1, request.ShippingAddress2, request.ShippingCity, request.ShippingStateCode, request.ShippingZipCode);
@@ -197,7 +186,7 @@ internal class OrderManager(IOrderRepo orderRepo, ICustomerRepo customerRepo, IL
             request.ShippingCity = customer.DefaultShippingCity ?? string.Empty;
             request.ShippingStateCode = customer.DefaultShippingStateCode ?? string.Empty;
             request.ShippingZipCode = customer.DefaultShippingZipCode ?? string.Empty;
-            _logger.LogInformation("Populated the shipping address from the defaults of customer {CustomerId}", customerId);
+            _logger.LogInformation("Populated the shipping address from the defaults of customer {CustomerId}", request.CustomerId);
         }
     }
 
@@ -216,18 +205,18 @@ internal class OrderManager(IOrderRepo orderRepo, ICustomerRepo customerRepo, IL
     /// </summary>
     private sealed class DefaultCreateOrder : ICreateOrder
     {
-        public Guid? CustomerId { get; set; }
+        public Guid CustomerId { get; set; }
         public DateTime? OrderDate { get; set; }
-        public string BillingAddress1 { get; set; } = string.Empty;
-        public string BillingAddress2 { get; set; } = string.Empty;
-        public string BillingCity { get; set; } = string.Empty;
-        public string BillingStateCode { get; set; } = string.Empty;
-        public string BillingZipCode { get; set; } = string.Empty;
-        public string ShippingAddress1 { get; set; } = string.Empty;
-        public string ShippingAddress2 { get; set; } = string.Empty;
-        public string ShippingCity { get; set; } = string.Empty;
-        public string ShippingStateCode { get; set; } = string.Empty;
-        public string ShippingZipCode { get; set; } = string.Empty;
+        public string? BillingAddress1 { get; set; } = string.Empty;
+        public string? BillingAddress2 { get; set; } = string.Empty;
+        public string? BillingCity { get; set; } = string.Empty;
+        public string? BillingStateCode { get; set; } = string.Empty;
+        public string? BillingZipCode { get; set; } = string.Empty;
+        public string? ShippingAddress1 { get; set; } = string.Empty;
+        public string? ShippingAddress2 { get; set; } = string.Empty;
+        public string? ShippingCity { get; set; } = string.Empty;
+        public string? ShippingStateCode { get; set; } = string.Empty;
+        public string? ShippingZipCode { get; set; } = string.Empty;
         public decimal? SubTotal { get; set; }
         public decimal? Shipping { get; set; }
         public decimal? Tax { get; set; }

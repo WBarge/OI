@@ -871,37 +871,6 @@ public class OrderRepoTests
             .BeEmpty("an order without items should still expose an empty collection");
     }
 
-    [Test, Description("CreateOrderAsync should save an order with no customer when CustomerId is null")]
-    public async Task CreateOrderAsync_PersistsOrderWithNullCustomerId()
-    {
-        await TestContext.Out.WriteLineAsync("Setting up test");
-        using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
-        OrderRepo sut = new(context);
-        Mock<ICreateOrder> requestMock = new();
-        requestMock.Setup(r => r.CustomerId).Returns((Guid?)null);
-        requestMock.Setup(r => r.BillingAddress1).Returns("123 Main St");
-        requestMock.Setup(r => r.BillingAddress2).Returns(string.Empty);
-        requestMock.Setup(r => r.BillingCity).Returns("Austin");
-        requestMock.Setup(r => r.BillingStateCode).Returns("TX");
-        requestMock.Setup(r => r.BillingZipCode).Returns("78701");
-        requestMock.Setup(r => r.ShippingAddress1).Returns("123 Main St");
-        requestMock.Setup(r => r.ShippingAddress2).Returns(string.Empty);
-        requestMock.Setup(r => r.ShippingCity).Returns("Austin");
-        requestMock.Setup(r => r.ShippingStateCode).Returns("TX");
-        requestMock.Setup(r => r.ShippingZipCode).Returns("78701");
-
-        await TestContext.Out.WriteLineAsync("Executing test");
-        IOrder result = await sut.CreateOrderAsync(requestMock.Object, 1000, true, TestContext.CurrentContext.CancellationToken);
-
-        await TestContext.Out.WriteLineAsync("Examining results");
-        result.CustomerId.Should().BeNull();
-        using IServiceScope verifyScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext verifyContext = verifyScope.ServiceProvider.GetRequiredService<OiDbContext>();
-        Order saved = await verifyContext.Set<Order>().SingleAsync(o => o.Id == result.Id);
-        saved.CustomerId.Should().BeNull("an order without a customer is valid");
-    }
-
     [Test, Description("CreateOrderAsync should return the customer on the order when the customer exists and was not already loaded")]
     public async Task CreateOrderAsync_ReturnsCustomerWhenCustomerExists()
     {
@@ -989,31 +958,4 @@ public class OrderRepoTests
         result.Customer.LastName.Should().Be("Jones");
     }
 
-    [Test, Description("CreateOrderAsync should leave the customer null when the order has no CustomerId")]
-    public async Task CreateOrderAsync_LeavesCustomerNullWhenNoCustomerId()
-    {
-        await TestContext.Out.WriteLineAsync("Setting up test");
-        using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
-        OrderRepo sut = new(context);
-        Mock<ICreateOrder> requestMock = new();
-        requestMock.Setup(r => r.CustomerId).Returns((Guid?)null);
-        requestMock.Setup(r => r.BillingAddress1).Returns("123 Main St");
-        requestMock.Setup(r => r.BillingAddress2).Returns(string.Empty);
-        requestMock.Setup(r => r.BillingCity).Returns("Austin");
-        requestMock.Setup(r => r.BillingStateCode).Returns("TX");
-        requestMock.Setup(r => r.BillingZipCode).Returns("78701");
-        requestMock.Setup(r => r.ShippingAddress1).Returns("123 Main St");
-        requestMock.Setup(r => r.ShippingAddress2).Returns(string.Empty);
-        requestMock.Setup(r => r.ShippingCity).Returns("Austin");
-        requestMock.Setup(r => r.ShippingStateCode).Returns("TX");
-        requestMock.Setup(r => r.ShippingZipCode).Returns("78701");
-
-        await TestContext.Out.WriteLineAsync("Executing test");
-        IOrder result = await sut.CreateOrderAsync(requestMock.Object, 1000, true, TestContext.CurrentContext.CancellationToken);
-
-        await TestContext.Out.WriteLineAsync("Examining results");
-        result.CustomerId.Should().BeNull();
-        result.Customer.Should().BeNull("an order without a customer has nothing to load");
-    }
 }

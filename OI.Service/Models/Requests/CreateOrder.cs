@@ -8,19 +8,19 @@ namespace OI.Service.Models.Requests;
 public class CreateOrder : ICreateOrder
 {
     /// <summary>Gets or sets the customer identifier.</summary>
-    public Guid? CustomerId { get; set; }
+    public Guid CustomerId { get; set; }
     /// <summary>Gets or sets the order date. If not provided, defaults to UTC now.</summary>
     public DateTime? OrderDate { get; set; }
     /// <summary>Gets or sets the billing address line 1.</summary>
-    public string BillingAddress1 { get; set; } = string.Empty;
+    public string? BillingAddress1 { get; set; } = string.Empty;
     /// <summary>Gets or sets the billing address line 2.</summary>
-    public string BillingAddress2 { get; set; } = string.Empty;
+    public string? BillingAddress2 { get; set; } = string.Empty;
     /// <summary>Gets or sets the billing city.</summary>
-    public string BillingCity { get; set; } = string.Empty;
+    public string? BillingCity { get; set; } = string.Empty;
     /// <summary>Gets or sets the billing state code.</summary>
-    public string BillingStateCode { get; set; } = string.Empty;
+    public string? BillingStateCode { get; set; } = string.Empty;
     /// <summary>Gets or sets the billing zip code.</summary>
-    public string BillingZipCode { get; set; } = string.Empty;
+    public string? BillingZipCode { get; set; } = string.Empty;
     /// <summary>Gets or sets the shipping address line 1.</summary>
     public string? ShippingAddress1 { get; set; }
     /// <summary>Gets or sets the shipping address line 2.</summary>

@@ -95,7 +95,7 @@ export class OrderInvoice implements OnInit {
   public tax: number = 0;
   public total: number = 0;
 
-  public mode: OrderMode = OrderMode.New;
+  public mode = signal<OrderMode>(OrderMode.New);
 
   constructor() {
   }
@@ -108,11 +108,11 @@ export class OrderInvoice implements OnInit {
       const isReadOnlyRoute = this.route.snapshot.data['readOnly'];
       // Determine mode based on the presence of the ID
       if (isReadOnlyRoute) {
-        this.mode = OrderMode.View
+        this.mode.set(OrderMode.View);
       }else  if (this.orderId) {
-        this.mode = OrderMode.Edit;
+        this.mode.set(OrderMode.Edit);
       } else {
-        this.mode = OrderMode.New;
+        this.mode.set(OrderMode.New);
       }
       if (this.orderId != null) {
         this.loadOrder(null);
@@ -122,11 +122,11 @@ export class OrderInvoice implements OnInit {
   }
 
   public get isReadOnly(): boolean {
-    return this.mode === OrderMode.View;
+    return this.mode() === OrderMode.View;
   }
 
   public get editable():boolean{
-    return this.mode === OrderMode.Edit;
+    return this.mode() === OrderMode.Edit;
   }
 
   public get canSubmit():boolean{
@@ -244,7 +244,7 @@ export class OrderInvoice implements OnInit {
       return null;
     }
     const order:Order = new Order();
-    if (this.mode === OrderMode.Edit && this.orderId !== null)
+    if (this.mode() === OrderMode.Edit && this.orderId !== null)
     {
       order.idValue = this.orderId;
       order.orderNumber = this.orderNumber;
@@ -284,6 +284,7 @@ export class OrderInvoice implements OnInit {
     {
       this.orderService.createOrder(orderToCreate).subscribe((result:Order)=>{
           this.loadOrder(result);
+          this.mode.set(OrderMode.Edit);
       });
     }
   }

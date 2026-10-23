@@ -45,6 +45,7 @@ public class OrderManagerTests
         Mock<IOrder> expectedOrder = new();
         expectedOrder.Setup(o => o.OrderNumber).Returns(1000);
         Mock<ICreateOrder> requestMock = new();
+        customerRepoMock.Setup(c=>c.GetCustomerByIdAsync(It.IsAny<Guid>(),It.IsAny<CancellationToken>())).ReturnsAsync(new Mock<ICustomer>().Object);
         orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
         orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(),
                 It.IsAny<CancellationToken>()))
@@ -64,6 +65,7 @@ public class OrderManagerTests
         Mock<IOrder> orderMock = new();
         orderMock.Setup(o => o.OrderNumber).Returns(1000);
         Mock<ICreateOrder> requestMock = new();
+        customerRepoMock.Setup(c=>c.GetCustomerByIdAsync(It.IsAny<Guid>(),It.IsAny<CancellationToken>())).ReturnsAsync(new Mock<ICustomer>().Object);
         orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
         orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(),
                 It.IsAny<CancellationToken>()))
@@ -82,6 +84,7 @@ public class OrderManagerTests
         OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrder> requestMock = new();
+        customerRepoMock.Setup(c=>c.GetCustomerByIdAsync(It.IsAny<Guid>(),It.IsAny<CancellationToken>())).ReturnsAsync(new Mock<ICustomer>().Object);
         orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1042);
         orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(),
                 It.IsAny<CancellationToken>()))
@@ -103,6 +106,7 @@ public class OrderManagerTests
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrder> requestMock = new();
         requestMock.SetupProperty(r => r.OrderDate, null);
+        customerRepoMock.Setup(c=>c.GetCustomerByIdAsync(It.IsAny<Guid>(),It.IsAny<CancellationToken>())).ReturnsAsync(new Mock<ICustomer>().Object);
         orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
         orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(),
                 It.IsAny<CancellationToken>()))
@@ -125,6 +129,7 @@ public class OrderManagerTests
         DateTime specificDate = new DateTime(2025, 3, 10, 0, 0, 0, DateTimeKind.Utc);
         Mock<ICreateOrder> requestMock = new();
         requestMock.SetupProperty(r => r.OrderDate, specificDate);
+        customerRepoMock.Setup(c=>c.GetCustomerByIdAsync(It.IsAny<Guid>(),It.IsAny<CancellationToken>())).ReturnsAsync(new Mock<ICustomer>().Object);
         orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
         orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(),
                 It.IsAny<CancellationToken>()))
@@ -144,6 +149,7 @@ public class OrderManagerTests
         Mock<IOrder> orderMock = new();
         orderMock.Setup(o => o.OrderNumber).Returns(1000);
         Mock<ICreateOrder> requestMock = new();
+        customerRepoMock.Setup(c=>c.GetCustomerByIdAsync(It.IsAny<Guid>(),It.IsAny<CancellationToken>())).ReturnsAsync(new Mock<ICustomer>().Object);
         orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
         orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(),
                 It.IsAny<CancellationToken>()))
@@ -164,6 +170,7 @@ public class OrderManagerTests
         OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrder> requestMock = new();
+        customerRepoMock.Setup(c=>c.GetCustomerByIdAsync(It.IsAny<Guid>(),It.IsAny<CancellationToken>())).ReturnsAsync(new Mock<ICustomer>().Object);
         orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
         orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(),
                 It.IsAny<CancellationToken>()))
@@ -185,6 +192,7 @@ public class OrderManagerTests
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrder> requestMock = new();
         requestMock.SetupProperty(r => r.SubTotal, null);
+        customerRepoMock.Setup(c=>c.GetCustomerByIdAsync(It.IsAny<Guid>(),It.IsAny<CancellationToken>())).ReturnsAsync(new Mock<ICustomer>().Object);
         orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
         orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(),
                 It.IsAny<CancellationToken>()))
@@ -204,6 +212,7 @@ public class OrderManagerTests
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrder> requestMock = new();
         requestMock.SetupProperty(r => r.SubTotal, 49.99m);
+        customerRepoMock.Setup(c=>c.GetCustomerByIdAsync(It.IsAny<Guid>(),It.IsAny<CancellationToken>())).ReturnsAsync(new Mock<ICustomer>().Object);
         orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
         orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(),
                 It.IsAny<CancellationToken>()))
@@ -223,6 +232,7 @@ public class OrderManagerTests
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrder> requestMock = new();
         requestMock.SetupAllProperties();
+        customerRepoMock.Setup(c=>c.GetCustomerByIdAsync(It.IsAny<Guid>(),It.IsAny<CancellationToken>())).ReturnsAsync(new Mock<ICustomer>().Object);
         orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
         orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(),
                 It.IsAny<CancellationToken>()))
@@ -256,6 +266,7 @@ public class OrderManagerTests
         requestMock.SetupProperty(r => r.Tax, 0m);
         requestMock.SetupProperty(r => r.Total, null);
         requestMock.Setup(r => r.OrderItems).Returns([item1.Object, item2.Object]);
+        customerRepoMock.Setup(c=>c.GetCustomerByIdAsync(It.IsAny<Guid>(),It.IsAny<CancellationToken>())).ReturnsAsync(new Mock<ICustomer>().Object);
         orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
         orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(),
                 It.IsAny<CancellationToken>()))
@@ -284,6 +295,7 @@ public class OrderManagerTests
         requestMock.SetupProperty(r => r.Tax, 0m);
         requestMock.SetupProperty(r => r.Total, null);
         requestMock.Setup(r => r.OrderItems).Returns([item1.Object]);
+        customerRepoMock.Setup(c=>c.GetCustomerByIdAsync(It.IsAny<Guid>(),It.IsAny<CancellationToken>())).ReturnsAsync(new Mock<ICustomer>().Object);
         orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
         orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(),
                 It.IsAny<CancellationToken>()))
@@ -312,6 +324,7 @@ public class OrderManagerTests
         requestMock.SetupProperty(r => r.Tax, 4.12m);
         requestMock.SetupProperty(r => r.Total, null);
         requestMock.Setup(r => r.OrderItems).Returns([item1.Object]);
+        customerRepoMock.Setup(c=>c.GetCustomerByIdAsync(It.IsAny<Guid>(),It.IsAny<CancellationToken>())).ReturnsAsync(new Mock<ICustomer>().Object);
         orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
         orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(),
                 It.IsAny<CancellationToken>()))
@@ -339,6 +352,7 @@ public class OrderManagerTests
         requestMock.SetupProperty(r => r.Tax, 0m);
         requestMock.SetupProperty(r => r.Total, null);
         requestMock.Setup(r => r.OrderItems).Returns([item.Object]);
+        customerRepoMock.Setup(c=>c.GetCustomerByIdAsync(It.IsAny<Guid>(),It.IsAny<CancellationToken>())).ReturnsAsync(new Mock<ICustomer>().Object);
         orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
         orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(),
                 It.IsAny<CancellationToken>()))
@@ -371,6 +385,7 @@ public class OrderManagerTests
         requestMock.SetupProperty(r => r.Tax, 0m);
         requestMock.SetupProperty(r => r.Total, null);
         requestMock.Setup(r => r.OrderItems).Returns([validItem.Object, invalidItem.Object]);
+        customerRepoMock.Setup(c=>c.GetCustomerByIdAsync(It.IsAny<Guid>(),It.IsAny<CancellationToken>())).ReturnsAsync(new Mock<ICustomer>().Object);
         orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
         orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(),
                 It.IsAny<CancellationToken>()))
@@ -399,6 +414,7 @@ public class OrderManagerTests
         requestMock.SetupProperty(r => r.Tax, 0m);
         requestMock.SetupProperty(r => r.Total, null);
         requestMock.Setup(r => r.OrderItems).Returns([item.Object]);
+        customerRepoMock.Setup(c=>c.GetCustomerByIdAsync(It.IsAny<Guid>(),It.IsAny<CancellationToken>())).ReturnsAsync(new Mock<ICustomer>().Object);
         orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
         orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(),
                 It.IsAny<CancellationToken>()))
@@ -432,6 +448,7 @@ public class OrderManagerTests
         requestMock.SetupProperty(r => r.Tax, 0m);
         requestMock.SetupProperty(r => r.Total, null);
         requestMock.Setup(r => r.OrderItems).Returns([item.Object]);
+        customerRepoMock.Setup(c=>c.GetCustomerByIdAsync(It.IsAny<Guid>(),It.IsAny<CancellationToken>())).ReturnsAsync(new Mock<ICustomer>().Object);
         orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
         orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(),
                 It.IsAny<CancellationToken>()))
@@ -462,6 +479,7 @@ public class OrderManagerTests
         requestMock.SetupProperty(r => r.Tax, 0m);
         requestMock.SetupProperty(r => r.Total, null);
         requestMock.Setup(r => r.OrderItems).Returns([item.Object]);
+        customerRepoMock.Setup(c=>c.GetCustomerByIdAsync(It.IsAny<Guid>(),It.IsAny<CancellationToken>())).ReturnsAsync(new Mock<ICustomer>().Object);
         orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
         orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(),
                 It.IsAny<CancellationToken>()))
@@ -490,6 +508,7 @@ public class OrderManagerTests
         requestMock.SetupProperty(r => r.Tax, 0m);
         requestMock.SetupProperty(r => r.Total, null);
         requestMock.Setup(r => r.OrderItems).Returns([item.Object]);
+        customerRepoMock.Setup(c=>c.GetCustomerByIdAsync(It.IsAny<Guid>(),It.IsAny<CancellationToken>())).ReturnsAsync(new Mock<ICustomer>().Object);
         orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
         orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(),
                 It.IsAny<CancellationToken>()))
@@ -513,6 +532,7 @@ public class OrderManagerTests
         requestMock.SetupProperty(r => r.Tax, 0m);
         requestMock.SetupProperty(r => r.Total, null);
         requestMock.Setup(r => r.OrderItems).Returns(new List<ICreateOrderItem>());
+        customerRepoMock.Setup(c=>c.GetCustomerByIdAsync(It.IsAny<Guid>(),It.IsAny<CancellationToken>())).ReturnsAsync(new Mock<ICustomer>().Object);
         orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
         orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(),
                 It.IsAny<CancellationToken>()))
@@ -536,6 +556,7 @@ public class OrderManagerTests
         requestMock.SetupProperty(r => r.Tax, 4.12m);
         requestMock.SetupProperty(r => r.Total, null);
         requestMock.Setup(r => r.OrderItems).Returns((IEnumerable<ICreateOrderItem>?)null);
+        customerRepoMock.Setup(c=>c.GetCustomerByIdAsync(It.IsAny<Guid>(),It.IsAny<CancellationToken>())).ReturnsAsync(new Mock<ICustomer>().Object);
         orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
         orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(),
                 It.IsAny<CancellationToken>()))
@@ -559,6 +580,7 @@ public class OrderManagerTests
         requestMock.SetupProperty(r => r.Tax, 1m);
         requestMock.SetupProperty(r => r.Total, 999m);
         requestMock.Setup(r => r.OrderItems).Returns((IEnumerable<ICreateOrderItem>?)null);
+        customerRepoMock.Setup(c=>c.GetCustomerByIdAsync(It.IsAny<Guid>(),It.IsAny<CancellationToken>())).ReturnsAsync(new Mock<ICustomer>().Object);
         orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
         orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(),
                 It.IsAny<CancellationToken>()))
@@ -570,35 +592,6 @@ public class OrderManagerTests
             .Be(13m, "a caller-supplied Total must not be trusted over the calculated one");
     }
 
-    [Test, Description("CreateOrderAsync should pass a defaulted request to the repo when the request is null")]
-    public async Task CreateOrderAsync_PassesDefaultedRequestToRepoWhenRequestIsNull()
-    {
-        Mock<IOrderRepo> orderRepoMock = new();
-        Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
-        Mock<IOrder> orderMock = new();
-        ICreateOrder? capturedRequest = null;
-        orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
-        orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(),
-                It.IsAny<CancellationToken>()))
-            .Callback<ICreateOrder, int, bool, CancellationToken>((request, _, _, _) => capturedRequest = request)
-            .ReturnsAsync(orderMock.Object);
-
-        await sut.CreateOrderAsync(null, TestContext.CurrentContext.CancellationToken);
-
-        capturedRequest.Should().NotBeNull("the manager should substitute a default request");
-        capturedRequest!.CustomerId.Should().BeNull();
-        capturedRequest.OrderDate.Should().NotBeNull();
-        capturedRequest.OrderDate!.Value.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
-        capturedRequest.SubTotal.Should().Be(0m);
-        capturedRequest.Shipping.Should().Be(0m);
-        capturedRequest.Tax.Should().Be(0m);
-        capturedRequest.Total.Should().Be(0m);
-        capturedRequest.BillingAddress1.Should().BeEmpty();
-        capturedRequest.ShippingAddress1.Should().BeEmpty();
-        capturedRequest.OrderItems.Should().BeNull();
-    }
-
     [Test, Description("CreateOrderAsync should pass the cancellation token to both repo calls")]
     public async Task CreateOrderAsync_PassesCancellationTokenToRepo()
     {
@@ -608,6 +601,7 @@ public class OrderManagerTests
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrder> requestMock = new();
         using CancellationTokenSource cts = new();
+        customerRepoMock.Setup(c=>c.GetCustomerByIdAsync(It.IsAny<Guid>(),It.IsAny<CancellationToken>())).ReturnsAsync(new Mock<ICustomer>().Object);
         orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(cts.Token)).ReturnsAsync(1000);
         orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), 1000, true, cts.Token))
             .ReturnsAsync(orderMock.Object);
@@ -627,6 +621,7 @@ public class OrderManagerTests
         OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrder> requestMock = new();
+        customerRepoMock.Setup(c=>c.GetCustomerByIdAsync(It.IsAny<Guid>(),It.IsAny<CancellationToken>())).ReturnsAsync(new Mock<ICustomer>().Object);
         orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("counter unavailable"));
         orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(),
@@ -648,6 +643,7 @@ public class OrderManagerTests
         Mock<ICustomerRepo> customerRepoMock = new();
         OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
         Mock<ICreateOrder> requestMock = new();
+        customerRepoMock.Setup(c=>c.GetCustomerByIdAsync(It.IsAny<Guid>(),It.IsAny<CancellationToken>())).ReturnsAsync(new Mock<ICustomer>().Object);
         orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
         orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(),
                 It.IsAny<CancellationToken>()))
@@ -658,47 +654,6 @@ public class OrderManagerTests
         await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("save failed");
     }
 
-    [Test, Description("CreateOrderAsync should not look up a customer when the request has no CustomerId")]
-    public async Task CreateOrderAsync_DoesNotLookUpCustomerWhenCustomerIdIsNull()
-    {
-        Mock<IOrderRepo> orderRepoMock = new();
-        Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
-        Mock<IOrder> orderMock = new();
-        Mock<ICreateOrder> requestMock = new();
-        requestMock.SetupProperty(r => r.CustomerId, null);
-        orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
-        orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(orderMock.Object);
-
-        await sut.CreateOrderAsync(requestMock.Object, TestContext.CurrentContext.CancellationToken);
-
-        customerRepoMock.Verify(r => r.GetCustomerByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
-            Times.Never);
-    }
-
-    [Test, Description("CreateOrderAsync should not look up a customer when the CustomerId is an empty Guid")]
-    public async Task CreateOrderAsync_DoesNotLookUpCustomerWhenCustomerIdIsEmptyGuid()
-    {
-        Mock<IOrderRepo> orderRepoMock = new();
-        Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
-        Mock<IOrder> orderMock = new();
-        Mock<ICreateOrder> requestMock = new();
-        requestMock.SetupProperty(r => r.CustomerId, Guid.Empty);
-        orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
-        orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(orderMock.Object);
-
-        await sut.CreateOrderAsync(requestMock.Object, TestContext.CurrentContext.CancellationToken);
-
-        customerRepoMock.Verify(r => r.GetCustomerByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
-            Times.Never);
-        requestMock.Object.CustomerId.Should()
-            .BeNull("an empty Guid is not a customer and must not reach the database");
-    }
 
     [Test, Description("CreateOrderAsync should look up the customer using the request's CustomerId and the cancellation token")]
     public async Task CreateOrderAsync_LooksUpCustomerWithIdAndCancellationToken()
@@ -711,7 +666,7 @@ public class OrderManagerTests
         using CancellationTokenSource cts = new();
         Mock<ICreateOrder> requestMock = new();
         requestMock.SetupProperty(r => r.CustomerId, customerId);
-        customerRepoMock.Setup(r => r.GetCustomerByIdAsync(customerId, cts.Token)).ReturnsAsync((ICustomer?)null);
+        customerRepoMock.Setup(c=>c.GetCustomerByIdAsync(It.IsAny<Guid>(),It.IsAny<CancellationToken>())).ReturnsAsync(new Mock<ICustomer>().Object);
         orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
         orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(),
                 It.IsAny<CancellationToken>()))
@@ -959,8 +914,7 @@ public class OrderManagerTests
         requestMock.SetupProperty(r => r.BillingCity, string.Empty);
         requestMock.SetupProperty(r => r.ShippingAddress1, string.Empty);
         requestMock.SetupProperty(r => r.ShippingCity, string.Empty);
-        customerRepoMock.Setup(r => r.GetCustomerByIdAsync(customerId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((ICustomer?)null);
+        customerRepoMock.Setup(c=>c.GetCustomerByIdAsync(It.IsAny<Guid>(),It.IsAny<CancellationToken>())).ReturnsAsync(new Mock<ICustomer>().Object);
         orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
         orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(),
                 It.IsAny<CancellationToken>()))
@@ -973,7 +927,6 @@ public class OrderManagerTests
         requestMock.Object.BillingCity.Should().BeEmpty();
         requestMock.Object.ShippingAddress1.Should().BeEmpty();
         requestMock.Object.ShippingCity.Should().BeEmpty();
-        requestMock.Object.CustomerId.Should().BeNull("an unknown customer id is cleared so the order can be saved");
     }
 
     [Test, Description("CreateOrderAsync should leave addresses unchanged when the customer has no default addresses")]
@@ -1068,31 +1021,6 @@ public class OrderManagerTests
                 It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    [Test, Description("CreateOrderAsync should send a null CustomerId to the order repo when the customer is not found")]
-    public async Task CreateOrderAsync_PassesNullCustomerIdToOrderRepoWhenCustomerNotFound()
-    {
-        Mock<IOrderRepo> orderRepoMock = new();
-        Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
-        Mock<IOrder> orderMock = new();
-        Guid customerId = Guid.NewGuid();
-        Mock<ICreateOrder> requestMock = new();
-        requestMock.SetupProperty(r => r.CustomerId, customerId);
-        Guid? customerIdAtRepoCall = Guid.NewGuid();
-        customerRepoMock.Setup(r => r.GetCustomerByIdAsync(customerId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((ICustomer?)null);
-        orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
-        orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(),
-                It.IsAny<CancellationToken>()))
-            .Callback<ICreateOrder, int, bool, CancellationToken>((createRequest, _, _, _) =>
-                customerIdAtRepoCall = createRequest.CustomerId)
-            .ReturnsAsync(orderMock.Object);
-
-        await sut.CreateOrderAsync(requestMock.Object, TestContext.CurrentContext.CancellationToken);
-
-        customerIdAtRepoCall.Should().BeNull("an order must not be saved against a customer that does not exist");
-    }
-
     [Test, Description("CreateOrderAsync should keep the CustomerId when the customer is found")]
     public async Task CreateOrderAsync_KeepsCustomerIdWhenCustomerFound()
     {
@@ -1144,6 +1072,7 @@ public class OrderManagerTests
         requestMock.SetupProperty(r => r.Tax, 0m);
         requestMock.SetupProperty(r => r.Total, null);
         requestMock.Setup(r => r.OrderItems).Returns([item1.Object, item2.Object, item3.Object]);
+        customerRepoMock.Setup(c=>c.GetCustomerByIdAsync(It.IsAny<Guid>(),It.IsAny<CancellationToken>())).ReturnsAsync(new Mock<ICustomer>().Object);
         orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
         orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(orderMock.Object);
@@ -1179,6 +1108,7 @@ public class OrderManagerTests
         requestMock.SetupProperty(r => r.Tax, 0m);
         requestMock.SetupProperty(r => r.Total, null);
         requestMock.Setup(r => r.OrderItems).Returns([item1.Object, item2.Object, item3.Object]);
+        customerRepoMock.Setup(c=>c.GetCustomerByIdAsync(It.IsAny<Guid>(),It.IsAny<CancellationToken>())).ReturnsAsync(new Mock<ICustomer>().Object);
         orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
         orderRepoMock.Setup(r => r.CreateOrderAsync(It.IsAny<ICreateOrder>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(orderMock.Object);

@@ -13,8 +13,8 @@ public class CreateOrderTests
     public void CreateOrder_HasExpectedDefaults()
     {
         CreateOrder sut = new();
-
-        sut.CustomerId.Should().BeNull();
+        
+        Assert.IsNotNull(sut.CustomerId);
         sut.OrderDate.Should().BeNull();
         sut.BillingAddress1.Should().BeEmpty();
         sut.BillingAddress2.Should().BeEmpty();

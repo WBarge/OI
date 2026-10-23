@@ -62,7 +62,7 @@
       <td>{{item.name}}</td>
       <td>{{item.description}}</td>
       <td>{{item.price | currency}}</td>
-      <td><p-inputnumber id="quantity"  [(ngModel)]="item.quantity" (ngModelChange)="onQuantityChange($event,item)"  readonly="isReadOnly"/></td>
+      <td><p-inputnumber id="quantity"  [(ngModel)]="item.quantity" (ngModelChange)="onQuantityChange($event,item)"  [readonly]="isReadOnly"/></td>
       <td>{{item.total | currency}}</td>
       <td>
         <div class="rightAlign">
