@@ -9,6 +9,7 @@
                     id="dateRange"
                     selectionMode="single"
                     appendTo="body"
+                    [disabled]="isReadOnly"
                     [(ngModel)]= "orderDate"
                   />
     </span>
@@ -17,22 +18,23 @@
 <p-fieldset legend="Customer" class="customerDetails" (dblclick)="onCustomerDoubleClick($event)">
     <span class="fieldOnSide">
       <label for="customerName">Name: </label>
-      <input id="customerName" type="text" readonly pInputText [(ngModel)]="customerName"/>
+      <input id="customerName" type="text" readonly pInputText [(ngModel)]="customerName " readonly="isReadOnly"/>
     </span>
     <span class="fieldOnSide">
       <label >Phone Number: </label>
-      <input pInputText id="phone" readonly [value]="customerPhone|phoneFormat"/>
+      <input pInputText id="phone" readonly [value]="customerPhone|phoneFormat" readonly="isReadOnly"/>
     </span>
   </p-fieldset>
 @if (configuration(); as config) {
   @if (!config.disableAddresses) {
     <div class="address-panels">
-      <address-panel [AddressData]="billingAddress" Header="Billing Address"></address-panel>
+      <address-panel [AddressData]="billingAddress" Header="Billing Address" [isReadOnly]="isReadOnly"></address-panel>
       <p-divider layout="vertical" />
       <address-panel
         [AddressData]="shippingAddress"
         Header="Shipping Address"
-        [isHidden]="config.HideShippingAddress">
+        [isHidden]="config.HideShippingAddress"
+        [isReadOnly]="isReadOnly">
       </address-panel>
     </div>
   }
@@ -60,7 +62,7 @@
       <td>{{item.name}}</td>
       <td>{{item.description}}</td>
       <td>{{item.price | currency}}</td>
-      <td><p-inputnumber id="quantity"  [(ngModel)]="item.quantity" (ngModelChange)="onQuantityChange($event,item)" /></td>
+      <td><p-inputnumber id="quantity"  [(ngModel)]="item.quantity" (ngModelChange)="onQuantityChange($event,item)"  readonly="isReadOnly"/></td>
       <td>{{item.total | currency}}</td>
       <td>
         <div class="rightAlign">
@@ -90,6 +92,16 @@
     <span>{{total | currency}}</span>
   </div>
 </p-fieldset>
+
+@if (canSubmit) {
+
+  @if (editable) {
+    <button type="button" pButton (click)="updateOrder($event)" label="Update">Update</button>
+  }@else{
+    <button type="button" pButton (click)="createOrder($event)" label="Create">Create</button>
+  }
+
+}
 
 <p-dialog header="Please select a customer" [style]="{ width: '75vw',height:'75vw' }" [(visible)]="showCustomerDialog" (onShow)="customerSelection.refresh()" [modal]="true" [closable]="false" >
   <app-customer-selection #customerSelection (selectedCustomer)="processSelectedCustomer($event)">

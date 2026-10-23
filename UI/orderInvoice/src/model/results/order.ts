@@ -1,4 +1,4 @@
-import { OrderItem } from "./order-item";
+import { ProductOrdered } from "./product-ordered";
 
 export class Order {
   public idValue:string="";
@@ -18,7 +18,7 @@ export class Order {
   public shippingCity: string = "";
   public shippingStateCode: string = "";
   public shippingZipCode: string = "";
-  public orderItems:OrderItem[] = [];
+  public orderItems:ProductOrdered[] = [];
   public subTotal:number=0;
   public shipping:number=0;
   public tax:number=0;

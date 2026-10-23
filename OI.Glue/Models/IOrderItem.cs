@@ -8,6 +8,11 @@ public interface IOrderItem
     public Guid Id { get; set; }
 
     /// <summary>
+    /// the id of the product that is being ordered
+    /// </summary>
+    public Guid ProductId { get; set; }
+
+    /// <summary>
     /// Gets or sets the name.
     /// the name of the product
     /// Is limited to 128 characters - will be silently truncated if longer

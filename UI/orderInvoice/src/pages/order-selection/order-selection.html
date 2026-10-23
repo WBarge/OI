@@ -15,24 +15,26 @@ currentPageReportTemplate="{first}-{last} of {totalRecords}"
 >
   <ng-template #header>
     <tr>
-      <th>SKU
+      <th>Order #</th>
+      <th>Customer
         <p-column-filter type="text" field="sku" display="menu" />
       </th>
-      <th>Name
+      <th>Phone Number
         <p-column-filter type="text" field="name" display="menu" />
       </th>
-      <th>Description
+      <th>Order Date
         <p-column-filter type="text" field="shortDescription" display="menu" />
       </th>
-      <th>Price</th>
+      <th>Total</th>
     </tr>
   </ng-template>
-  <ng-template #body let-product>
-    <tr [pSelectableRow]="product">
-      <td>{{product.sku}}</td>
-      <td>{{product.name}}</td>
-      <td>{{product.shortDescription}}</td>
-      <td>{{product.price | currency}}</td>
+  <ng-template #body let-order>
+    <tr [pSelectableRow]="order">
+      <td>{{order.orderNumber}}</td>
+      <td>{{order.customerName}}</td>
+      <td>{{order.phoneNumber | phoneFormat}}</td>
+      <td>{{order.orderDate | date:'MM/dd/yyyy'}}</td>
+      <td>{{order.total | currency}}</td>
     </tr>
   </ng-template>
 </p-table>

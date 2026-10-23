@@ -37,6 +37,9 @@ import { Trash } from '@primeicons/angular/trash';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { ProductSelection } from '../../components/product-selection/product-selection';
+import { OrdersService } from '../../services/orders-service';
+import { Order } from '../../model/results/order';
+import { NotificationService } from '../../utils/notification-service';
 
 
 @Component({
@@ -67,6 +70,8 @@ export class OrderInvoice implements OnInit {
   private configService = inject(ConfigService);
   private customerService = inject(CustomerService);
   private route = inject(ActivatedRoute);
+  private orderService = inject(OrdersService);
+  private notify=inject(NotificationService);
 
 
 
@@ -74,9 +79,12 @@ export class OrderInvoice implements OnInit {
   public oiMode: string = "Order";
   public showCustomerDialog:boolean = false;
   public showProductDialog:boolean = false;
+
   public orderId:string|null = null;
   public orderNumber: string = "";
   public orderDate:Date = new Date();
+  public orderCompleted:Date = new Date();
+  public customerId:string = "";
   public customerName: string = "";
   public customerPhone: string = "555-555-5555";
   public billingAddress:Address = new Address();
@@ -97,7 +105,7 @@ export class OrderInvoice implements OnInit {
 
     this.route.paramMap.subscribe(params => {
       this.orderId = params.get('id');
-       const isReadOnlyRoute = this.route.snapshot.data['readOnly'];
+      const isReadOnlyRoute = this.route.snapshot.data['readOnly'];
       // Determine mode based on the presence of the ID
       if (isReadOnlyRoute) {
         this.mode = OrderMode.View
@@ -106,8 +114,23 @@ export class OrderInvoice implements OnInit {
       } else {
         this.mode = OrderMode.New;
       }
+      if (this.orderId != null) {
+        this.loadOrder(null);
+      }
     });
 
+  }
+
+  public get isReadOnly(): boolean {
+    return this.mode === OrderMode.View;
+  }
+
+  public get editable():boolean{
+    return this.mode === OrderMode.Edit;
+  }
+
+  public get canSubmit():boolean{
+    return (!this.customerId) === false && this.items.length > 0
   }
 
   onQuantityChange(event:any,item:any){
@@ -121,21 +144,25 @@ export class OrderInvoice implements OnInit {
   }
 
   delete(productToDelete:ProductOrdered){
-      this.items = this.items.filter(p=>p.productId != productToDelete.productId);
-      this.calculateTotals();
+    if (this.isReadOnly) return;
+    this.items = this.items.filter(p=>p.productId != productToDelete.productId);
+    this.calculateTotals();
   }
 
   public onOrderItemsDoubleClick(event: MouseEvent): void {
+     if (this.isReadOnly) return;
     this.showProductDialog = true;
   }
 
   public onCustomerDoubleClick(event: MouseEvent): void {
+     if (this.isReadOnly) return;
     this.showCustomerDialog = true;
   }
 
   public processSelectedCustomer(customer:CustomerSearch){
       this.customerService.getCustomer(customer.idValue)
           .subscribe((result:Customer)=>{
+            this.customerId = result.idValue;
             this.customerName = result.firstName+" "+result.lastName;
             this.customerName = this.customerName.trim();
             this.customerPhone = result.phoneNumber;
@@ -183,6 +210,111 @@ export class OrderInvoice implements OnInit {
     this.tax = this.subtotal * 0.07; // Assuming a 7% tax rate
     this.total = this.subtotal + this.shipping + this.tax;
   }
+
+  loadOrder(orderToLoad:Order|null){
+
+    if (orderToLoad !== null && orderToLoad.idValue) {
+        this.orderId = orderToLoad.idValue;
+    }
+    if (this.orderId === null) {
+      return;
+    }
+    if (!orderToLoad){
+      this.orderService.getOrderById(this.orderId)
+      .subscribe((order:Order)=>{
+        this.populateOrderFields(order);
+      });
+    }else{
+        this.populateOrderFields(orderToLoad);
+    }
+  }
+
+  produceOrder():Order | null{
+    if (!this.customerId)
+    {
+      this.notify.error("ERROR","A Customer must be selected!");
+      return null;
+    }
+    if (this.items.length <1){
+      this.notify.error("ERROR","At least one item must be added to the order")
+      return null;
+    }
+    if (!this.orderDate || isNaN(new Date(this.orderDate).getTime())) {
+     this.notify.error("ERROR", "A valid order date is required");
+      return null;
+    }
+    const order:Order = new Order();
+    if (this.mode === OrderMode.Edit && this.orderId !== null)
+    {
+      order.idValue = this.orderId;
+      order.orderNumber = this.orderNumber;
+    }
+    order.orderDate = this.orderDate;
+    order.customerId = this.customerId;
+    order.orderItems = this.items;
+    order.billingAddress1 = this.billingAddress.address1;
+    order.billingAddress2 = this.billingAddress.address2;
+    order.billingCity = this.billingAddress.city;
+    order.billingStateCode =  this.billingAddress.stateCode;
+    order.billingZipCode = this.billingAddress.zipCode;
+    order.shippingAddress1 = this.shippingAddress.address1;
+    order.shippingAddress2 = this.shippingAddress.address2;
+    order.shippingCity = this.shippingAddress.city;
+    order.shippingStateCode = this.shippingAddress.stateCode;
+    order.shippingZipCode = this.shippingAddress.zipCode;
+    order.subTotal = this.subtotal;
+    order.shipping = this.shipping;
+    order.tax = this.tax;
+    order.total = this.total;
+
+    return order;
+  }
+
+  updateOrder(event:any){
+    const orderToCreate:Order|null = this.produceOrder();
+    if (orderToCreate !== null)
+    {
+      this.orderService.updateOrder(orderToCreate).subscribe();
+    }
+  }
+
+  createOrder(event:any){
+    const orderToCreate:Order|null = this.produceOrder();
+    if (orderToCreate !== null)
+    {
+      this.orderService.createOrder(orderToCreate).subscribe((result:Order)=>{
+          this.loadOrder(result);
+      });
+    }
+  }
+
+  populateOrderFields(order:Order) {
+    this.orderId = order.idValue;
+    this.orderNumber = order.orderNumber;
+    this.orderDate = order.orderDate;
+    this.orderCompleted = order.completedDate;
+    this.customerId = order.customerId;
+    this.customerName = order.customerName;
+    this.customerPhone = order.phoneNumber;
+    this.billingAddress = new Address();
+    this.billingAddress.address1 = order.billingAddress1;
+    this.billingAddress.address2 = order.billingAddress2;
+    this.billingAddress.city = order.billingCity;
+    this.billingAddress.stateCode = order.billingStateCode;
+    this.billingAddress.zipCode = order.billingZipCode;
+    this.shippingAddress = new Address();
+    this.shippingAddress.address1 = order.shippingAddress1;
+    this.shippingAddress.address2 = order.shippingAddress2;
+    this.shippingAddress.city = order.shippingCity;
+    this.shippingAddress.stateCode = order.shippingStateCode;
+    this.shippingAddress.zipCode = order.shippingZipCode;
+    this.items = order.orderItems;
+    this.subtotal = order.subTotal;
+    this.shipping = order.shipping;
+    this.tax = order.tax;
+    this.total = order.total;
+  }
+
 }
 
 enum OrderMode {

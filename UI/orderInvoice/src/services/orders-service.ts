@@ -5,12 +5,14 @@ import { catchError, map, Observable } from 'rxjs';
 import { ConfigService } from './config-service';
 import { ErrorHandlerService, HandleError } from '../utils/error-handler.service';
 
+
 import { FilterDetail, FilterDictionary } from '../model/requests/filter-detail';
 import { OrderListResult } from '../model/results/order-list-result';
 import { ListRequest } from '../model/requests/list-request';
 import { OrderSearch } from '../model/results/order-search';
 import { Order } from '../model/results/order';
-import { OrderItem } from '../model/results/order-item';
+import { ProductOrdered } from '../model/results/product-ordered';
+
 
 @Service()
 export class OrdersService {
@@ -40,8 +42,8 @@ export class OrdersService {
               tempCustomer.orderDate = new Date(order.orderDate);
               tempCustomer.completedDate = new Date(order.completedDate);
               tempCustomer.customerId = order.customerId;
-              tempCustomer.customerName = order.customer.Map((c:any)=>c.firstName+""+c.lastName);
-              tempCustomer.phoneNumber = order.customer.Map((c:any)=>c.phoneNumber);
+              tempCustomer.customerName = order.customer  ? `${order.customer.firstName} ${order.customer.lastName}`  : '';
+              tempCustomer.phoneNumber = order.customer  ? `${order.customer.phoneNumber}`  : '';
               tempCustomer.billingAddress1 = order.billingAddress1;
               tempCustomer.billingAddress2 = order.billingAddress2;
               tempCustomer.billingCity = order.billingCity;
@@ -52,8 +54,8 @@ export class OrdersService {
               tempCustomer.shippingCity = order.shippingCity;
               tempCustomer.shippingStateCode = order.shippingStateCode;
               tempCustomer.shippingZipCode = order.shippingZipCode;
-              tempCustomer.orderItems = order.OrderItems.map((item:any)=>{
-                const tempChar = new OrderItem();
+              tempCustomer.orderItems = order.orderItems.map((item:any)=>{
+                const tempChar = new ProductOrdered();
                 tempChar.idValue = item.id;
                 tempChar.name = item.name;
                 tempChar.description = item.description;
@@ -61,7 +63,7 @@ export class OrdersService {
                 tempChar.price = item.price;
                 tempChar.quantity = item.quantity;
                 tempChar.total = item.total;
-
+                tempChar.productId = item.productId;
                 return tempChar;
               });
               tempCustomer.subTotal = order.subTotal;
@@ -117,11 +119,96 @@ export class OrdersService {
       );
   }
 
-  public CreateOrder(something:Order):Observable<Order>{
-    throw Error("not implemented")
+  public createOrder(orderToCreate:Order):Observable<Order>{
+    const request = this.toRequest(orderToCreate);
+
+    return this.http.post<any>(this.orderServiceLocation,request)
+      .pipe(
+        map((created:any)=>this.toOrder(created,orderToCreate)),
+        catchError(this.handleError<Order>('createOrder'))
+      );
   }
 
-  public UpdateOrder(moreThings:Order):Observable<any>{
-    throw Error("not implemented")
+  private toOrder(created:any, submitted:Order):Order{
+    const order = new Order();
+    order.idValue = created.id;
+    order.orderNumber = String(created.orderNumber);
+    order.orderDate = new Date(created.orderDate);
+    order.completedDate = new Date(created.completedDate);
+    order.customerId = created.customerId ?? "";
+    order.customerName = created.customer
+      ? `${created.customer.firstName ?? ""} ${created.customer.lastName ?? ""}`.trim()
+      : submitted.customerName;
+    order.phoneNumber = created.customer ? created.customer.phoneNumber : submitted.phoneNumber;
+    order.billingAddress1 = created.billingAddress1;
+    order.billingAddress2 = created.billingAddress2;
+    order.billingCity = created.billingCity;
+    order.billingStateCode = created.billingStateCode;
+    order.billingZipCode = created.billingZipCode;
+    order.shippingAddress1 = created.shippingAddress1;
+    order.shippingAddress2 = created.shippingAddress2;
+    order.shippingCity = created.shippingCity;
+    order.shippingStateCode = created.shippingStateCode;
+    order.shippingZipCode = created.shippingZipCode;
+    order.orderItems = (created.orderItems ?? []).map((item:any)=>{
+      const orderItem = new ProductOrdered();
+      orderItem.idValue = item.id;
+      orderItem.name = item.name;
+      orderItem.description = item.description;
+      orderItem.sku = item.sku;
+      orderItem.price = item.price;
+      orderItem.quantity = item.quantity;
+      orderItem.total = item.total;
+      return orderItem;
+    });
+    order.subTotal = created.subTotal;
+    order.shipping = created.shipping;
+    order.tax = created.tax;
+    order.total = created.total;
+    order.isPending = created.isPending;
+    return order;
+  }
+
+  public updateOrder(orderToUpdate:Order):Observable<any>{
+    const request = {
+      id: orderToUpdate.idValue,
+      orderNumber: Number(orderToUpdate.orderNumber),
+      ...this.toRequest(orderToUpdate)
+    };
+
+    return this.http.put<any>(this.orderServiceLocation,request)
+      .pipe(
+        catchError(this.handleError<any>('updateOrder'))
+      );
+  }
+
+  private toRequest(order:Order){
+    return {
+      customerId: order.customerId || null,
+      orderDate: order.orderDate,
+      billingAddress1: order.billingAddress1,
+      billingAddress2: order.billingAddress2,
+      billingCity: order.billingCity,
+      billingStateCode: order.billingStateCode,
+      billingZipCode: order.billingZipCode,
+      shippingAddress1: order.shippingAddress1,
+      shippingAddress2: order.shippingAddress2,
+      shippingCity: order.shippingCity,
+      shippingStateCode: order.shippingStateCode,
+      shippingZipCode: order.shippingZipCode,
+      subTotal: order.subTotal,
+      shipping: order.shipping,
+      tax: order.tax,
+      total: order.total,
+      orderItems: order.orderItems.map((item:ProductOrdered)=>({
+        productId: item.productId,
+        name: item.name,
+        description: item.description,
+        sku: item.sku,
+        price: item.price,
+        quantity: item.quantity,
+        total: item.total
+      }))
+    };
   }
 }

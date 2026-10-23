@@ -2,15 +2,15 @@
 <p-fieldset legend={{headingTest}} class="addressPanel">
   <span class="fieldOnSide">
     <label for="address1">Address 1</label>
-    <input id="address1" type="text" pInputText  [(ngModel)]="data.address1" />
+    <input id="address1" type="text" pInputText  [(ngModel)]="data.address1" readonly="isReadOnly()" />
   </span>
   <span class="fieldOnSide">
     <label for="address2">Address 2</label>
-    <input id="address2" type="text" pInputText  [(ngModel)]="data.address2" />
+    <input id="address2" type="text" pInputText  [(ngModel)]="data.address2" readonly="isReadOnly()"/>
   </span>
   <span class="fieldOnSide">
     <label for="city">City</label>
-    <input id="city" type="text" pInputText [(ngModel)]="data.city" />
+    <input id="city" type="text" pInputText [(ngModel)]="data.city" readonly="isReadOnly()"/>
   </span>
     <span class="fieldOnSide">
     <label for="state">State</label>
@@ -21,11 +21,12 @@
         optionValue="code"
         placeholder="Select a State"
         [(ngModel)]="data.stateCode"
+        readonly="isReadOnly()"
     />
   </span>
   <span class="fieldOnSide">
     <label for="zipCode">Zip Code</label>
-    <input id="zipCode" pInputMask="99999" placeholder="99999" type="text" pInputText [(ngModel)]="data.zipCode" />
+    <input id="zipCode" pInputMask="99999" placeholder="99999" type="text" pInputText [(ngModel)]="data.zipCode" readonly="isReadOnly()"/>
   </span>
 </p-fieldset>
 }

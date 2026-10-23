@@ -32,7 +32,7 @@ export class AddressPanel  {
    @Input('AddressData')data:Address = new Address();
 
   readonly isHidden = input(false);
-
+  readonly isReadOnly = input(false);
   private stateService:StateService = inject(StateService);
 
   public states = signal<State[]>([]);

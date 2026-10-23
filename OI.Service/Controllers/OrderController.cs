@@ -38,7 +38,7 @@ public class OrderController(IOrderManager orderManager, ILogger<OrderController
     /// <param name="id">the unique id for the order</param>
     /// <param name="token">the cancellation token</param>
     /// <returns></returns>
-    [HttpGet]
+    [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(IOrder), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetOrderAsync(Guid id, CancellationToken token)
     {

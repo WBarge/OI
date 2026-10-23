@@ -41,25 +41,25 @@ public static class Program
             {
                 options.SwaggerEndpoint("/openapi/v1.json", "v1");
             });
-            app.Lifetime.ApplicationStarted.Register(() =>
-            {
-                //The project is configured to launch the Swagger UI in a browser when the application starts
-                //This code will cause another browser window to open using the Scalar.AspNetCore package to launch when the application starts.
-                //The code checks for the presence of Google Chrome Canary and uses it if available; otherwise, it falls back to the default browser.
-                //Google Chrome Canary is the preferred browser to use while building Web API applications
-                string canary = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    @"Google\Chrome SxS\Application\chrome.exe");
+            //app.Lifetime.ApplicationStarted.Register(() =>
+            //{
+            //    //The project is configured to launch the Swagger UI in a browser when the application starts
+            //    //This code will cause another browser window to open using the Scalar.AspNetCore package to launch when the application starts.
+            //    //The code checks for the presence of Google Chrome Canary and uses it if available; otherwise, it falls back to the default browser.
+            //    //Google Chrome Canary is the preferred browser to use while building Web API applications
+            //    string canary = Path.Combine(
+            //        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            //        @"Google\Chrome SxS\Application\chrome.exe");
 
-                const string URL = @"https://localhost:7128/scalar";
+            //    const string URL = @"https://localhost:7128/scalar";
 
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = File.Exists(canary) ? canary : URL, // fall back to default browser
-                    Arguments = File.Exists(canary) ? $"{URL}" : "",
-                    UseShellExecute = true
-                });
-            });
+            //    Process.Start(new ProcessStartInfo
+            //    {
+            //        FileName = File.Exists(canary) ? canary : URL, // fall back to default browser
+            //        Arguments = File.Exists(canary) ? $"{URL}" : "",
+            //        UseShellExecute = true
+            //    });
+            //});
         }
 
         app.UseUiExceptionHandler();

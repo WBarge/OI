@@ -10,6 +10,7 @@ internal static class OrderItemTranslator
         return new OI.Data.Translators.Internal_Models.OrderItem
         {
             Id = orderItem.Id,
+            ProductId = orderItem.ProductId,
             Name = orderItem.Name,
             Description = orderItem.Description,
             Sku = orderItem.Sku,

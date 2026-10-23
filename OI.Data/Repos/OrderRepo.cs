@@ -1,5 +1,6 @@
 using CrossCutting.Exceptions;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json.Linq;
 using OI.Data.Helpers;
 using OI.Data.Model;
 using OI.Data.Translators;
@@ -18,7 +19,12 @@ internal class OrderRepo(OiDbContext dbContext) : BaseEfRepo<Order>(dbContext), 
     /// <returns></returns>
     public async Task<IOrder?> GetOrderAsync(Guid orderId, CancellationToken token = default)
     {
-        Order? result = await base.FindByIdAsync(orderId, token);
+        Order? result = await DbContext.Orders
+            .Where(o => o.Id == orderId)
+            .Include(o => o.Customer)
+            .Include(o => o.OrderItems)
+            .FirstOrDefaultAsync(token);
+
         return result.Translate();
     }
 
@@ -136,7 +142,12 @@ internal class OrderRepo(OiDbContext dbContext) : BaseEfRepo<Order>(dbContext), 
     /// <exception cref="RequiredObjectException"></exception>
     public async Task UpdateOrder(IUpdateOrder request, CancellationToken cancellationToken = default)
     {
-        Order? order = await base.FindByIdAsync(request.Id, cancellationToken);
+        Order? order = await DbContext.Orders
+            .Where(o => o.Id == request.Id)
+            .Include(o => o.Customer)
+            .Include(o => o.OrderItems)
+            .FirstOrDefaultAsync(cancellationToken);
+
         if (order == null)
         {
             throw new RequiredObjectException("invalid order id");
@@ -162,12 +173,53 @@ internal class OrderRepo(OiDbContext dbContext) : BaseEfRepo<Order>(dbContext), 
 
         if (request.OrderItems != null && request.OrderItems.Any())
         {
-            order.OrderItems = [];
+            //List<OrderItem> orderItems = await this.DbContext.OrderItems
+            //    .Where(oi => oi.OrderId == order.Id)
+            //    .ToListAsync<OrderItem>(cancellationToken);
+            order.OrderItems ??= [];
             foreach (ICreateOrderItem createOrderItemRequest in request.OrderItems)
             {
-                OrderItem newItem = CreateOrderItem(createOrderItemRequest, order.Id);
-                order.OrderItems.Add(newItem);
+                OrderItem convertedItem = CreateOrderItem(createOrderItemRequest, order.Id);
+                OrderItem? foundItem = order.OrderItems!.FirstOrDefault(o => o.ProductId == createOrderItemRequest.ProductId);
+                if (foundItem != null)
+                {
+                    foundItem.Quantity = convertedItem.Quantity;
+                    foundItem.Total = convertedItem.Total;
+
+                }
+                else
+                {
+                    await DbContext.OrderItems.AddAsync(convertedItem,cancellationToken);
+                }
             }
+        }
+
+        try
+        {
+            await SaveAsync(cancellationToken);
+            if (request.OrderItems!.Count() != order.OrderItems!.Count())
+            {
+                order = await DbContext.Orders
+                    .Where(o => o.Id == request.Id)
+                    .Include(o => o.Customer)
+                    .Include(o => o.OrderItems)
+                    .FirstOrDefaultAsync(cancellationToken);
+                foreach (OrderItem orderOrderItem in order.OrderItems)
+                {
+                    bool missing = request.OrderItems!.FirstOrDefault(o => o.ProductId == orderOrderItem.ProductId) == null;
+                    if (missing)
+                    {
+                        order.OrderItems.Remove(orderOrderItem);
+                    }
+                }
+                await SaveAsync(cancellationToken);
+            }
+
+
+        }
+        catch (Exception x)
+        {
+            throw x;
         }
     }
 
@@ -189,7 +241,7 @@ internal class OrderRepo(OiDbContext dbContext) : BaseEfRepo<Order>(dbContext), 
             Sku = request.Sku,
             Price = request.Price ?? decimal.Zero,
             Quantity = request.Quantity ?? 0,
-            Total = request.Total ?? decimal.Zero,
+            Total = request.Total ?? (request.Price ?? decimal.Zero) * (request.Quantity ?? 0),
             Created = DateTime.UtcNow
         };
     }

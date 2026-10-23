@@ -1,10 +1,8 @@
-import { Component,output,inject,ChangeDetectionStrategy } from '@angular/core';
-import {CurrencyPipe} from '@angular/common';
+import { Component,inject,ChangeDetectionStrategy } from '@angular/core';
+import { Router } from '@angular/router';
+import { CurrencyPipe, DatePipe } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
-
-
-import { NotificationService } from '../../utils/notification-service';
-import { FilterTransformerService } from '../../services/transformers/filter-transformer.service';
 
 import { FilterMetadata } from 'primeng/api';
 import { TableLazyLoadEvent, TableModule, TablePageEvent,TableRowSelectEvent } from 'primeng/table';
@@ -14,61 +12,76 @@ import { IftaLabelModule } from 'primeng/iftalabel';
 import { InputTextModule} from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
 
+import { NotificationService } from '../../utils/notification-service';
+import { FilterTransformerService } from '../../services/transformers/filter-transformer.service';
+import { OrdersService } from '../../services/orders-service';
+
+import { PhoneFormatPipe } from '../../pipes/phone-format-pipe'
+
+import { OrderSearch } from '../../model/results/order-search';
+import { OrderListResult } from '../../model/results/order-list-result';
+
 
 @Component({
   imports: [TableModule,
         CurrencyPipe,
+        DatePipe,
+        PhoneFormatPipe,
         FieldsetModule,
         ToolbarModule,
         IftaLabelModule,
         InputTextModule,
         FormsModule,
         InputNumberModule],
-    providers: [FilterTransformerService],
+  providers: [FilterTransformerService,OrdersService],
+  changeDetection: ChangeDetectionStrategy.Eager,
   selector: 'app-order-selection',
   styleUrl: './order-selection.css',
   templateUrl: './order-selection.html',
 })
 export class OrderSelection {
   private notify=inject(NotificationService);
+  private router = inject(Router);
 
-    products!:any[];
-    currentPage:number =1;
-    pageSize:number = 10;
-    totalItems:number = 0;
-    filters?: {
-      [s: string]: FilterMetadata | FilterMetadata[] | undefined;
-    };
+  orders!:OrderSearch[];
+  currentPage:number =1;
+  pageSize:number = 10;
+  totalItems:number = 0;
+  filters?: {
+    [s: string]: FilterMetadata | FilterMetadata[] | undefined;
+  };
 
-    //private dataService=inject(ProductService);
-    private filterTransformer=inject(FilterTransformerService);
-
-      constructor()  {
-      }
+  private dataService=inject(OrdersService);
+  private filterTransformer=inject(FilterTransformerService);
 
 
-      loadOrders(){
-        this.notify.info('System Message','Loading Orders');
-        // var transFormedFilters = this.filterTransformer?.transformGridFilters(this.filters);
-        // this.dataService.getProducts(this.currentPage,this.pageSize,transFormedFilters)
-        //   .subscribe((results:ProductsListResult)=>{
-        //     this.products = results.data;
-        //     this.totalItems = results.totalRecordSize
-        //   });
-      }
+  constructor()  {
+  }
 
-      loadOrdersLazy(event: TableLazyLoadEvent) {
-        this.filters = event.filters;
-        this.loadOrders();
-      }
 
-      pageChange(event:TablePageEvent){
-        this.pageSize = event.rows;
-        this.currentPage = event.first/this.pageSize + 1;
-      }
+  loadOrders(){
+    this.notify.info('System Message','Loading Orders');
+      var transFormedFilters = this.filterTransformer?.transformGridFilters(this.filters);
+    this.dataService.getOrders(this.currentPage,this.pageSize,transFormedFilters)
+      .subscribe((results:OrderListResult)=>{
+        this.orders = results.data;
+        this.totalItems = results.totalRecordSize
+      });
+  }
 
-      onSelect(event:TableRowSelectEvent){
-          //this.selectedProduct.emit(event.data);
-        }
+  loadOrdersLazy(event: TableLazyLoadEvent) {
+    this.filters = event.filters;
+    this.loadOrders();
+  }
+
+  pageChange(event:TablePageEvent){
+    this.pageSize = event.rows;
+    this.currentPage = event.first/this.pageSize + 1;
+  }
+
+  onSelect(event:TableRowSelectEvent){
+      var id = event.data.idValue;
+      this.router.navigate(["/orderInvoice",id]);
+  }
 
 }
