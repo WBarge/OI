@@ -180,8 +180,7 @@ internal class OrderRepo(OiDbContext dbContext) : BaseEfRepo<Order>(dbContext), 
             foreach (ICreateOrderItem createOrderItemRequest in request.OrderItems)
             {
                 OrderItem convertedItem = CreateOrderItem(createOrderItemRequest, order.Id);
-                OrderItem? foundItem =
-                    order.OrderItems!.FirstOrDefault(o => o.ProductId == createOrderItemRequest.ProductId);
+                OrderItem? foundItem = order.OrderItems!.FirstOrDefault(o =>o.Id == createOrderItemRequest.Id);
                 if (foundItem != null)
                 {
                     foundItem.Quantity = convertedItem.Quantity;

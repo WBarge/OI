@@ -93,15 +93,19 @@
   </div>
 </p-fieldset>
 
-@if (canSubmit) {
+<div class="buttonRow">
+  @if (canSubmit) {
 
-  @if (editable) {
-    <button type="button" pButton (click)="updateOrder($event)" label="Update">Update</button>
-  }@else{
-    <button type="button" pButton (click)="createOrder($event)" label="Create">Create</button>
+    @if (editable) {
+      <button type="button" pButton (click)="updateOrder($event)" label="Update">Update</button>
+    }@else{
+      <button type="button" pButton (click)="createOrder($event)" label="Create">Create</button>
+    }
+
   }
+  <button type="button" pButton (click)="done($event)" label="Done">Done</button>
+</div>
 
-}
 
 <p-dialog header="Please select a customer" [style]="{ width: '75vw',height:'75vw' }" [(visible)]="showCustomerDialog" (onShow)="customerSelection.refresh()" [modal]="true" [closable]="false" >
   <app-customer-selection #customerSelection (selectedCustomer)="processSelectedCustomer($event)">

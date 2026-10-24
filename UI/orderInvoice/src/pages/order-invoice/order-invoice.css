@@ -60,6 +60,12 @@
   width: 15rem;
 }
 
+.buttonRow{
+  display: flex;
+  justify-content: flex-start;
+  gap: 1rem;
+}
+
 @media (max-width: 700px) {
 	.address-panels {
 		grid-template-columns: 1fr;

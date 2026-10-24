@@ -3,6 +3,7 @@ using OI.Glue.Managers;
 using OI.Glue.Models;
 using OI.Glue.Repos;
 using CrossCutting.Exceptions;
+using CrossCutting.Extensions;
 
 namespace OI.Business.Managers;
 
@@ -103,6 +104,21 @@ internal class CustomerManager(ICustomerRepo customerRepo, ILogger<CustomerManag
         ICustomer customer = await _customerRepo.CreateCustomerAsync(request, cancellationToken);
         _logger.LogInformation("Created customer {CustomerId}", customer.Id);
         return customer;
+    }
+
+    public async Task UpdateCustomerAsync(IUpdateCustomer request, CancellationToken token = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (request.Id.IsEmpty())
+        {
+            throw new RequestException(nameof(IUpdateCustomer.Id));
+        }
+
+        NormalizeAndValidate(request);
+        _logger.LogInformation("Updating Customer {id}",request.Id);
+        await _customerRepo.UpdateCustomerAsync(request, token);
+        _logger.LogInformation("Updated customer {id}",request.Id);
     }
 
     /// <summary>

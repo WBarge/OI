@@ -19,6 +19,7 @@ export class App {
   constructor() {
     this.items = [
       {label:'Home', routerLink:'/'},
+      {label:'Customers', routerLink:'/customers'},
       {label:'About',routerLink:'/about'}
     ];
   }

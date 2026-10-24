@@ -5,6 +5,11 @@ namespace OI.Service.Models.Requests;
 /// <summary>Represents a request to create an order item.</summary>
 public class CreateOrderItem : ICreateOrderItem
 {
+    /// <summary>
+    /// The id of the order item
+    /// </summary>
+    public Guid? Id { get; set; }
+
     /// <summary>Gets or sets the product identifier.</summary>
     public Guid ProductId { get; set; }
     /// <summary>Gets or sets the name of the order item.</summary>

@@ -100,8 +100,28 @@ export class CustomerService {
     );
   }
 
-  updateCustomer(custToUpdate:Customer):Observable<any>{
-    throw new Error("Not Implemented!");
+  updateCustomer(custToPopulate:Customer):Observable<any>{
+    const request ={
+      id:custToPopulate.idValue,
+      firstName:custToPopulate.firstName,
+      lastName:custToPopulate.lastName,
+      phoneNumber:custToPopulate.phoneNumber,
+      defaultBillingAddress1:custToPopulate.defaultBillingAddress1,
+      defaultBillingAddress2:custToPopulate.defaultBillingAddress2,
+      defaultBillingCity:custToPopulate.defaultBillingCity,
+      defaultBillingStateCode:custToPopulate.defaultBillingStateCode,
+      defaultBillingZipCode:custToPopulate.defaultBillingZipCode,
+      defaultShippingAddress1:custToPopulate.defaultShippingAddress1,
+      defaultShippingAddress2:custToPopulate.defaultShippingAddress2,
+      defaultShippingCity:custToPopulate.defaultShippingCity,
+      defaultShippingStateCode:custToPopulate.defaultShippingStateCode,
+      defaultShippingZipCode:custToPopulate.defaultShippingZipCode
+    }
+
+     return this.http.put(this.customerServiceLocation,request)
+    .pipe(
+      catchError(this.handleError<any>('createCustomer'))
+    );
   }
 
 }

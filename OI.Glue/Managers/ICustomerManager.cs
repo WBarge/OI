@@ -41,4 +41,12 @@ public interface ICustomerManager
     /// or a value is longer than its column allows. Both are reported to the client as 400 Bad Request.
     /// </remarks>
     Task<ICustomer> CreateCustomerAsync(ICreateCustomer? request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Updates the customer in the system
+    /// </summary>
+    /// <param name="request"></param>
+    /// <param name="token"></param>
+    /// <returns></returns>
+    Task UpdateCustomerAsync(IUpdateCustomer request, CancellationToken token = default);
 }

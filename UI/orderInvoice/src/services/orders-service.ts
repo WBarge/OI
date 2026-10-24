@@ -201,6 +201,7 @@ export class OrdersService {
       tax: order.tax,
       total: order.total,
       orderItems: order.orderItems.map((item:ProductOrdered)=>({
+        id: item.idValue || null,
         productId: item.productId,
         name: item.name,
         description: item.description,

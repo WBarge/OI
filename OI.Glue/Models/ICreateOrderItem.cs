@@ -2,6 +2,7 @@ namespace OI.Glue.Models;
 
 public interface ICreateOrderItem
 {
+    Guid? Id { get; set; }
     /// <summary>Gets or sets the product identifier.</summary>
     Guid ProductId { get; set; }
     /// <summary>Gets or sets the name of the order item.</summary>

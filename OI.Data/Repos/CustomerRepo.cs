@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using CrossCutting.Exceptions;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Client;
 using OI.Data.Helpers;
 using OI.Data.Translators;
 using OI.Data.Translators.Internal_Models;
@@ -87,5 +89,31 @@ internal class CustomerRepo(OiDbContext dbContext) : BaseEfRepo<Customer>(dbCont
         await InsertAsync(customer, cancellationToken);
         await SaveAsync(cancellationToken);
         return customer.Translate();
+    }
+
+    public async Task UpdateCustomerAsync(IUpdateCustomer request, CancellationToken token = default)
+    {
+        Customer? preexisting = await base.FindByIdAsync(request.Id,token);
+        if (preexisting == null)
+        {
+            throw new RequiredObjectException("customer was not found");
+        }
+
+        preexisting.LastName = request.LastName;
+        preexisting.FirstName = request.FirstName;
+        preexisting.PhoneNumber = request.PhoneNumber;
+        preexisting.DefaultBillingAddress1 = request.DefaultBillingAddress1;
+        preexisting.DefaultBillingAddress2 = request.DefaultBillingAddress2;
+        preexisting.DefaultBillingCity = request.DefaultBillingCity;
+        preexisting.DefaultBillingStateCode = request.DefaultBillingStateCode;
+        preexisting.DefaultBillingZipCode = request.DefaultBillingZipCode;
+        preexisting.DefaultShippingAddress1 = request.DefaultShippingAddress1;
+        preexisting.DefaultShippingAddress2 = request.DefaultShippingAddress2;
+        preexisting.DefaultShippingCity = request.DefaultShippingCity;
+        preexisting.DefaultShippingStateCode = request.DefaultShippingStateCode;
+        preexisting.DefaultShippingZipCode = request.DefaultShippingZipCode;
+
+        base.Update(preexisting);
+        await SaveAsync(token);
     }
 }

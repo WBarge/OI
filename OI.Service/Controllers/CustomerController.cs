@@ -49,12 +49,28 @@ public class CustomerController(ICustomerManager customerManager, ILogger<Custom
     [HttpPost]
     [ProducesResponseType(typeof(ICustomer), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> CreateCustomer(CancellationToken cancellationToken,
-        [FromBody] CreateCustomer? request)
+    public async Task<IActionResult> CreateCustomer(CancellationToken cancellationToken, [FromBody] CreateCustomer? request)
     {
         _logger.LogInformation("POST api/customer called");
         ICustomer customer = await _customerManager.CreateCustomerAsync(request, cancellationToken);
         _logger.LogInformation("Created customer {CustomerId}", customer.Id);
         return CreatedAtAction(nameof(GetCustomerById), new { id = customer.Id }, customer);
+    }
+
+    /// <summary>
+    /// Update the customer in the system
+    /// </summary>
+    /// <param name="token"></param>
+    /// <param name="request"></param>
+    /// <returns></returns>
+    /// <exception cref="NotImplementedException"></exception>
+    [HttpPut]
+    public async Task<IActionResult> UpdateCustomer(CancellationToken token, [FromBody] UpdateCustomer request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        _logger.LogInformation("PUT api/customer called");
+        await _customerManager.UpdateCustomerAsync(request, token);
+        _logger.LogInformation("Updated customer {id}",request.Id);
+        return Ok();
     }
 }

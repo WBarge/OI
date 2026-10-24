@@ -1,0 +1,80 @@
+<button type="button" pButton class="widthFull" (click)="newCustomerClicked()" >New Customer</button>
+
+<p-table id="customerTable" #customerTable
+[value]="customers()"
+selectionMode="single"
+(onRowSelect)="onSelect($event)"
+dataKey="idValue"
+[paginator]="true"
+[alwaysShowPaginator]="true"
+[totalRecords]="totalItems"
+[lazy]="true"
+(onLazyLoad)="loadCustomersLazy($event)"
+(onPage)="pageChange($event)"
+[rowsPerPageOptions]="[10, 25, 50]"
+[rows]="pageSize"
+[showCurrentPageReport]="true"
+currentPageReportTemplate="{first}-{last} of {totalRecords}"
+>
+  <ng-template #header>
+    <tr>
+      <th colspan="5" class="gridHeader" >Existing Customers</th>
+    </tr>
+    <tr>
+      <th>First Name
+        <p-column-filter type="text" field="FirstName" display="menu" />
+      </th>
+      <th>Last Name
+        <p-column-filter type="text" field="LastName" display="menu" />
+      </th>
+      <th>Phone Number
+        <p-column-filter type="text" field="PhoneNumber" display="menu" />
+      </th>
+    </tr>
+  </ng-template>
+  <ng-template #body let-customer>
+    <tr  [pSelectableRow]="customer">
+      <td>{{customer.firstName}}</td>
+      <td>{{customer.lastName}}</td>
+      <td>{{customer.phoneNumber |phoneFormat}}</td>
+    </tr>
+  </ng-template>
+</p-table>
+
+<button type="button" pButton (click)="done($event)" label="Done">Done</button>
+
+
+<p-dialog [header]="heading" [visible]="showNewCustomerDialog()" (visibleChange)="showNewCustomerDialog.set($event)" [modal]="true" [closable]="true" >
+  <p-fieldset legend="Customer" class="customerDetails">
+    <span class="fieldOnSide">
+      <label for="customerFirstName">First Name: </label>
+      <input id="customerFirstName" type="text" pInputText [(ngModel)]="customerFirstName"/>
+    </span>
+    <span class="fieldOnSide">
+      <label for="customerLastName">Last Name: </label>
+      <input id="customerLastName" type="text" pInputText [(ngModel)]="customerLastName"/>
+    </span>
+    <span class="fieldOnSide">
+      <label >Phone Number: </label>
+      <input pInputText id="phone" pInputMask="(999) 999-9999" placeholder="(999) 999-9999" [(ngModel)]="customerPhone"/>
+    </span>
+  </p-fieldset>
+  @if (configuration(); as config) {
+  @if (!config.disableAddresses) {
+    <span class="fieldOnSide">
+        <p-checkbox id="shipNbill" [(ngModel)]="shippingSameAsBilling" [binary]="true" [hidden]="configuration()?.HideShippingAddress"/>
+        <label pLabel for="shipNbill" class="text-sm" [hidden]="configuration()?.HideShippingAddress">Shipping is the same Billing</label>
+    </span>
+    <div class="address-panels">
+      <address-panel  [AddressData]="billingAddress" Header="Billing Address" [isReadOnly]="false"></address-panel>
+      <p-divider layout="vertical" />
+      @if (configuration(); as config) {
+        <address-panel [AddressData]="shippingAddress" Header="Shipping Address" [isHidden]="config.HideShippingAddress" [isReadOnly]="false"></address-panel>
+      }
+    </div>
+  }}
+  <ng-template #footer>
+      <button type="button" pButton (click)="doneWithWithNewCustomerClicked()">Done</button>
+  </ng-template>
+</p-dialog>
+

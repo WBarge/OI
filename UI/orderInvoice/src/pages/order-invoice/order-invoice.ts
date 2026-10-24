@@ -70,6 +70,7 @@ export class OrderInvoice implements OnInit {
   private configService = inject(ConfigService);
   private customerService = inject(CustomerService);
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private orderService = inject(OrdersService);
   private notify=inject(NotificationService);
 
@@ -316,6 +317,9 @@ export class OrderInvoice implements OnInit {
     this.total = order.total;
   }
 
+  done(event:any){
+    this.router.navigate(["/home"]);
+  }
 }
 
 enum OrderMode {

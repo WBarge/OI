@@ -42,4 +42,5 @@ public interface ICustomerRepo
     /// <returns>The saved customer, including its new id.</returns>
     Task<ICustomer> CreateCustomerAsync(ICreateCustomer request, CancellationToken cancellationToken = default);
 
+    Task UpdateCustomerAsync(IUpdateCustomer request, CancellationToken token = default);
 }

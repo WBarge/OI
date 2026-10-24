@@ -25,7 +25,7 @@ public class CustomersController(ICustomerManager customerManager, ILogger<Custo
     /// <returns>An object with <c>data</c> (the customers on the page) and <c>totalRecordSize</c> (the total number of customers).</returns>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetCustomers(CancellationToken cancellationToken, [FromBody] ListRequest request)
+    public async Task<IActionResult> GetCustomers(CancellationToken cancellationToken, [FromBody] ListRequest? request)
     {
         _logger.LogInformation("POST api/customers called");
         request ??= new ListRequest();
