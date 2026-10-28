@@ -7,7 +7,7 @@ import { OrdersService } from './orders-service';
 import { ConfigService } from './config-service';
 import { Configuration } from '../model/configuration';
 import { Order } from '../model/results/order';
-import { OrderItem } from '../model/results/order-item';
+import { ProductOrdered } from '../model/results/product-ordered'
 
 describe('OrdersService', () => {
   let service: OrdersService;
@@ -43,7 +43,7 @@ describe('OrdersService', () => {
   });
 
   const item = (productId: string, price: number, quantity: number) =>
-    Object.assign(new OrderItem(), {
+    Object.assign(new ProductOrdered(), {
       idValue: `line-${productId}`, productId, name: `Product ${productId}`, description: `Description ${productId}`,
       sku: `SKU-${productId}`, price, quantity, total: price * quantity
     });
@@ -61,7 +61,7 @@ describe('OrdersService', () => {
       subTotal: 25.5, shipping: 5, tax: 1.79, total: 32.29
     });
 
-  describe('CreateOrder', () => {
+  describe('createOrder', () => {
     /** What the API sends back (camelCase JSON of IOrder), for the order above once saved. */
     const savedOrder = (overrides: Record<string, unknown> = {}) => ({
       id: '22222222-2222-2222-2222-222222222222',
@@ -81,7 +81,7 @@ describe('OrdersService', () => {
     });
 
     it('should POST the order to the Order endpoint', () => {
-      service.CreateOrder(newOrder()).subscribe();
+      service.createOrder(newOrder()).subscribe();
 
       const request = httpTestingController.expectOne(orderUrl);
       expect(request.request.method).toBe('POST');
@@ -91,7 +91,7 @@ describe('OrdersService', () => {
     it('should send the order in the shape the API expects, including the product of every item', () => {
       const order = newOrder();
 
-      service.CreateOrder(order).subscribe();
+      service.createOrder(order).subscribe();
 
       const request = httpTestingController.expectOne(orderUrl);
       expect(request.request.body).toEqual({
@@ -109,7 +109,7 @@ describe('OrdersService', () => {
     });
 
     it('should not send what the server assigns or the screen only displays', () => {
-      service.CreateOrder(newOrder()).subscribe();
+      service.createOrder(newOrder()).subscribe();
 
       const request = httpTestingController.expectOne(orderUrl);
       for (const key of ['idValue', 'orderNumber', 'completedDate', 'isPending', 'customerName', 'phoneNumber']) {
@@ -124,7 +124,7 @@ describe('OrdersService', () => {
     it('should send a null customer when none has been chosen, because an empty string is not a valid id', () => {
       const order = Object.assign(newOrder(), { customerId: '' });
 
-      service.CreateOrder(order).subscribe();
+      service.createOrder(order).subscribe();
 
       const request = httpTestingController.expectOne(orderUrl);
       expect(request.request.body.customerId).toBeNull();
@@ -134,7 +134,7 @@ describe('OrdersService', () => {
     it('should send an order with no items', () => {
       const order = Object.assign(newOrder(), { orderItems: [] });
 
-      service.CreateOrder(order).subscribe();
+      service.createOrder(order).subscribe();
 
       const request = httpTestingController.expectOne(orderUrl);
       expect(request.request.body.orderItems).toEqual([]);
@@ -144,7 +144,7 @@ describe('OrdersService', () => {
     it('should emit the saved order with the id and order number the server assigned', () => {
       const next = vi.fn();
 
-      service.CreateOrder(newOrder()).subscribe(next);
+      service.createOrder(newOrder()).subscribe(next);
       httpTestingController.expectOne(orderUrl).flush(savedOrder());
 
       const created: Order = next.mock.calls[0][0];
@@ -159,7 +159,7 @@ describe('OrdersService', () => {
     it('should emit the addresses and totals the server saved', () => {
       const next = vi.fn();
 
-      service.CreateOrder(newOrder()).subscribe(next);
+      service.createOrder(newOrder()).subscribe(next);
       httpTestingController.expectOne(orderUrl).flush(savedOrder({ total: 40, subTotal: 33.21 }));
 
       const created: Order = next.mock.calls[0][0];
@@ -176,12 +176,12 @@ describe('OrdersService', () => {
     it('should emit the saved items with the ids the server assigned', () => {
       const next = vi.fn();
 
-      service.CreateOrder(newOrder()).subscribe(next);
+      service.createOrder(newOrder()).subscribe(next);
       httpTestingController.expectOne(orderUrl).flush(savedOrder());
 
       const created: Order = next.mock.calls[0][0];
       expect(created.orderItems).toHaveLength(2);
-      expect(created.orderItems[0]).toBeInstanceOf(OrderItem);
+      expect(created.orderItems[0]).toBeInstanceOf(ProductOrdered);
       expect(created.orderItems[0]).toEqual(expect.objectContaining({
         idValue: 'item-1', name: 'Product p1', description: 'Description p1', sku: 'SKU-p1', price: 10, quantity: 2, total: 20
       }));
@@ -191,7 +191,7 @@ describe('OrdersService', () => {
     it('should emit no items when the server sends none', () => {
       const next = vi.fn();
 
-      service.CreateOrder(newOrder()).subscribe(next);
+      service.createOrder(newOrder()).subscribe(next);
       httpTestingController.expectOne(orderUrl).flush(savedOrder({ orderItems: undefined }));
 
       expect(next.mock.calls[0][0].orderItems).toEqual([]);
@@ -200,7 +200,7 @@ describe('OrdersService', () => {
     it('should keep the customer name and phone number from the screen when the server does not send the customer', () => {
       const next = vi.fn();
 
-      service.CreateOrder(newOrder()).subscribe(next);
+      service.createOrder(newOrder()).subscribe(next);
       httpTestingController.expectOne(orderUrl).flush(savedOrder({ customer: null }));
 
       const created: Order = next.mock.calls[0][0];
@@ -211,7 +211,7 @@ describe('OrdersService', () => {
     it('should use the customer the server sends when there is one', () => {
       const next = vi.fn();
 
-      service.CreateOrder(newOrder()).subscribe(next);
+      service.createOrder(newOrder()).subscribe(next);
       httpTestingController.expectOne(orderUrl)
         .flush(savedOrder({ customer: { firstName: 'Janet', lastName: 'Smythe', phoneNumber: '2145550101' } }));
 
@@ -223,7 +223,7 @@ describe('OrdersService', () => {
     it('should emit an empty customer id when the order has no customer', () => {
       const next = vi.fn();
 
-      service.CreateOrder(Object.assign(newOrder(), { customerId: '' })).subscribe(next);
+      service.createOrder(Object.assign(newOrder(), { customerId: '' })).subscribe(next);
       httpTestingController.expectOne(orderUrl).flush(savedOrder({ customerId: null }));
 
       expect(next.mock.calls[0][0].customerId).toBe('');
@@ -233,7 +233,7 @@ describe('OrdersService', () => {
       const next = vi.fn();
       const complete = vi.fn();
 
-      service.CreateOrder(newOrder()).subscribe({ next, complete });
+      service.createOrder(newOrder()).subscribe({ next, complete });
       httpTestingController.expectOne(orderUrl).flush(savedOrder());
 
       expect(next).toHaveBeenCalledTimes(1);
@@ -241,7 +241,7 @@ describe('OrdersService', () => {
     });
 
     it('should not call the server until it is subscribed to', () => {
-      service.CreateOrder(newOrder());
+      service.createOrder(newOrder());
 
       httpTestingController.expectNone(orderUrl);
     });
@@ -251,7 +251,7 @@ describe('OrdersService', () => {
       const next = vi.fn();
       const complete = vi.fn();
 
-      service.CreateOrder(newOrder()).subscribe({ next, complete });
+      service.createOrder(newOrder()).subscribe({ next, complete });
       httpTestingController.expectOne(orderUrl)
         .flush({ message: 'ProductId is required' }, { status: 400, statusText: 'Bad Request' });
 
@@ -267,7 +267,7 @@ describe('OrdersService', () => {
     it('should report a server failure as a fatal error', () => {
       const addSpy = vi.spyOn(messageService, 'add');
 
-      service.CreateOrder(newOrder()).subscribe();
+      service.createOrder(newOrder()).subscribe();
       httpTestingController.expectOne(orderUrl).flush({ message: 'boom' }, { status: 500, statusText: 'Server Error' });
 
       expect(addSpy).toHaveBeenCalledWith(expect.objectContaining({ severity: 'error', summary: 'Fatal Error' }));
@@ -280,7 +280,7 @@ describe('OrdersService', () => {
     });
 
     it('should PUT the order to the Order endpoint', () => {
-      service.UpdateOrder(savedOrder()).subscribe();
+      service.updateOrder(savedOrder()).subscribe();
 
       const request = httpTestingController.expectOne(orderUrl);
       expect(request.request.method).toBe('PUT');
@@ -290,7 +290,7 @@ describe('OrdersService', () => {
     it('should send the id, the order number as a number and the editable fields the API expects', () => {
       const order = savedOrder();
 
-      service.UpdateOrder(order).subscribe();
+      service.updateOrder(order).subscribe();
 
       const request = httpTestingController.expectOne(orderUrl);
       expect(request.request.body).toEqual({
@@ -311,7 +311,7 @@ describe('OrdersService', () => {
     });
 
     it('should not send what the server owns or the screen only displays', () => {
-      service.UpdateOrder(savedOrder()).subscribe();
+      service.updateOrder(savedOrder()).subscribe();
 
       const request = httpTestingController.expectOne(orderUrl);
       for (const key of ['idValue', 'completedDate', 'isPending', 'customerName', 'phoneNumber']) {
@@ -324,7 +324,7 @@ describe('OrdersService', () => {
     });
 
     it('should send a null customer when the order has none, because an empty string is not a valid id', () => {
-      service.UpdateOrder(Object.assign(savedOrder(), { customerId: '' })).subscribe();
+      service.updateOrder(Object.assign(savedOrder(), { customerId: '' })).subscribe();
 
       const request = httpTestingController.expectOne(orderUrl);
       expect(request.request.body.customerId).toBeNull();
@@ -336,12 +336,12 @@ describe('OrdersService', () => {
       let createBody: Record<string, unknown> = {};
       let updateBody: Record<string, unknown> = {};
 
-      service.CreateOrder(order).subscribe();
+      service.createOrder(order).subscribe();
       const create = httpTestingController.expectOne(request => request.method === 'POST');
       createBody = create.request.body;
       create.flush({});
 
-      service.UpdateOrder(order).subscribe();
+      service.updateOrder(order).subscribe();
       const update = httpTestingController.expectOne(request => request.method === 'PUT');
       updateBody = update.request.body;
       update.flush(null);
@@ -356,7 +356,7 @@ describe('OrdersService', () => {
       const next = vi.fn();
       const complete = vi.fn();
 
-      service.UpdateOrder(savedOrder()).subscribe({ next, complete });
+      service.updateOrder(savedOrder()).subscribe({ next, complete });
       httpTestingController.expectOne(orderUrl).flush(null);
 
       expect(next).toHaveBeenCalledTimes(1);
@@ -366,14 +366,14 @@ describe('OrdersService', () => {
     it('should not show a toast when the update succeeds', () => {
       const addSpy = vi.spyOn(messageService, 'add');
 
-      service.UpdateOrder(savedOrder()).subscribe();
+      service.updateOrder(savedOrder()).subscribe();
       httpTestingController.expectOne(orderUrl).flush(null);
 
       expect(addSpy).not.toHaveBeenCalled();
     });
 
     it('should not call the server until it is subscribed to', () => {
-      service.UpdateOrder(savedOrder());
+      service.updateOrder(savedOrder());
 
       httpTestingController.expectNone(orderUrl);
     });
@@ -383,7 +383,7 @@ describe('OrdersService', () => {
       const next = vi.fn();
       const complete = vi.fn();
 
-      service.UpdateOrder(savedOrder()).subscribe({ next, complete });
+      service.updateOrder(savedOrder()).subscribe({ next, complete });
       httpTestingController.expectOne(orderUrl)
         .flush({ message: 'The id of the order is required.' }, { status: 400, statusText: 'Bad Request' });
 
@@ -399,7 +399,7 @@ describe('OrdersService', () => {
     it('should report a server failure as a fatal error', () => {
       const addSpy = vi.spyOn(messageService, 'add');
 
-      service.UpdateOrder(savedOrder()).subscribe();
+      service.updateOrder(savedOrder()).subscribe();
       httpTestingController.expectOne(orderUrl).flush({ message: 'boom' }, { status: 500, statusText: 'Server Error' });
 
       expect(addSpy).toHaveBeenCalledWith(expect.objectContaining({ severity: 'error', summary: 'Fatal Error' }));
