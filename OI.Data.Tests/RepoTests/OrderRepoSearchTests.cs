@@ -1,6 +1,8 @@
 using FluentAssertions;
+using OI.Data.Contexts;
 using OI.Data.Helpers;
 using OI.Data.Model;
+using OI.Data.Model.Orders;
 using OI.Data.Repos;
 using OI.Glue.Models;
 
@@ -32,7 +34,7 @@ public class OrderRepoSearchTests
         Guid wanted = await SeedOrderAsync(city: "Austin");
         await SeedOrderAsync(city: "Dallas");
         await SeedOrderAsync(city: "Houston");
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         OrderRepo sut = new(context);
 
         IEnumerable<IOrderSearch> result = await sut.FindPagedOrderRecordsAsync(CityEquals("Austin"), 1, 10, CancellationToken.None);
@@ -48,7 +50,7 @@ public class OrderRepoSearchTests
         Guid customerId = await SeedCustomerAsync("Smith", "Jane", "512-555-0100");
         Guid orderId = await SeedOrderAsync(customerId: customerId, city: "Austin", total: 123.45m, isPending: false,
             orderDate: orderDate, completedDate: completedDate);
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         OrderRepo sut = new(context);
 
         IEnumerable<IOrderSearch> result = await sut.FindPagedOrderRecordsAsync(CityEquals("Austin"), 1, 10, CancellationToken.None);
@@ -68,7 +70,7 @@ public class OrderRepoSearchTests
     {
         Guid customerId = await SeedCustomerAsync("Smith", "Jane", "512-555-0100");
         await SeedOrderAsync(customerId: customerId, city: "Austin", isPending: true, completedDate: null);
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         OrderRepo sut = new(context);
 
         IEnumerable<IOrderSearch> result = await sut.FindPagedOrderRecordsAsync(CityEquals("Austin"), 1, 10, CancellationToken.None);
@@ -83,7 +85,7 @@ public class OrderRepoSearchTests
     {
         Guid customerId = await SeedCustomerAsync("Smith", "Jane", "512-555-0100");
         await SeedOrderAsync(customerId: customerId, city: "Austin", orderNumber: 4321);
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         OrderRepo sut = new(context);
 
         IEnumerable<IOrderSearch> result = await sut.FindPagedOrderRecordsAsync(CityEquals("Austin"), 1, 10, CancellationToken.None);
@@ -95,7 +97,7 @@ public class OrderRepoSearchTests
     public async Task FindPagedOrderRecordsAsync_ReturnsOrderWithoutCustomer()
     {
         Guid orderId = await SeedOrderAsync(customerId: null, city: "Austin");
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         OrderRepo sut = new(context);
 
         IEnumerable<IOrderSearch> result = await sut.FindPagedOrderRecordsAsync(CityEquals("Austin"), 1, 10, CancellationToken.None);
@@ -111,7 +113,7 @@ public class OrderRepoSearchTests
     {
         Guid customerId = await SeedCustomerAsync("Smith", "Jane", "512-555-0100");
         Guid orderId = await SeedOrderAsync(customerId: customerId, city: "Austin", itemCount: 3);
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         OrderRepo sut = new(context);
 
         IEnumerable<IOrderSearch> result = await sut.FindPagedOrderRecordsAsync(CityEquals("Austin"), 1, 10, CancellationToken.None);
@@ -128,7 +130,7 @@ public class OrderRepoSearchTests
         await SeedOrderAsync(customerId: smithZed, city: "Austin");
         await SeedOrderAsync(customerId: smithAdam, city: "Austin");
         await SeedOrderAsync(customerId: jonesZoe, city: "Austin");
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         OrderRepo sut = new(context);
 
         IEnumerable<IOrderSearch> result = await sut.FindPagedOrderRecordsAsync(CityEquals("Austin"), 1, 10, CancellationToken.None);
@@ -140,7 +142,7 @@ public class OrderRepoSearchTests
     public async Task FindPagedOrderRecordsAsync_ReturnsRequestedPage()
     {
         await SeedFiveOrdersForOneCustomerAsync();
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         OrderRepo sut = new(context);
 
         List<IOrderSearch> page1 = (await sut.FindPagedOrderRecordsAsync(CityEquals("Austin"), 1, 2, CancellationToken.None)).ToList();
@@ -158,7 +160,7 @@ public class OrderRepoSearchTests
     public async Task FindPagedOrderRecordsAsync_PagesDoNotOverlapOrSkipOrders()
     {
         await SeedFiveOrdersForOneCustomerAsync();
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         OrderRepo sut = new(context);
 
         List<Guid> ids = [];
@@ -175,7 +177,7 @@ public class OrderRepoSearchTests
     public async Task FindPagedOrderRecordsAsync_TreatsPageBelowOneAsFirstPage()
     {
         await SeedFiveOrdersForOneCustomerAsync();
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         OrderRepo sut = new(context);
 
         IEnumerable<IOrderSearch> first = await sut.FindPagedOrderRecordsAsync(CityEquals("Austin"), 1, 2, CancellationToken.None);
@@ -188,7 +190,7 @@ public class OrderRepoSearchTests
     public async Task FindPagedOrderRecordsAsync_TreatsPageSizeBelowOneAsOne()
     {
         await SeedFiveOrdersForOneCustomerAsync();
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         OrderRepo sut = new(context);
 
         IEnumerable<IOrderSearch> result = await sut.FindPagedOrderRecordsAsync(CityEquals("Austin"), 1, 0, CancellationToken.None);
@@ -200,7 +202,7 @@ public class OrderRepoSearchTests
     public async Task FindPagedOrderRecordsAsync_ReturnsEmpty_WhenOffsetOverflowsInt()
     {
         await SeedFiveOrdersForOneCustomerAsync();
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         OrderRepo sut = new(context);
 
         IEnumerable<IOrderSearch> result = await sut.FindPagedOrderRecordsAsync(CityEquals("Austin"), int.MaxValue, int.MaxValue, CancellationToken.None);
@@ -212,7 +214,7 @@ public class OrderRepoSearchTests
     public async Task FindPagedOrderRecordsAsync_ReturnsEmpty_WhenNothingMatches()
     {
         await SeedOrderAsync(city: "Austin");
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         OrderRepo sut = new(context);
 
         IEnumerable<IOrderSearch> result = await sut.FindPagedOrderRecordsAsync(CityEquals("Nowhere"), 1, 10, CancellationToken.None);
@@ -223,7 +225,7 @@ public class OrderRepoSearchTests
     [Test, Description("FindPagedOrderRecordsAsync should return an empty list when there are no orders at all")]
     public async Task FindPagedOrderRecordsAsync_ReturnsEmpty_WhenThereAreNoOrders()
     {
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         OrderRepo sut = new(context);
 
         IEnumerable<IOrderSearch> result = await sut.FindPagedOrderRecordsAsync(null, 1, 10, CancellationToken.None);
@@ -237,7 +239,7 @@ public class OrderRepoSearchTests
         await SeedOrderAsync(city: "Austin");
         await SeedOrderAsync(city: "Dallas");
         await SeedOrderAsync(city: "Houston");
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         OrderRepo sut = new(context);
 
         IEnumerable<IOrderSearch> result = await sut.FindPagedOrderRecordsAsync(null, 1, 100, CancellationToken.None);
@@ -250,7 +252,7 @@ public class OrderRepoSearchTests
     {
         await SeedOrderAsync(city: "Austin");
         await SeedOrderAsync(city: "Dallas");
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         OrderRepo sut = new(context);
 
         IEnumerable<IOrderSearch> result = await sut.FindPagedOrderRecordsAsync(new Dictionary<string, IFilterMetaData[]>(), 1, 100, CancellationToken.None);
@@ -264,7 +266,7 @@ public class OrderRepoSearchTests
         Guid pendingAustin = await SeedOrderAsync(city: "Austin", isPending: true);
         await SeedOrderAsync(city: "Austin", isPending: false);
         await SeedOrderAsync(city: "Dallas", isPending: true);
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         OrderRepo sut = new(context);
         Dictionary<string, IFilterMetaData[]> filters = new()
         {
@@ -282,7 +284,7 @@ public class OrderRepoSearchTests
     {
         Guid wanted = await SeedOrderAsync(city: "Austin", orderNumber: 2001);
         await SeedOrderAsync(city: "Austin", orderNumber: 2002);
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         OrderRepo sut = new(context);
         Dictionary<string, IFilterMetaData[]> filters = new() { ["OrderNumber"] = [Criteria("2001", "equals")] };
 
@@ -295,12 +297,12 @@ public class OrderRepoSearchTests
     public async Task FindPagedOrderRecordsAsync_DoesNotChangeData()
     {
         await SeedOrderAsync(city: "Austin", itemCount: 2);
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         OrderRepo sut = new(context);
 
         await sut.FindPagedOrderRecordsAsync(null, 1, 10, CancellationToken.None);
 
-        using OiDbContext verify = _db.CreateContext();
+        using OiServiceDbContext verify = _db.CreateContext();
         verify.Orders.Count().Should().Be(1);
         verify.OrderItems.Count().Should().Be(2);
         context.ChangeTracker.HasChanges().Should().BeFalse();
@@ -314,7 +316,7 @@ public class OrderRepoSearchTests
     public async Task FindPagedOrderRecordsAsync_Throws_WhenFilteringOnNonOrderProperty()
     {
         await SeedOrderAsync(city: "Austin");
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         OrderRepo sut = new(context);
         Dictionary<string, IFilterMetaData[]> filters = new() { ["CustomerName"] = [Criteria("Smith", "contains")] };
 
@@ -328,7 +330,7 @@ public class OrderRepoSearchTests
     public async Task FindPagedOrderRecordsAsync_Throws_WhenCancelled()
     {
         await SeedOrderAsync(city: "Austin");
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         OrderRepo sut = new(context);
         using CancellationTokenSource cts = new();
         await cts.CancelAsync();
@@ -349,7 +351,7 @@ public class OrderRepoSearchTests
         await SeedOrderAsync(city: "Austin");
         await SeedOrderAsync(city: "Austin");
         await SeedOrderAsync(city: "Dallas");
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         OrderRepo sut = new(context);
 
         long count = await sut.GetOrdersCountAsync(CityEquals("Austin"), CancellationToken.None);
@@ -363,7 +365,7 @@ public class OrderRepoSearchTests
         await SeedOrderAsync(city: "Austin");
         await SeedOrderAsync(city: "Dallas");
         await SeedOrderAsync(city: "Houston");
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         OrderRepo sut = new(context);
 
         long count = await sut.GetOrdersCountAsync(null, CancellationToken.None);
@@ -375,7 +377,7 @@ public class OrderRepoSearchTests
     public async Task GetOrdersCountAsync_ReturnsZero_WhenNothingMatches()
     {
         await SeedOrderAsync(city: "Austin");
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         OrderRepo sut = new(context);
 
         long matching = await sut.GetOrdersCountAsync(CityEquals("Nowhere"), CancellationToken.None);
@@ -386,7 +388,7 @@ public class OrderRepoSearchTests
     [Test, Description("GetOrdersCountAsync should return zero when there are no orders")]
     public async Task GetOrdersCountAsync_ReturnsZero_WhenThereAreNoOrders()
     {
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         OrderRepo sut = new(context);
 
         long count = await sut.GetOrdersCountAsync(null, CancellationToken.None);
@@ -398,7 +400,7 @@ public class OrderRepoSearchTests
     public async Task GetOrdersCountAsync_CountsOrderOnce_WhenItHasManyItems()
     {
         await SeedOrderAsync(city: "Austin", itemCount: 4);
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         OrderRepo sut = new(context);
 
         long count = await sut.GetOrdersCountAsync(CityEquals("Austin"), CancellationToken.None);
@@ -411,7 +413,7 @@ public class OrderRepoSearchTests
     {
         await SeedFiveOrdersForOneCustomerAsync();
         await SeedOrderAsync(city: "Dallas");
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         OrderRepo sut = new(context);
 
         long count = await sut.GetOrdersCountAsync(CityEquals("Austin"), CancellationToken.None);
@@ -427,7 +429,7 @@ public class OrderRepoSearchTests
     [Test, Description("GetOrdersCountAsync should fail with an ArgumentException when asked to filter on a name that is not an Order property")]
     public async Task GetOrdersCountAsync_Throws_WhenFilteringOnNonOrderProperty()
     {
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         OrderRepo sut = new(context);
         Dictionary<string, IFilterMetaData[]> filters = new() { ["PhoneNumber"] = [Criteria("512", "startsWith")] };
 
@@ -440,7 +442,7 @@ public class OrderRepoSearchTests
     [Test, Description("GetOrdersCountAsync should fail with a cancellation exception when the token is already cancelled")]
     public async Task GetOrdersCountAsync_Throws_WhenCancelled()
     {
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         OrderRepo sut = new(context);
         using CancellationTokenSource cts = new();
         await cts.CancelAsync();
@@ -477,7 +479,7 @@ public class OrderRepoSearchTests
     private async Task<Guid> SeedCustomerAsync(string lastName, string? firstName, string phoneNumber)
     {
         Guid id = Guid.NewGuid();
-        await using OiDbContext seed = _db.CreateContext();
+        await using OiServiceDbContext seed = _db.CreateContext();
         seed.Customers.Add(new Customer
         {
             Id = id,
@@ -501,7 +503,7 @@ public class OrderRepoSearchTests
         int itemCount = 0)
     {
         Guid id = Guid.NewGuid();
-        await using OiDbContext seed = _db.CreateContext();
+        await using OiServiceDbContext seed = _db.CreateContext();
         Order order = new()
         {
             Id = id,

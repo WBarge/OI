@@ -1,6 +1,7 @@
 ﻿using CrossCutting.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using OI.Data.Contexts;
 
 namespace OI.Data.DBSchemaHelper;
 
@@ -16,9 +17,9 @@ public static class DbSchemaExtension
     public static void HandleDbSchema(this IServiceCollection services)
     {
         ServiceProvider provider = services.BuildServiceProvider();
-        OiDbContext dbContext = provider.GetRequiredService<OiDbContext>();
-        dbContext.Required(nameof(dbContext));
-        dbContext.Database.Migrate();
+        OiServiceDbContext serviceDbContext = provider.GetRequiredService<OiServiceDbContext>();
+        serviceDbContext.Required(nameof(serviceDbContext));
+        serviceDbContext.Database.Migrate();
 
     }
 }

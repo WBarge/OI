@@ -1,4 +1,4 @@
-using OI.Data.Model;
+using OI.Data.Model.Orders;
 using OI.Glue.Models;
 
 namespace OI.Data.Translators;

@@ -1,8 +1,9 @@
 using System.Linq.Expressions;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using OI.Data.Contexts;
 using OI.Data.Helpers;
-using OI.Data.Model;
+using OI.Data.Model.Orders;
 using OI.Data.Repos;
 using OI.Glue.Models;
 
@@ -15,7 +16,7 @@ namespace OI.Data.Tests.RepoTests;
 [TestFixture, Description("Tests for BaseEfRepo")]
 public class BaseEfRepoTests
 {
-    private sealed class CustomerTestRepo(OiDbContext dbContext) : BaseEfRepo<Customer>(dbContext)
+    private sealed class CustomerTestRepo(OiServiceDbContext serviceDbContext) : BaseEfRepo<Customer>(serviceDbContext)
     {
         public Task<List<Customer>> All(CancellationToken token = default) => GetAllRecordsAsync(token);
         public Task<List<Customer>> AllPaged(int page, int size) => GetAllRecordsPagedAsync(page, size);
@@ -33,7 +34,7 @@ public class BaseEfRepoTests
     /// <summary>
     /// State has neither a Created nor a Modified property, which the base class has to cope with.
     /// </summary>
-    private sealed class StateTestRepo(OiDbContext dbContext) : BaseEfRepo<State>(dbContext)
+    private sealed class StateTestRepo(OiServiceDbContext serviceDbContext) : BaseEfRepo<State>(serviceDbContext)
     {
         public Task Insert(State state) => InsertAsync(state);
         public void Change(State state) => Update(state);
@@ -45,7 +46,7 @@ public class BaseEfRepoTests
     [SetUp]
     public void SetUp() => _db = new IsolatedDatabase();
 
-    [Test, Description("The constructor should throw when the DbContext is null")]
+    [Test, Description("The constructor should throw when the ServiceDbContext is null")]
     public void Constructor_Throws_WhenDbContextIsNull()
     {
         Action act = () => _ = new CustomerTestRepo(null!);
@@ -56,7 +57,7 @@ public class BaseEfRepoTests
     [Test, Description("Create should return a new, empty entity each time")]
     public void Create_ReturnsNewInstanceEachTime()
     {
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         CustomerTestRepo sut = new(context);
 
         Customer first = sut.NewEntity();
@@ -70,7 +71,7 @@ public class BaseEfRepoTests
     [Test, Description("InsertAsync should stamp Created with the current UTC time")]
     public async Task InsertAsync_SetsCreated()
     {
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         CustomerTestRepo sut = new(context);
         Customer customer = NewCustomer("Smith");
         customer.Created = DateTime.MinValue;
@@ -83,34 +84,34 @@ public class BaseEfRepoTests
     [Test, Description("InsertAsync should not write to the database until SaveAsync is called")]
     public async Task InsertAsync_DoesNotPersistUntilSaved()
     {
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         CustomerTestRepo sut = new(context);
         Customer customer = NewCustomer("Smith");
 
         await sut.Insert(customer);
 
-        using (OiDbContext before = _db.CreateContext())
+        using (OiServiceDbContext before = _db.CreateContext())
         {
             (await before.Customers.CountAsync()).Should().Be(0);
         }
 
         await sut.Save();
 
-        using OiDbContext after = _db.CreateContext();
+        using OiServiceDbContext after = _db.CreateContext();
         (await after.Customers.CountAsync(c => c.Id == customer.Id)).Should().Be(1);
     }
 
     [Test, Description("InsertAsync should work for an entity that has no Created property")]
     public async Task InsertAsync_WorksForEntityWithoutCreated()
     {
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         StateTestRepo sut = new(context);
         State state = new() { Id = Guid.NewGuid(), Name = "Testland", Code = "TL" };
 
         await sut.Insert(state);
         await sut.Save();
 
-        using OiDbContext verify = _db.CreateContext();
+        using OiServiceDbContext verify = _db.CreateContext();
         (await verify.States.CountAsync(s => s.Code == "TL")).Should().Be(1);
     }
 
@@ -118,7 +119,7 @@ public class BaseEfRepoTests
     public async Task Update_SetsModifiedAndPersistsChange()
     {
         Guid id = await SeedCustomerAsync("Smith");
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         CustomerTestRepo sut = new(context);
         Customer customer = (await sut.ById(id))!;
         customer.Modified.Should().BeNull();
@@ -127,7 +128,7 @@ public class BaseEfRepoTests
         sut.Change(customer);
         await sut.Save();
 
-        using OiDbContext verify = _db.CreateContext();
+        using OiServiceDbContext verify = _db.CreateContext();
         Customer saved = await verify.Customers.SingleAsync(c => c.Id == id);
         saved.LastName.Should().Be("Jones");
         saved.Modified.Should().NotBeNull();
@@ -137,7 +138,7 @@ public class BaseEfRepoTests
     [Test, Description("Update should work for an entity that has no Modified property")]
     public async Task Update_WorksForEntityWithoutModified()
     {
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         StateTestRepo sut = new(context);
         State state = new() { Id = Guid.NewGuid(), Name = "Testland", Code = "TL" };
         await sut.Insert(state);
@@ -147,7 +148,7 @@ public class BaseEfRepoTests
         sut.Change(state);
         await sut.Save();
 
-        using OiDbContext verify = _db.CreateContext();
+        using OiServiceDbContext verify = _db.CreateContext();
         (await verify.States.SingleAsync(s => s.Code == "TL")).Name.Should().Be("Renamed");
     }
 
@@ -155,20 +156,20 @@ public class BaseEfRepoTests
     public async Task Delete_RemovesEntityWhenSaved()
     {
         Guid id = await SeedCustomerAsync("Smith");
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         CustomerTestRepo sut = new(context);
         Customer customer = (await sut.ById(id))!;
 
         sut.Remove(customer);
 
-        using (OiDbContext before = _db.CreateContext())
+        using (OiServiceDbContext before = _db.CreateContext())
         {
             (await before.Customers.CountAsync(c => c.Id == id)).Should().Be(1);
         }
 
         await sut.Save();
 
-        using OiDbContext after = _db.CreateContext();
+        using OiServiceDbContext after = _db.CreateContext();
         (await after.Customers.CountAsync(c => c.Id == id)).Should().Be(0);
     }
 
@@ -176,7 +177,7 @@ public class BaseEfRepoTests
     public async Task FindByIdAsync_ReturnsEntity_WhenItExists()
     {
         Guid id = await SeedCustomerAsync("Smith");
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         CustomerTestRepo sut = new(context);
 
         Customer? result = await sut.ById(id);
@@ -189,7 +190,7 @@ public class BaseEfRepoTests
     public async Task FindByIdAsync_ReturnsNull_WhenItDoesNotExist()
     {
         await SeedCustomerAsync("Smith");
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         CustomerTestRepo sut = new(context);
 
         Customer? result = await sut.ById(Guid.NewGuid());
@@ -203,7 +204,7 @@ public class BaseEfRepoTests
         await SeedCustomerAsync("Alpha");
         await SeedCustomerAsync("Beta");
         await SeedCustomerAsync("Zeta");
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         CustomerTestRepo sut = new(context);
 
         List<Customer> result = await sut.All();
@@ -214,7 +215,7 @@ public class BaseEfRepoTests
     [Test, Description("GetAllRecordsAsync should return an empty list when there are no entities")]
     public async Task GetAllRecordsAsync_ReturnsEmpty_WhenThereAreNone()
     {
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         CustomerTestRepo sut = new(context);
 
         List<Customer> result = await sut.All();
@@ -229,7 +230,7 @@ public class BaseEfRepoTests
         {
             await SeedCustomerAsync($"Customer{i}");
         }
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         CustomerTestRepo sut = new(context);
 
         List<Customer> page1 = await sut.AllPaged(1, 2);
@@ -250,7 +251,7 @@ public class BaseEfRepoTests
         await SeedCustomerAsync("Smith");
         await SeedCustomerAsync("Smithers");
         await SeedCustomerAsync("Jones");
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         CustomerTestRepo sut = new(context);
 
         List<Customer> result = await sut.Where(c => c.LastName.StartsWith("Smith"));
@@ -262,7 +263,7 @@ public class BaseEfRepoTests
     public async Task FindByConditionAsync_ReturnsEmpty_WhenNothingMatches()
     {
         await SeedCustomerAsync("Smith");
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         CustomerTestRepo sut = new(context);
 
         List<Customer> result = await sut.Where(c => c.LastName == "Nobody");
@@ -278,7 +279,7 @@ public class BaseEfRepoTests
             await SeedCustomerAsync($"Smith{i}");
         }
         await SeedCustomerAsync("Jones");
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         CustomerTestRepo sut = new(context);
         Dictionary<string, IFilterMetaData[]> filters = new()
         {
@@ -300,7 +301,7 @@ public class BaseEfRepoTests
         await SeedCustomerAsync("Alpha");
         await SeedCustomerAsync("Beta");
         await SeedCustomerAsync("Zeta");
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         CustomerTestRepo sut = new(context);
 
         List<Customer> result = await sut.Filtered(null, 1, 10);
@@ -315,7 +316,7 @@ public class BaseEfRepoTests
         {
             await SeedCustomerAsync($"Customer{i}");
         }
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         CustomerTestRepo sut = new(context);
 
         List<Customer> first = await sut.Filtered(null, 1, 2);
@@ -327,7 +328,7 @@ public class BaseEfRepoTests
     [Test, Description("SaveAsync should persist several pending changes together")]
     public async Task SaveAsync_PersistsAllPendingChanges()
     {
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         CustomerTestRepo sut = new(context);
         Customer first = NewCustomer("Alpha");
         Customer second = NewCustomer("Beta");
@@ -336,7 +337,7 @@ public class BaseEfRepoTests
         await sut.Insert(second);
         await sut.Save();
 
-        using OiDbContext verify = _db.CreateContext();
+        using OiServiceDbContext verify = _db.CreateContext();
         (await verify.Customers.CountAsync()).Should().Be(2);
     }
 
@@ -348,7 +349,7 @@ public class BaseEfRepoTests
     private async Task<Guid> SeedCustomerAsync(string lastName)
     {
         Customer customer = NewCustomer(lastName);
-        await using OiDbContext seed = _db.CreateContext();
+        await using OiServiceDbContext seed = _db.CreateContext();
         seed.Customers.Add(customer);
         await seed.SaveChangesAsync();
         return customer.Id;

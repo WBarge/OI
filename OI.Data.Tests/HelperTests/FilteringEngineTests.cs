@@ -1,7 +1,8 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using OI.Data.Contexts;
 using OI.Data.Helpers;
-using OI.Data.Model;
+using OI.Data.Model.Orders;
 using OI.Glue.Models;
 
 namespace OI.Data.Tests.HelperTests;
@@ -313,7 +314,7 @@ public class FilteringEngineTests
     {
         IsolatedDatabase db = new();
         await SeedCustomersAsync(db, "Alpha", "Beta", "Zeta");
-        using OiDbContext context = db.CreateContext();
+        using OiServiceDbContext context = db.CreateContext();
 
         IQueryable<Customer> query = await context.Customers.BuildFilterQueryAsync(null!, CancellationToken.None);
 
@@ -325,7 +326,7 @@ public class FilteringEngineTests
     {
         IsolatedDatabase db = new();
         await SeedCustomersAsync(db, "Alpha", "Beta", "Zeta");
-        using OiDbContext context = db.CreateContext();
+        using OiServiceDbContext context = db.CreateContext();
 
         IQueryable<Customer> query = await context.Customers.BuildFilterQueryAsync(new Dictionary<string, IFilterMetaData[]>(), CancellationToken.None);
 
@@ -343,7 +344,7 @@ public class FilteringEngineTests
     {
         IsolatedDatabase db = new();
         await SeedCustomersAsync(db, "Alpha", "Beta", "Alphabet", "Zeta");
-        using OiDbContext context = db.CreateContext();
+        using OiServiceDbContext context = db.CreateContext();
         Dictionary<string, IFilterMetaData[]> filters = Filters(("LastName", [Filter(searchValue, matchMode)]));
 
         IQueryable<Customer> query = await context.Customers.BuildFilterQueryAsync(filters, CancellationToken.None);
@@ -356,7 +357,7 @@ public class FilteringEngineTests
     public async Task BuildFilterQueryAsync_CombinesFiltersOnDifferentProperties()
     {
         IsolatedDatabase db = new();
-        await using (OiDbContext seed = db.CreateContext())
+        await using (OiServiceDbContext seed = db.CreateContext())
         {
             seed.Customers.AddRange(
                 new Customer { Id = Guid.NewGuid(), LastName = "Smith", PhoneNumber = "512-555-0100", Created = DateTime.UtcNow },
@@ -364,7 +365,7 @@ public class FilteringEngineTests
                 new Customer { Id = Guid.NewGuid(), LastName = "Jones", PhoneNumber = "512-555-0102", Created = DateTime.UtcNow });
             await seed.SaveChangesAsync();
         }
-        using OiDbContext context = db.CreateContext();
+        using OiServiceDbContext context = db.CreateContext();
         Dictionary<string, IFilterMetaData[]> filters = Filters(
             ("LastName", [Filter("Smith", "equals")]),
             ("PhoneNumber", [Filter("512", "startsWith")]));
@@ -380,7 +381,7 @@ public class FilteringEngineTests
     {
         IsolatedDatabase db = new();
         await SeedCustomersAsync(db, "Alpha", "Alphabet", "Beta");
-        using OiDbContext context = db.CreateContext();
+        using OiServiceDbContext context = db.CreateContext();
         Dictionary<string, IFilterMetaData[]> filters = Filters(("LastName", [Filter("Alpha", "startsWith")]));
 
         IQueryable<Customer> query = await context.Customers.BuildFilterQueryAsync(filters, CancellationToken.None);
@@ -393,7 +394,7 @@ public class FilteringEngineTests
     public async Task BuildFilterQueryAsync_Throws_WhenPropertyDoesNotExist()
     {
         IsolatedDatabase db = new();
-        using OiDbContext context = db.CreateContext();
+        using OiServiceDbContext context = db.CreateContext();
         Dictionary<string, IFilterMetaData[]> filters = Filters(("NoSuchProperty", [Filter("x", "equals")]));
 
         Func<Task> act = () => context.Customers.BuildFilterQueryAsync(filters, CancellationToken.None);
@@ -406,7 +407,7 @@ public class FilteringEngineTests
     public async Task BuildFilterQueryAsync_Throws_WhenCancelled()
     {
         IsolatedDatabase db = new();
-        using OiDbContext context = db.CreateContext();
+        using OiServiceDbContext context = db.CreateContext();
         using CancellationTokenSource cts = new();
         await cts.CancelAsync();
 
@@ -462,7 +463,7 @@ public class FilteringEngineTests
 
     private static async Task SeedCustomersAsync(IsolatedDatabase db, params string[] lastNames)
     {
-        await using OiDbContext seed = db.CreateContext();
+        await using OiServiceDbContext seed = db.CreateContext();
         foreach (string lastName in lastNames)
         {
             seed.Customers.Add(new Customer { Id = Guid.NewGuid(), LastName = lastName, PhoneNumber = "512-555-0100", Created = DateTime.UtcNow });

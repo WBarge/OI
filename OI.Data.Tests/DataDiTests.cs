@@ -1,8 +1,8 @@
 using FluentAssertions;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
+using OI.Data.Contexts;
 using OI.Data.Repos;
 using OI.Glue.Repos;
 
@@ -17,37 +17,37 @@ public class DataDiTests
     [TestCase(typeof(IStateRepo), typeof(StateRepo))]
     [TestCase(typeof(IOrderRepo), typeof(OrderRepo))]
     [TestCase(typeof(ICustomerRepo), typeof(CustomerRepo))]
-    [Description("ConfigureDi should register each repository interface to its implementation as scoped")]
+    [Description("ConfigureServiceDi should register each repository interface to its implementation as scoped")]
     public void ConfigureDi_RegistersRepositoryAsScoped(Type serviceType, Type implementationType)
     {
         ServiceCollection services = new();
 
-        DataDi.ConfigureDi(services, CreateConfiguration());
+        DataDi.ConfigureServiceDi(services, CreateConfiguration());
 
         services.Should().ContainSingle(d => d.ServiceType == serviceType)
             .Which.Should().Match<ServiceDescriptor>(d =>
                 d.ImplementationType == implementationType && d.Lifetime == ServiceLifetime.Scoped);
     }
 
-    [Test, Description("ConfigureDi should register the DbContext")]
+    [Test, Description("ConfigureServiceDi should register the ServiceDbContext")]
     public void ConfigureDi_RegistersDbContext()
     {
         ServiceCollection services = new();
 
-        DataDi.ConfigureDi(services, CreateConfiguration());
+        DataDi.ConfigureServiceDi(services, CreateConfiguration());
 
-        services.Should().Contain(d => d.ServiceType == typeof(OiDbContext));
+        services.Should().Contain(d => d.ServiceType == typeof(OiServiceDbContext));
     }
 
 
     [TestCase(typeof(IStateRepo), typeof(StateRepo))]
     [TestCase(typeof(IOrderRepo), typeof(OrderRepo))]
     [TestCase(typeof(ICustomerRepo), typeof(CustomerRepo))]
-    [Description("Each repository should be resolvable from a scope, with its DbContext")]
+    [Description("Each repository should be resolvable from a scope, with its ServiceDbContext")]
     public void ConfigureDi_RepositoriesCanBeResolved(Type serviceType, Type implementationType)
     {
         ServiceCollection services = new();
-        DataDi.ConfigureDi(services, CreateConfiguration());
+        DataDi.ConfigureServiceDi(services, CreateConfiguration());
         using ServiceProvider provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
         using IServiceScope scope = provider.CreateScope();
 
@@ -56,16 +56,16 @@ public class DataDiTests
         resolved.Should().BeOfType(implementationType);
     }
 
-    [Test, Description("The repositories resolved in one scope should share one DbContext, so a manager's repos see each other's changes")]
+    [Test, Description("The repositories resolved in one scope should share one ServiceDbContext, so a manager's repos see each other's changes")]
     public void ConfigureDi_RepositoriesInOneScopeShareTheDbContext()
     {
         ServiceCollection services = new();
-        DataDi.ConfigureDi(services, CreateConfiguration());
+        DataDi.ConfigureServiceDi(services, CreateConfiguration());
         using ServiceProvider provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
         using IServiceScope scope = provider.CreateScope();
 
-        OiDbContext first = scope.ServiceProvider.GetRequiredService<OiDbContext>();
-        OiDbContext second = scope.ServiceProvider.GetRequiredService<OiDbContext>();
+        OiServiceDbContext first = scope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
+        OiServiceDbContext second = scope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
 
         first.Should().BeSameAs(second);
     }

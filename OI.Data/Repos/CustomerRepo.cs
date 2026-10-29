@@ -1,16 +1,16 @@
 ﻿using CrossCutting.Exceptions;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Identity.Client;
+using OI.Data.Contexts;
 using OI.Data.Helpers;
 using OI.Data.Translators;
 using OI.Data.Translators.Internal_Models;
 using OI.Glue.Models;
 using OI.Glue.Repos;
-using Customer = OI.Data.Model.Customer;
+using Customer = OI.Data.Model.Orders.Customer;
 
 namespace OI.Data.Repos;
 
-internal class CustomerRepo(OiDbContext dbContext) : BaseEfRepo<Customer>(dbContext), ICustomerRepo
+internal class CustomerRepo(OiServiceDbContext serviceDbContext) : BaseEfRepo<Customer>(serviceDbContext), ICustomerRepo
 {
     /// <summary>
     /// Get the customer by id
@@ -37,7 +37,7 @@ internal class CustomerRepo(OiDbContext dbContext) : BaseEfRepo<Customer>(dbCont
         pageSize = Math.Max(pageSize, 1);
         int skip = (int)Math.Min((long)pageSize * (pageNumber - 1), int.MaxValue);
 
-        IQueryable<Customer> filtered = await DbContext.Customers.BuildFilterQueryAsync(filterCriteria!, cancellationToken);
+        IQueryable<Customer> filtered = await ServiceDbContext.Customers.BuildFilterQueryAsync(filterCriteria!, cancellationToken);
         List<CustomerSearch> customers = await filtered
             .OrderBy(c => c.LastName)
             .ThenBy(c => c.FirstName)
@@ -54,7 +54,7 @@ internal class CustomerRepo(OiDbContext dbContext) : BaseEfRepo<Customer>(dbCont
     /// </summary>
     public async Task<long> GetCustomerCountAsync(Dictionary<string, IFilterMetaData[]>? filterCriteria = null,CancellationToken cancellationToken = default)
     {
-        IQueryable<Customer> filtered = await DbContext.Customers.BuildFilterQueryAsync(filterCriteria!, cancellationToken);
+        IQueryable<Customer> filtered = await ServiceDbContext.Customers.BuildFilterQueryAsync(filterCriteria!, cancellationToken);
         return await filtered.LongCountAsync(cancellationToken);
     }
 

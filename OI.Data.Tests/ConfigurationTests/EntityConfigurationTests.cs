@@ -1,7 +1,8 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
-using OI.Data.Model;
+using OI.Data.Contexts;
+using OI.Data.Model.Orders;
 
 namespace OI.Data.Tests.ConfigurationTests;
 
@@ -15,7 +16,7 @@ namespace OI.Data.Tests.ConfigurationTests;
 public class EntityConfigurationTests
 {
     private IModel _model = null!;
-    private OiDbContext _context = null!;
+    private OiServiceDbContext _context = null!;
 
     [OneTimeSetUp]
     public void OneTimeSetUp()

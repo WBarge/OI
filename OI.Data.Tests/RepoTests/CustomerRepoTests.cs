@@ -2,8 +2,9 @@
 using FluentAssertions.Specialized;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using OI.Data.Contexts;
 using OI.Data.Helpers;
-using OI.Data.Model;
+using OI.Data.Model.Orders;
 using OI.Data.Repos;
 using OI.Glue.Models;
 
@@ -21,15 +22,15 @@ public class CustomerRepoTests
 
         // Ensure the in-memory database is created and seeded
         using IServiceScope scope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = scope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = scope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         context.Database.EnsureCreated();
     }
 
-    [Test, Description("CustomerRepo constructor should throw when dbContext is null")]
+    [Test, Description("CustomerRepo constructor should throw when serviceDbContext is null")]
     public void Constructor_ThrowsWhenDbContextIsNull()
     {
         Action act = () => _ = new CustomerRepo(null!);
-        act.Should().Throw<ArgumentNullException>("dbContext is required by CustomerRepo");
+        act.Should().Throw<ArgumentNullException>("serviceDbContext is required by CustomerRepo");
     }
 
     [Test, Description("GetCustomerByIdAsync should return the customer with all fields mapped when it exists")]
@@ -38,7 +39,7 @@ public class CustomerRepoTests
         await TestContext.Out.WriteLineAsync("Setting up test");
         Guid customerId = Guid.NewGuid();
         using IServiceScope seedScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext seedContext = seedScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext seedContext = seedScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         seedContext.Customers.Add(new Customer
         {
             Id = customerId,
@@ -59,7 +60,7 @@ public class CustomerRepoTests
         });
         await seedContext.SaveChangesAsync();
         using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         CustomerRepo sut = new(context);
 
         await TestContext.Out.WriteLineAsync("Executing test");
@@ -88,7 +89,7 @@ public class CustomerRepoTests
     {
         await TestContext.Out.WriteLineAsync("Setting up test");
         using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         CustomerRepo sut = new(context);
 
         await TestContext.Out.WriteLineAsync("Executing test");
@@ -111,7 +112,7 @@ public class CustomerRepoTests
         seeded.DefaultShippingZipCode = "75201";
         await SeedAsync(seeded);
         using IServiceScope scope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = scope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = scope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         CustomerRepo sut = new(context);
 
         IEnumerable<ICustomerSearch> results =
@@ -132,7 +133,7 @@ public class CustomerRepoTests
         string other = UniqueLastName();
         await SeedAsync(NewCustomer(wanted, "Jane"), NewCustomer(other, "John"));
         using IServiceScope scope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = scope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = scope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         CustomerRepo sut = new(context);
 
         IEnumerable<ICustomerSearch> results =
@@ -147,7 +148,7 @@ public class CustomerRepoTests
         string lastName = UniqueLastName();
         await SeedAsync(NewCustomer(lastName, "Jane"), NewCustomer(lastName, "John"));
         using IServiceScope scope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = scope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = scope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         CustomerRepo sut = new(context);
         Dictionary<string, IFilterMetaData[]> filters = EqualsFilter("LastName", lastName);
         filters["FirstName"] = EqualsFilter("FirstName", "John")["FirstName"];
@@ -165,7 +166,7 @@ public class CustomerRepoTests
     {
         await SeedAsync(NewCustomer(UniqueLastName(), "Jane"), NewCustomer(UniqueLastName(), "John"));
         using IServiceScope scope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = scope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = scope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         CustomerRepo sut = new(context);
 
         IEnumerable<ICustomerSearch> results =
@@ -181,7 +182,7 @@ public class CustomerRepoTests
         string lastName = UniqueLastName();
         await SeedAsync(NewCustomer(lastName, "Jane"));
         using IServiceScope scope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = scope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = scope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         CustomerRepo sut = new(context);
 
         IEnumerable<ICustomerSearch> results =
@@ -199,7 +200,7 @@ public class CustomerRepoTests
             NewCustomer(sharedLastName, "Abe"),
             NewCustomer(sharedLastName, "Bea"));
         using IServiceScope scope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = scope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = scope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         CustomerRepo sut = new(context);
 
         IEnumerable<ICustomerSearch> results =
@@ -221,7 +222,7 @@ public class CustomerRepoTests
             NewCustomer(lastName, "C4"),
             NewCustomer(lastName, "C5"));
         using IServiceScope scope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = scope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = scope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         CustomerRepo sut = new(context);
         Dictionary<string, IFilterMetaData[]> filters = EqualsFilter("LastName", lastName);
 
@@ -246,7 +247,7 @@ public class CustomerRepoTests
         string lastName = UniqueLastName();
         await SeedAsync(NewCustomer(lastName, "C1"), NewCustomer(lastName, "C2"), NewCustomer(lastName, "C3"));
         using IServiceScope scope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = scope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = scope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         CustomerRepo sut = new(context);
 
         IEnumerable<ICustomerSearch> results =
@@ -261,7 +262,7 @@ public class CustomerRepoTests
         string lastName = UniqueLastName();
         await SeedAsync(NewCustomer(lastName, "C1"), NewCustomer(lastName, "C2"));
         using IServiceScope scope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = scope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = scope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         CustomerRepo sut = new(context);
 
         IEnumerable<ICustomerSearch> results =
@@ -278,7 +279,7 @@ public class CustomerRepoTests
         string lastName = UniqueLastName();
         await SeedAsync(NewCustomer(lastName, "C1"));
         using IServiceScope scope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = scope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = scope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         CustomerRepo sut = new(context);
 
         IEnumerable<ICustomerSearch> results =
@@ -294,7 +295,7 @@ public class CustomerRepoTests
         string lastName = UniqueLastName();
         await SeedAsync(NewCustomer(lastName, null));
         using IServiceScope scope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = scope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = scope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         CustomerRepo sut = new(context);
 
         IEnumerable<ICustomerSearch> results =
@@ -308,7 +309,7 @@ public class CustomerRepoTests
     {
         long before;
         using (IServiceScope beforeScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope())
-        using (OiDbContext beforeContext = beforeScope.ServiceProvider.GetRequiredService<OiDbContext>())
+        using (OiServiceDbContext beforeContext = beforeScope.ServiceProvider.GetRequiredService<OiServiceDbContext>())
         {
             before = await new CustomerRepo(beforeContext).GetCustomerCountAsync(null,
                 TestContext.CurrentContext.CancellationToken);
@@ -318,7 +319,7 @@ public class CustomerRepoTests
             NewCustomer(UniqueLastName(), "C"));
 
         using IServiceScope scope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = scope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = scope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         long after =
             await new CustomerRepo(context).GetCustomerCountAsync(null, TestContext.CurrentContext.CancellationToken);
 
@@ -330,7 +331,7 @@ public class CustomerRepoTests
     {
         StubCreateCustomer request = FullRequest();
         using IServiceScope scope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = scope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = scope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         CustomerRepo sut = new(context);
 
         ICustomer result = await sut.CreateCustomerAsync(request, CancellationToken.None);
@@ -353,7 +354,7 @@ public class CustomerRepoTests
 
         // Read it back with a fresh context so we know it was really written, not just returned.
         using IServiceScope readScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext readContext = readScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext readContext = readScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         Customer saved = await readContext.Customers.AsNoTracking().SingleAsync(c => c.Id == result.Id);
         saved.LastName.Should().Be(request.LastName);
         saved.FirstName.Should().Be(request.FirstName);
@@ -368,13 +369,13 @@ public class CustomerRepoTests
     public async Task CreateCustomerAsync_SetsCreatedToNow()
     {
         using IServiceScope scope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = scope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = scope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         CustomerRepo sut = new(context);
 
         ICustomer result = await sut.CreateCustomerAsync(FullRequest(), CancellationToken.None);
 
         using IServiceScope readScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext readContext = readScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext readContext = readScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         Customer saved = await readContext.Customers.AsNoTracking().SingleAsync(c => c.Id == result.Id);
         saved.Created.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMinutes(1));
         saved.Modified.Should().BeNull();
@@ -384,7 +385,7 @@ public class CustomerRepoTests
     public async Task CreateCustomerAsync_GivesEachCustomerItsOwnId()
     {
         using IServiceScope scope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = scope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = scope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         CustomerRepo sut = new(context);
 
         ICustomer first = await sut.CreateCustomerAsync(FullRequest(), CancellationToken.None);
@@ -397,14 +398,14 @@ public class CustomerRepoTests
     public async Task CreateCustomerAsync_SavesMissingOptionalValuesAsNull()
     {
         using IServiceScope scope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = scope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = scope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         CustomerRepo sut = new(context);
         StubCreateCustomer request = new() { LastName = UniqueLastName(), PhoneNumber = "512-555-0100" };
 
         ICustomer result = await sut.CreateCustomerAsync(request, CancellationToken.None);
 
         using IServiceScope readScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext readContext = readScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext readContext = readScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         Customer saved = await readContext.Customers.AsNoTracking().SingleAsync(c => c.Id == result.Id);
         saved.FirstName.Should().BeNull();
         saved.DefaultBillingAddress1.Should().BeNull();
@@ -419,13 +420,13 @@ public class CustomerRepoTests
         StubCreateCustomer request = FullRequest();
         ICustomer created;
         using (IServiceScope createScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope())
-        using (OiDbContext createContext = createScope.ServiceProvider.GetRequiredService<OiDbContext>())
+        using (OiServiceDbContext createContext = createScope.ServiceProvider.GetRequiredService<OiServiceDbContext>())
         {
             created = await new CustomerRepo(createContext).CreateCustomerAsync(request, CancellationToken.None);
         }
 
         using IServiceScope readScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext readContext = readScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext readContext = readScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         ICustomer? found = await new CustomerRepo(readContext).GetCustomerByIdAsync(created.Id, CancellationToken.None);
 
         found.Should().NotBeNull();
@@ -437,7 +438,7 @@ public class CustomerRepoTests
     public async Task CreateCustomerAsync_ThrowsWhenRequestIsNull()
     {
         using IServiceScope scope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = scope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = scope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         CustomerRepo sut = new(context);
 
         Func<Task> act = () => sut.CreateCustomerAsync(null!, CancellationToken.None);
@@ -507,7 +508,7 @@ public class CustomerRepoTests
     private async Task SeedAsync(params Customer[] customers)
     {
         using IServiceScope scope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = scope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = scope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         context.Customers.AddRange(customers);
         await context.SaveChangesAsync();
     }

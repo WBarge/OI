@@ -1,14 +1,16 @@
 ﻿using System.Reflection;
 using Microsoft.EntityFrameworkCore;
-using OI.Data.Model;
+using OI.Data.Model.Orders;
 
-namespace OI.Data;
+namespace OI.Data.Contexts;
 
 /// <summary>
-/// Represents the database context for the OI application, providing access to the underlying database and managing entity configurations.
+/// Represents a database context,
+/// providing access to the underlying database and managing entity configurations.
+/// This context is the persistence store for orders and their dependant data
 /// </summary>
 /// <param name="options"></param>
-internal class OiDbContext(DbContextOptions<OiDbContext> options) : DbContext(options)
+internal class OiServiceDbContext(DbContextOptions<OiServiceDbContext> options) : DbContext(options)
 {
     /// <summary>
     /// Configures the model for the database context by applying entity configurations from the current assembly.

@@ -20,7 +20,7 @@ public class RootCompositionTests
     [TestCase(typeof(IStateManager))]
     [TestCase(typeof(IOrderManager))]
     [TestCase(typeof(ICustomerManager))]
-    [Description("ConfigureDi should register every manager the controllers depend on")]
+    [Description("ConfigureServiceDi should register every manager the controllers depend on")]
     public void ConfigureDi_RegistersManagers(Type serviceType)
     {
         ServiceCollection services = new();
@@ -34,7 +34,7 @@ public class RootCompositionTests
     [TestCase(typeof(IStateRepo))]
     [TestCase(typeof(IOrderRepo))]
     [TestCase(typeof(ICustomerRepo))]
-    [Description("ConfigureDi should register every repository the managers depend on")]
+    [Description("ConfigureServiceDi should register every repository the managers depend on")]
     public void ConfigureDi_RegistersRepositories(Type serviceType)
     {
         ServiceCollection services = new();
@@ -50,7 +50,7 @@ public class RootCompositionTests
     [TestCase(typeof(IStateRepo))]
     [TestCase(typeof(IOrderRepo))]
     [TestCase(typeof(ICustomerRepo))]
-    [Description("ConfigureDi should register managers and repositories as scoped so they share the request's DbContext")]
+    [Description("ConfigureServiceDi should register managers and repositories as scoped so they share the request's DbContext")]
     public void ConfigureDi_RegistersServicesAsScoped(Type serviceType)
     {
         ServiceCollection services = new();
@@ -62,7 +62,7 @@ public class RootCompositionTests
             "a singleton would capture a scoped DbContext, and a transient would not share one per request");
     }
 
-    [Test, Description("ConfigureDi should register each service type only once")]
+    [Test, Description("ConfigureServiceDi should register each service type only once")]
     public void ConfigureDi_RegistersEachServiceTypeOnce()
     {
         ServiceCollection services = new();
@@ -83,7 +83,7 @@ public class RootCompositionTests
     [TestCase(typeof(IStateManager))]
     [TestCase(typeof(IOrderManager))]
     [TestCase(typeof(ICustomerManager))]
-    [Description("The container built from ConfigureDi should be able to create each manager with all of its dependencies")]
+    [Description("The container built from ConfigureServiceDi should be able to create each manager with all of its dependencies")]
     public void ConfigureDi_ManagersCanBeResolvedFromAScope(Type serviceType)
     {
         ServiceCollection services = new();

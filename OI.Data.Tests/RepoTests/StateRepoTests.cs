@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
+using OI.Data.Contexts;
 using OI.Data.Repos;
 using OI.Glue.Models;
 
@@ -17,15 +18,15 @@ public class StateRepoTests
 
         // Ensure the in-memory database is created and seeded
         using IServiceScope scope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = scope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = scope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         context.Database.EnsureCreated();
     }
 
-    [Test, Description("StateRepo constructor should throw when dbContext is null")]
+    [Test, Description("StateRepo constructor should throw when serviceDbContext is null")]
     public void Constructor_ThrowsWhenDbContextIsNull()
     {
         Action act = () => _ = new StateRepo(null!);
-        act.Should().Throw<ArgumentNullException>("dbContext is required by StateRepo");
+        act.Should().Throw<ArgumentNullException>("serviceDbContext is required by StateRepo");
     }
 
     [Test, Description("ListStatesAsync should return all 50 states")]
@@ -33,7 +34,7 @@ public class StateRepoTests
     {
         await TestContext.Out.WriteLineAsync("Setting up test");
         using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         StateRepo sut = new(context);
 
         await TestContext.Out.WriteLineAsync("Executing test");
@@ -48,7 +49,7 @@ public class StateRepoTests
     {
         await TestContext.Out.WriteLineAsync("Setting up test");
         using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         StateRepo sut = new(context);
 
         await TestContext.Out.WriteLineAsync("Executing test");
@@ -63,7 +64,7 @@ public class StateRepoTests
     {
         await TestContext.Out.WriteLineAsync("Setting up test");
         using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         StateRepo sut = new(context);
 
         await TestContext.Out.WriteLineAsync("Executing test");
@@ -78,7 +79,7 @@ public class StateRepoTests
     {
         await TestContext.Out.WriteLineAsync("Setting up test");
         using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         StateRepo sut = new(context);
 
         await TestContext.Out.WriteLineAsync("Executing test");
@@ -93,7 +94,7 @@ public class StateRepoTests
     {
         await TestContext.Out.WriteLineAsync("Setting up test");
         using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         StateRepo sut = new(context);
 
         await TestContext.Out.WriteLineAsync("Executing test");

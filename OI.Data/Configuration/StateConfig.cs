@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using OI.Data.Model;
+using OI.Data.Model.Orders;
 
 namespace OI.Data.Configuration;
 

@@ -5,13 +5,13 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using OI.Data;
+using OI.Data.Contexts;
 
 #nullable disable
 
 namespace OI.Data.Migrations
 {
-    [DbContext(typeof(OiDbContext))]
+    [DbContext(typeof(OiServiceDbContext))]
     [Migration("20261009211238_updated_Order_CompletedDate")]
     partial class updated_Order_CompletedDate
     {

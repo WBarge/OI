@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using OI.Glue.Managers;
 using OI.Glue.Models;
 using OI.Service.Models.Requests;
