@@ -36,43 +36,43 @@ export class OrdersService {
         return this.http.get<Order>(requestUrl)
         .pipe(
           map((order:any)=>{
-            const tempCustomer = new Order();
-            tempCustomer.idValue = order.id;
-              tempCustomer.orderNumber= order.orderNumber;
-              tempCustomer.orderDate = new Date(order.orderDate);
-              tempCustomer.completedDate = new Date(order.completedDate);
-              tempCustomer.customerId = order.customerId;
-              tempCustomer.customerName = order.customer  ? `${order.customer.firstName} ${order.customer.lastName}`  : '';
-              tempCustomer.phoneNumber = order.customer  ? `${order.customer.phoneNumber}`  : '';
-              tempCustomer.billingAddress1 = order.billingAddress1;
-              tempCustomer.billingAddress2 = order.billingAddress2;
-              tempCustomer.billingCity = order.billingCity;
-              tempCustomer.billingStateCode = order.billingStateCode;
-              tempCustomer.billingZipCode = order.billingZipCode;
-              tempCustomer.shippingAddress1 = order.shippingAddress1;
-              tempCustomer.shippingAddress2 = order.shippingAddress2;
-              tempCustomer.shippingCity = order.shippingCity;
-              tempCustomer.shippingStateCode = order.shippingStateCode;
-              tempCustomer.shippingZipCode = order.shippingZipCode;
-              tempCustomer.orderItems = order.orderItems.map((item:any)=>{
-                const tempChar = new ProductOrdered();
-                tempChar.idValue = item.id;
-                tempChar.name = item.name;
-                tempChar.description = item.description;
-                tempChar.sku = item.sku;
-                tempChar.price = item.price;
-                tempChar.quantity = item.quantity;
-                tempChar.total = item.total;
-                tempChar.productId = item.productId;
-                return tempChar;
+            const tempOrder = new Order();
+            tempOrder.idValue = order.id;
+              tempOrder.orderNumber= order.orderNumber;
+              tempOrder.orderDate = new Date(order.orderDate);
+              tempOrder.completedDate = new Date(order.completedDate);
+              tempOrder.customerId = order.customerId;
+              tempOrder.customerName = order.customer  ? `${order.customer.firstName} ${order.customer.lastName}`  : '';
+              tempOrder.phoneNumber = order.customer  ? `${order.customer.phoneNumber}`  : '';
+              tempOrder.billingAddress1 = order.billingAddress1;
+              tempOrder.billingAddress2 = order.billingAddress2;
+              tempOrder.billingCity = order.billingCity;
+              tempOrder.billingStateCode = order.billingStateCode;
+              tempOrder.billingZipCode = order.billingZipCode;
+              tempOrder.shippingAddress1 = order.shippingAddress1;
+              tempOrder.shippingAddress2 = order.shippingAddress2;
+              tempOrder.shippingCity = order.shippingCity;
+              tempOrder.shippingStateCode = order.shippingStateCode;
+              tempOrder.shippingZipCode = order.shippingZipCode;
+              tempOrder.orderItems = order.orderItems.map((item:any)=>{
+                const tempItem = new ProductOrdered();
+                tempItem.idValue = item.id;
+                tempItem.name = item.name;
+                tempItem.description = item.description;
+                tempItem.sku = item.sku;
+                tempItem.price = item.price;
+                tempItem.quantity = item.quantity;
+                tempItem.total = item.total;
+                tempItem.productId = item.productId;
+                return tempItem;
               });
-              tempCustomer.subTotal = order.subTotal;
-              tempCustomer.shipping = order.shipping;
-              tempCustomer.tax = order.tax;
-              tempCustomer.total = order.total;
-              tempCustomer.isPending = order.isPending;
+              tempOrder.subTotal = order.subTotal;
+              tempOrder.shipping = order.shipping;
+              tempOrder.tax = order.tax;
+              tempOrder.total = order.total;
+              tempOrder.isPending = order.isPending;
 
-            return tempCustomer;
+            return tempOrder;
           }),
         catchError(this.handleError<Order>('getOrderById'))
         );

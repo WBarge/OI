@@ -264,8 +264,71 @@ describe('CustomerService', () => {
   });
 
   describe('updateCustomer', () => {
-    it('should not be implemented yet', () => {
-      expect(() => service.updateCustomer(new Customer())).toThrow('Not Implemented!');
+    const customer = () => Object.assign(new Customer(), {
+      idValue: 'c-1', firstName: 'Ada', lastName: 'Lovelace', phoneNumber: '5551234567',
+      defaultBillingAddress1: '1 Bill St', defaultBillingAddress2: 'Apt 1', defaultBillingCity: 'Billtown',
+      defaultBillingStateCode: 'AZ', defaultBillingZipCode: '85001',
+      defaultShippingAddress1: '2 Ship St', defaultShippingAddress2: 'Apt 2', defaultShippingCity: 'Shipville',
+      defaultShippingStateCode: 'CA', defaultShippingZipCode: '90001'
+    });
+
+    it('should PUT the customer to the Customer endpoint', () => {
+      service.updateCustomer(customer()).subscribe();
+
+      const request = httpTestingController.expectOne(customerUrl);
+      expect(request.request.method).toBe('PUT');
+      request.flush({});
+    });
+
+    it('should send the customer in the shape the API expects, with the id as id', () => {
+      service.updateCustomer(customer()).subscribe();
+
+      const request = httpTestingController.expectOne(customerUrl);
+      expect(request.request.body).toEqual({
+        id: 'c-1', firstName: 'Ada', lastName: 'Lovelace', phoneNumber: '5551234567',
+        defaultBillingAddress1: '1 Bill St', defaultBillingAddress2: 'Apt 1', defaultBillingCity: 'Billtown',
+        defaultBillingStateCode: 'AZ', defaultBillingZipCode: '85001',
+        defaultShippingAddress1: '2 Ship St', defaultShippingAddress2: 'Apt 2', defaultShippingCity: 'Shipville',
+        defaultShippingStateCode: 'CA', defaultShippingZipCode: '90001'
+      });
+      expect(request.request.body).not.toHaveProperty('idValue');
+      request.flush({});
+    });
+
+    it('should not call the API until it is subscribed to', () => {
+      service.updateCustomer(customer());
+
+      httpTestingController.expectNone(customerUrl);
+    });
+
+    it('should emit the response and complete when the customer was updated', () => {
+      const next = vi.fn();
+      const complete = vi.fn();
+
+      service.updateCustomer(customer()).subscribe({ next, complete });
+      httpTestingController.expectOne(customerUrl).flush({ updated: true });
+
+      expect(next).toHaveBeenCalledWith({ updated: true });
+      expect(complete).toHaveBeenCalledTimes(1);
+    });
+
+    it('should show an error toast and emit a safe value when the call fails', () => {
+      const addSpy = vi.spyOn(messageService, 'add');
+      const next = vi.fn();
+      const complete = vi.fn();
+
+      service.updateCustomer(customer()).subscribe({ next, complete });
+      httpTestingController.expectOne(customerUrl)
+        .flush({ message: 'duplicate phone number' }, { status: 400, statusText: 'Bad Request' });
+
+      // the operation name is deliberately not pinned here, see the note about updateCustomer's error label
+      expect(addSpy).toHaveBeenCalledWith(expect.objectContaining({
+        severity: 'warn',
+        summary: 'Invalid request',
+        detail: expect.stringMatching(/^CustomerService: \w+ failed: duplicate phone number$/)
+      }));
+      expect(next).toHaveBeenCalledWith({});
+      expect(complete).toHaveBeenCalledTimes(1);
     });
   });
 });

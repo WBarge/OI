@@ -7,7 +7,8 @@ import { OrdersService } from './orders-service';
 import { ConfigService } from './config-service';
 import { Configuration } from '../model/configuration';
 import { Order } from '../model/results/order';
-import { ProductOrdered } from '../model/results/product-ordered'
+import { ProductOrdered } from '../model/results/product-ordered';
+import { OrderSearch } from '../model/results/order-search';
 
 describe('OrdersService', () => {
   let service: OrdersService;
@@ -101,10 +102,22 @@ describe('OrdersService', () => {
         shippingAddress1: '9 Ship Rd', shippingAddress2: '', shippingCity: 'Dallas', shippingStateCode: 'TX', shippingZipCode: '75201',
         subTotal: 25.5, shipping: 5, tax: 1.79, total: 32.29,
         orderItems: [
-          { productId: 'p1', name: 'Product p1', description: 'Description p1', sku: 'SKU-p1', price: 10, quantity: 2, total: 20 },
-          { productId: 'p2', name: 'Product p2', description: 'Description p2', sku: 'SKU-p2', price: 5.5, quantity: 1, total: 5.5 }
+          { id: 'line-p1', productId: 'p1', name: 'Product p1', description: 'Description p1', sku: 'SKU-p1', price: 10, quantity: 2, total: 20 },
+          { id: 'line-p2', productId: 'p2', name: 'Product p2', description: 'Description p2', sku: 'SKU-p2', price: 5.5, quantity: 1, total: 5.5 }
         ]
       });
+      request.flush(savedOrder());
+    });
+
+    it('should send the id of an item that is already saved and a null id for an item that is not, so the API can tell them apart', () => {
+      const order = newOrder();
+      order.orderItems = [item('p1', 10, 2), Object.assign(item('p3', 3, 1), { idValue: '' })];
+
+      service.createOrder(order).subscribe();
+
+      const request = httpTestingController.expectOne(orderUrl);
+      expect(request.request.body.orderItems[0].id).toBe('line-p1');
+      expect(request.request.body.orderItems[1].id).toBeNull();
       request.flush(savedOrder());
     });
 
@@ -258,7 +271,7 @@ describe('OrdersService', () => {
       expect(addSpy).toHaveBeenCalledWith(expect.objectContaining({
         severity: 'warn',
         summary: 'Invalid request',
-        detail: 'OrderService: CreateOrder failed: ProductId is required'
+        detail: 'OrderService: createOrder failed: ProductId is required'
       }));
       expect(next).toHaveBeenCalledWith({});
       expect(complete).toHaveBeenCalledTimes(1);
@@ -274,7 +287,7 @@ describe('OrdersService', () => {
     });
   });
 
-  describe('UpdateOrder', () => {
+  describe('updateOrder', () => {
     const savedOrder = () => Object.assign(newOrder(), {
       idValue: '22222222-2222-2222-2222-222222222222', orderNumber: '1001'
     });
@@ -302,8 +315,8 @@ describe('OrdersService', () => {
         shippingAddress1: '9 Ship Rd', shippingAddress2: '', shippingCity: 'Dallas', shippingStateCode: 'TX', shippingZipCode: '75201',
         subTotal: 25.5, shipping: 5, tax: 1.79, total: 32.29,
         orderItems: [
-          { productId: 'p1', name: 'Product p1', description: 'Description p1', sku: 'SKU-p1', price: 10, quantity: 2, total: 20 },
-          { productId: 'p2', name: 'Product p2', description: 'Description p2', sku: 'SKU-p2', price: 5.5, quantity: 1, total: 5.5 }
+          { id: 'line-p1', productId: 'p1', name: 'Product p1', description: 'Description p1', sku: 'SKU-p1', price: 10, quantity: 2, total: 20 },
+          { id: 'line-p2', productId: 'p2', name: 'Product p2', description: 'Description p2', sku: 'SKU-p2', price: 5.5, quantity: 1, total: 5.5 }
         ]
       });
       expect(typeof request.request.body.orderNumber).toBe('number');
@@ -390,7 +403,7 @@ describe('OrdersService', () => {
       expect(addSpy).toHaveBeenCalledWith(expect.objectContaining({
         severity: 'warn',
         summary: 'Invalid request',
-        detail: 'OrderService: UpdateOrder failed: The id of the order is required.'
+        detail: 'OrderService: updateOrder failed: The id of the order is required.'
       }));
       expect(next).toHaveBeenCalledWith({});
       expect(complete).toHaveBeenCalledTimes(1);
@@ -403,6 +416,203 @@ describe('OrdersService', () => {
       httpTestingController.expectOne(orderUrl).flush({ message: 'boom' }, { status: 500, statusText: 'Server Error' });
 
       expect(addSpy).toHaveBeenCalledWith(expect.objectContaining({ severity: 'error', summary: 'Fatal Error' }));
+    });
+  });
+
+  describe('getOrderById', () => {
+    /** What GET api/Order/{id} sends back (camelCase JSON of IOrder). */
+    const apiOrder = (overrides: Record<string, unknown> = {}) => ({
+      id: '22222222-2222-2222-2222-222222222222',
+      orderNumber: 1001,
+      orderDate: '2026-03-15T10:30:00Z',
+      completedDate: '0001-01-01T00:00:00',
+      customerId: '11111111-1111-1111-1111-111111111111',
+      customer: { firstName: 'Jane', lastName: 'Smith', phoneNumber: '5125550100' },
+      billingAddress1: '1 Bill St', billingAddress2: 'Apt 2', billingCity: 'Austin', billingStateCode: 'TX', billingZipCode: '78701',
+      shippingAddress1: '9 Ship Rd', shippingAddress2: '', shippingCity: 'Dallas', shippingStateCode: 'TX', shippingZipCode: '75201',
+      orderItems: [
+        { id: 'item-1', productId: 'p1', name: 'Product p1', description: 'Description p1', sku: 'SKU-p1', price: 10, quantity: 2, total: 20 },
+        { id: 'item-2', productId: 'p2', name: 'Product p2', description: 'Description p2', sku: 'SKU-p2', price: 5.5, quantity: 1, total: 5.5 }
+      ],
+      subTotal: 25.5, shipping: 5, tax: 1.79, total: 32.29, isPending: true,
+      ...overrides
+    });
+
+    it('should GET the order by id from the Order endpoint', () => {
+      service.getOrderById('22222222-2222-2222-2222-222222222222').subscribe();
+
+      const request = httpTestingController.expectOne(`${orderUrl}/22222222-2222-2222-2222-222222222222`);
+      expect(request.request.method).toBe('GET');
+      request.flush(apiOrder());
+    });
+
+    it('should emit an Order with the id, number, dates and customer the server sent', () => {
+      const next = vi.fn();
+
+      service.getOrderById('22222222-2222-2222-2222-222222222222').subscribe(next);
+      httpTestingController.expectOne(`${orderUrl}/22222222-2222-2222-2222-222222222222`).flush(apiOrder());
+
+      const order: Order = next.mock.calls[0][0];
+      expect(order).toBeInstanceOf(Order);
+      expect(order.idValue).toBe('22222222-2222-2222-2222-222222222222');
+      expect(String(order.orderNumber)).toBe('1001');
+      expect(order.orderDate).toEqual(new Date('2026-03-15T10:30:00Z'));
+      expect(order.customerId).toBe('11111111-1111-1111-1111-111111111111');
+      expect(order.customerName).toBe('Jane Smith');
+      expect(order.phoneNumber).toBe('5125550100');
+      expect(order.isPending).toBe(true);
+    });
+
+    it('should emit the addresses and totals the server sent', () => {
+      const next = vi.fn();
+
+      service.getOrderById('22222222-2222-2222-2222-222222222222').subscribe(next);
+      httpTestingController.expectOne(`${orderUrl}/22222222-2222-2222-2222-222222222222`).flush(apiOrder());
+
+      const order: Order = next.mock.calls[0][0];
+      expect(order.billingAddress1).toBe('1 Bill St');
+      expect(order.billingZipCode).toBe('78701');
+      expect(order.shippingCity).toBe('Dallas');
+      expect(order.shippingZipCode).toBe('75201');
+      expect(order.subTotal).toBe(25.5);
+      expect(order.shipping).toBe(5);
+      expect(order.tax).toBe(1.79);
+      expect(order.total).toBe(32.29);
+    });
+
+    it('should emit every item with its product id, so the order can be saved again', () => {
+      const next = vi.fn();
+
+      service.getOrderById('22222222-2222-2222-2222-222222222222').subscribe(next);
+      httpTestingController.expectOne(`${orderUrl}/22222222-2222-2222-2222-222222222222`).flush(apiOrder());
+
+      const order: Order = next.mock.calls[0][0];
+      expect(order.orderItems).toHaveLength(2);
+      expect(order.orderItems[0]).toBeInstanceOf(ProductOrdered);
+      expect(order.orderItems[0]).toEqual(expect.objectContaining({
+        idValue: 'item-1', productId: 'p1', name: 'Product p1', description: 'Description p1',
+        sku: 'SKU-p1', price: 10, quantity: 2, total: 20
+      }));
+      expect(order.orderItems[1].productId).toBe('p2');
+    });
+
+    it('should leave the customer name and phone number empty when the order has no customer', () => {
+      const next = vi.fn();
+
+      service.getOrderById('22222222-2222-2222-2222-222222222222').subscribe(next);
+      httpTestingController.expectOne(`${orderUrl}/22222222-2222-2222-2222-222222222222`)
+        .flush(apiOrder({ customer: null, customerId: null }));
+
+      const order: Order = next.mock.calls[0][0];
+      expect(order.customerName).toBe('');
+      expect(order.phoneNumber).toBe('');
+    });
+
+    it('should show a toast naming the operation and emit a safe value when the order cannot be loaded', () => {
+      const addSpy = vi.spyOn(messageService, 'add');
+      const next = vi.fn();
+      const complete = vi.fn();
+
+      service.getOrderById('missing').subscribe({ next, complete });
+      httpTestingController.expectOne(`${orderUrl}/missing`)
+        .flush({ message: 'Order not found' }, { status: 400, statusText: 'Bad Request' });
+
+      expect(addSpy).toHaveBeenCalledWith(expect.objectContaining({
+        severity: 'warn',
+        summary: 'Invalid request',
+        detail: 'OrderService: getOrderById failed: Order not found'
+      }));
+      expect(next).toHaveBeenCalledWith({});
+      expect(complete).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('getOrders', () => {
+    const ordersUrl = `${apiUrl}Orders`;
+
+    const apiPage = () => ({
+      totalRecordSize: 42,
+      data: [
+        {
+          id: 'order-1', customerName: 'Ada Lovelace', phoneNumber: '5551234567', orderNumber: 1001,
+          orderDate: '2026-03-15T10:30:00Z', completedDate: '0001-01-01T00:00:00', total: 32.29, isPending: true
+        },
+        {
+          id: 'order-2', customerName: 'Alan Turing', phoneNumber: '5559876543', orderNumber: 1002,
+          orderDate: '2026-03-16T10:30:00Z', completedDate: '2026-03-17T10:30:00Z', total: 10, isPending: false
+        }
+      ]
+    });
+
+    it('should POST the page request to the Orders endpoint', () => {
+      service.getOrders(2, 25).subscribe();
+
+      const request = httpTestingController.expectOne(ordersUrl);
+      expect(request.request.method).toBe('POST');
+      expect(request.request.body).toEqual({ page: 2, pageSize: 25, filters: null });
+      request.flush(apiPage());
+    });
+
+    it('should default to the first page of ten', () => {
+      service.getOrders().subscribe();
+
+      const request = httpTestingController.expectOne(ordersUrl);
+      expect(request.request.body).toEqual({ page: 1, pageSize: 10, filters: null });
+      request.flush(apiPage());
+    });
+
+    it('should send the filters as an object keyed by field', () => {
+      const filters = new Map([
+        ['CustomerName', [{ searchValue: 'ad', matchMode: 'contains', logicalOperator: 'and' }]]
+      ]);
+
+      service.getOrders(1, 10, filters).subscribe();
+
+      const request = httpTestingController.expectOne(ordersUrl);
+      expect(request.request.body.filters).toEqual({
+        CustomerName: [{ searchValue: 'ad', matchMode: 'contains', logicalOperator: 'and' }]
+      });
+      request.flush(apiPage());
+    });
+
+    it('should send no filters when the map is empty', () => {
+      service.getOrders(1, 10, new Map()).subscribe();
+
+      const request = httpTestingController.expectOne(ordersUrl);
+      expect(request.request.body.filters).toBeNull();
+      request.flush(apiPage());
+    });
+
+    it('should emit the total record count and an OrderSearch for every order', () => {
+      const next = vi.fn();
+
+      service.getOrders().subscribe(next);
+      httpTestingController.expectOne(ordersUrl).flush(apiPage());
+
+      const result = next.mock.calls[0][0];
+      expect(result.totalRecordSize).toBe(42);
+      expect(result.data).toHaveLength(2);
+      expect(result.data[0]).toBeInstanceOf(OrderSearch);
+      expect(result.data[0]).toEqual(expect.objectContaining({
+        idValue: 'order-1', customerName: 'Ada Lovelace', phoneNumber: '5551234567', total: 32.29, isPending: true
+      }));
+      expect(String(result.data[0].orderNumber)).toBe('1001');
+      expect(result.data[0].orderDate).toEqual(new Date('2026-03-15T10:30:00Z'));
+      expect(result.data[1].completedDate).toEqual(new Date('2026-03-17T10:30:00Z'));
+      expect(result.data[1].isPending).toBe(false);
+    });
+
+    it('should show a toast naming the operation when the server fails', () => {
+      const addSpy = vi.spyOn(messageService, 'add');
+
+      service.getOrders().subscribe();
+      httpTestingController.expectOne(ordersUrl).flush({ message: 'boom' }, { status: 500, statusText: 'Server Error' });
+
+      expect(addSpy).toHaveBeenCalledWith(expect.objectContaining({
+        severity: 'error',
+        summary: 'Fatal Error',
+        detail: 'OrderService: getOrders failed: boom'
+      }));
     });
   });
 });

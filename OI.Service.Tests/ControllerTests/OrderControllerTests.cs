@@ -184,4 +184,59 @@ public class OrderControllerTests
         method.Should().NotBeNull();
         method!.GetCustomAttribute<HttpPostAttribute>().Should().NotBeNull("creating an order must be a POST");
     }
+
+    [Test, Description("GetOrderAsync should return 200 OK with the order")]
+    public async Task GetOrderAsync_Returns200OkWithOrder()
+    {
+        Mock<IOrderManager> orderManagerMock = new();
+        OrderController sut = new(orderManagerMock.Object, NullLogger<OrderController>.Instance);
+        Guid orderId = Guid.NewGuid();
+        Mock<IOrder> orderMock = new();
+        orderMock.Setup(o => o.Id).Returns(orderId);
+        orderManagerMock.Setup(m => m.GetOrderByIdAsync(orderId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(orderMock.Object);
+
+        IActionResult result = await sut.GetOrderAsync(orderId, TestContext.CurrentContext.CancellationToken);
+
+        OkObjectResult okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        okResult.StatusCode.Should().Be(StatusCodes.Status200OK);
+        okResult.Value.Should().Be(orderMock.Object);
+    }
+
+    [Test, Description("GetOrderAsync should pass the id and cancellation token to the manager")]
+    public async Task GetOrderAsync_PassesIdAndCancellationTokenToManager()
+    {
+        Mock<IOrderManager> orderManagerMock = new();
+        OrderController sut = new(orderManagerMock.Object, NullLogger<OrderController>.Instance);
+        Guid orderId = Guid.NewGuid();
+        using CancellationTokenSource cts = new();
+
+        await sut.GetOrderAsync(orderId, cts.Token);
+
+        orderManagerMock.Verify(m => m.GetOrderByIdAsync(orderId, cts.Token), Times.Once);
+    }
+
+    [Test, Description("GetOrderAsync should propagate exceptions thrown by the manager")]
+    public async Task GetOrderAsync_PropagatesManagerException()
+    {
+        Mock<IOrderManager> orderManagerMock = new();
+        OrderController sut = new(orderManagerMock.Object, NullLogger<OrderController>.Instance);
+        orderManagerMock.Setup(m => m.GetOrderByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("manager failed"));
+
+        Func<Task> act = async () => await sut.GetOrderAsync(Guid.NewGuid(), TestContext.CurrentContext.CancellationToken);
+
+        await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("manager failed");
+    }
+
+    [Test, Description("GetOrderAsync should be exposed as an HTTP GET endpoint that takes a guid id in the route")]
+    public void GetOrderAsync_IsDecoratedWithHttpGetForGuidId()
+    {
+        MethodInfo? method = typeof(OrderController).GetMethod(nameof(OrderController.GetOrderAsync));
+
+        method.Should().NotBeNull();
+        HttpGetAttribute? attribute = method!.GetCustomAttribute<HttpGetAttribute>();
+        attribute.Should().NotBeNull("reading an order must be a GET");
+        attribute!.Template.Should().Be("{id:guid}", "the order is identified by its id in the route, and only a guid can match");
+    }
 }

@@ -9,23 +9,23 @@ namespace OI.Service.Tests.ModelTests;
 [TestFixture, Description("Tests for the CreateOrder and CreateOrderItem request models")]
 public class CreateOrderTests
 {
-    [Test, Description("CreateOrder should default strings to empty and nullable values to null")]
+    [Test, Description("CreateOrder should default the customer to empty, the billing address to empty and everything else optional to null")]
     public void CreateOrder_HasExpectedDefaults()
     {
         CreateOrder sut = new();
-        
-        Assert.IsNotNull(sut.CustomerId);
+
+        sut.CustomerId.Should().Be(Guid.Empty, "the customer is required, so it is empty until the caller sets it");
         sut.OrderDate.Should().BeNull();
         sut.BillingAddress1.Should().BeEmpty();
         sut.BillingAddress2.Should().BeEmpty();
         sut.BillingCity.Should().BeEmpty();
         sut.BillingStateCode.Should().BeEmpty();
         sut.BillingZipCode.Should().BeEmpty();
-        sut.ShippingAddress1.Should().BeNullOrEmpty();
-        sut.ShippingAddress2.Should().BeNullOrEmpty();
-        sut.ShippingCity.Should().BeNullOrEmpty();
-        sut.ShippingStateCode.Should().BeNullOrEmpty();
-        sut.ShippingZipCode.Should().BeNullOrEmpty();
+        sut.ShippingAddress1.Should().BeNull("the shipping address is optional");
+        sut.ShippingAddress2.Should().BeNull("the shipping address is optional");
+        sut.ShippingCity.Should().BeNull("the shipping address is optional");
+        sut.ShippingStateCode.Should().BeNull("the shipping address is optional");
+        sut.ShippingZipCode.Should().BeNull("the shipping address is optional");
         sut.SubTotal.Should().BeNull();
         sut.Shipping.Should().BeNull();
         sut.Tax.Should().BeNull();
@@ -38,6 +38,7 @@ public class CreateOrderTests
     {
         CreateOrderItem sut = new();
 
+        sut.Id.Should().BeNull("an item that is not saved yet has no id");
         sut.ProductId.Should().Be(Guid.Empty);
         sut.Name.Should().BeEmpty();
         sut.Description.Should().BeEmpty();
@@ -57,6 +58,78 @@ public class CreateOrderTests
         result.Should().NotBeNull();
         result!.BillingCity.Should().Be("Austin");
         result.SubTotal.Should().Be(10.5m);
+    }
+
+    [Test, Description("CreateOrder should deserialize without any shipping address because it is optional")]
+    public void CreateOrder_DeserializesWithoutShippingAddress()
+    {
+        Guid customerId = Guid.NewGuid();
+        string json = $"{{\"customerId\":\"{customerId}\",\"billingAddress1\":\"1 Bill St\",\"billingCity\":\"Austin\"}}";
+
+        CreateOrder? result = JsonSerializer.Deserialize<CreateOrder>(json, JsonSerializerOptions.Web);
+
+        result.Should().NotBeNull();
+        result!.CustomerId.Should().Be(customerId);
+        result.BillingAddress1.Should().Be("1 Bill St");
+        result.ShippingAddress1.Should().BeNull();
+        result.ShippingAddress2.Should().BeNull();
+        result.ShippingCity.Should().BeNull();
+        result.ShippingStateCode.Should().BeNull();
+        result.ShippingZipCode.Should().BeNull();
+    }
+
+    [Test, Description("CreateOrder should deserialize without any billing address because it is optional")]
+    public void CreateOrder_DeserializesWithoutBillingAddress()
+    {
+        string json = $"{{\"customerId\":\"{Guid.NewGuid()}\",\"billingAddress1\":null,\"billingAddress2\":null,\"billingCity\":null,\"billingStateCode\":null,\"billingZipCode\":null}}";
+
+        CreateOrder? result = JsonSerializer.Deserialize<CreateOrder>(json, JsonSerializerOptions.Web);
+
+        result.Should().NotBeNull();
+        result!.BillingAddress1.Should().BeNull();
+        result.BillingAddress2.Should().BeNull();
+        result.BillingCity.Should().BeNull();
+        result.BillingStateCode.Should().BeNull();
+        result.BillingZipCode.Should().BeNull();
+    }
+
+    [Test, Description("CreateOrder should deserialize a shipping address when one is supplied")]
+    public void CreateOrder_DeserializesShippingAddress()
+    {
+        string json = "{\"shippingAddress1\":\"9 Ship Rd\",\"shippingAddress2\":\"Unit 4\",\"shippingCity\":\"Dallas\",\"shippingStateCode\":\"TX\",\"shippingZipCode\":\"75201\"}";
+
+        CreateOrder? result = JsonSerializer.Deserialize<CreateOrder>(json, JsonSerializerOptions.Web);
+
+        result.Should().NotBeNull();
+        result!.ShippingAddress1.Should().Be("9 Ship Rd");
+        result.ShippingAddress2.Should().Be("Unit 4");
+        result.ShippingCity.Should().Be("Dallas");
+        result.ShippingStateCode.Should().Be("TX");
+        result.ShippingZipCode.Should().Be("75201");
+    }
+
+    [Test, Description("CreateOrder should leave the customer empty when the JSON has no customerId so the manager can reject it")]
+    public void CreateOrder_DeserializesMissingCustomerIdAsEmptyGuid()
+    {
+        CreateOrder? result = JsonSerializer.Deserialize<CreateOrder>("{\"billingCity\":\"Austin\"}", JsonSerializerOptions.Web);
+
+        result.Should().NotBeNull();
+        result!.CustomerId.Should().Be(Guid.Empty);
+    }
+
+    [Test, Description("CreateOrder should keep the id of an order item that is already saved")]
+    public void CreateOrder_DeserializesOrderItemId()
+    {
+        Guid itemId = Guid.NewGuid();
+        string json = $"{{\"orderItems\":[{{\"id\":\"{itemId}\",\"productId\":\"{Guid.NewGuid()}\",\"quantity\":3}},{{\"productId\":\"{Guid.NewGuid()}\",\"quantity\":1}}]}}";
+
+        CreateOrder? result = JsonSerializer.Deserialize<CreateOrder>(json, JsonSerializerOptions.Web);
+
+        result.Should().NotBeNull();
+        List<CreateOrderItem> items = result!.OrderItems!.ToList();
+        items.Should().HaveCount(2);
+        items[0].Id.Should().Be(itemId, "an existing item is identified by its id when the order is updated");
+        items[1].Id.Should().BeNull("a new item has no id yet");
     }
 
     [Test, Description("CreateOrder should deserialize order items from JSON the way ASP.NET Core model binding does")]

@@ -1,7 +1,6 @@
 using FluentAssertions;
 using OI.Data.Contexts;
 using OI.Data.Helpers;
-using OI.Data.Model;
 using OI.Data.Model.Orders;
 using OI.Data.Repos;
 using OI.Glue.Models;

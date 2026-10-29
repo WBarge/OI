@@ -44,10 +44,10 @@ describe('App', () => {
     expect(compiled.querySelector('router-outlet')).toBeTruthy();
   });
 
-  it('should offer Home and About in the menu', () => {
+  it('should offer Home, Customers and About in the menu', () => {
     const app = TestBed.createComponent(App).componentInstance;
 
-    expect(app.items.map(item => item.label)).toEqual(['Home', 'About']);
+    expect(app.items.map(item => item.label)).toEqual(['Home', 'Customers', 'About']);
   });
 
   it('should hand its menu items to the menubar', async () => {
@@ -66,6 +66,7 @@ describe('App', () => {
 
     const text = (fixture.nativeElement as HTMLElement).querySelector('p-menubar')?.textContent ?? '';
     expect(text).toContain('Home');
+    expect(text).toContain('Customers');
     expect(text).toContain('About');
   });
 
@@ -82,6 +83,12 @@ describe('App', () => {
     const app = TestBed.createComponent(App).componentInstance;
 
     expect(app.items.find(item => item.label === 'Home')?.routerLink).toBe('/');
+  });
+
+  it('should link Customers to the customers page', () => {
+    const app = TestBed.createComponent(App).componentInstance;
+
+    expect(app.items.find(item => item.label === 'Customers')?.routerLink).toBe('/customers');
   });
 
   it('should link About to the about page', () => {

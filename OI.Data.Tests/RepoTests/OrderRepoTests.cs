@@ -1,3 +1,4 @@
+using CrossCutting.Exceptions;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -959,4 +960,413 @@ public class OrderRepoTests
         result.Customer.LastName.Should().Be("Jones");
     }
 
+// ---------- GET ORDER ----------
+
+    [Test, Description("GetOrderAsync should return null when no order has the id")]
+    public async Task GetOrderAsync_ReturnsNullWhenOrderDoesNotExist()
+    {
+        await TestContext.Out.WriteLineAsync("Setting up test");
+        using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
+        OrderRepo sut = new(context);
+
+        await TestContext.Out.WriteLineAsync("Executing test");
+        IOrder? result = await sut.GetOrderAsync(Guid.NewGuid(), TestContext.CurrentContext.CancellationToken);
+
+        await TestContext.Out.WriteLineAsync("Examining results");
+        result.Should().BeNull("there is no order with that id");
+    }
+
+    [Test, Description("GetOrderAsync should return the order with its items, including the product of each item")]
+    public async Task GetOrderAsync_ReturnsOrderWithItems()
+    {
+        await TestContext.Out.WriteLineAsync("Setting up test");
+        Guid productId1 = Guid.NewGuid();
+        Guid productId2 = Guid.NewGuid();
+        IOrder created = await SeedOrderAsync(Guid.NewGuid(),
+            CreateItem(productId1, "WID-001", 10.50m, 2),
+            CreateItem(productId2, "GAD-002", 5.25m, 3));
+        using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
+        OrderRepo sut = new(context);
+
+        await TestContext.Out.WriteLineAsync("Executing test");
+        IOrder? result = await sut.GetOrderAsync(created.Id, TestContext.CurrentContext.CancellationToken);
+
+        await TestContext.Out.WriteLineAsync("Examining results");
+        result.Should().NotBeNull();
+        result!.Id.Should().Be(created.Id);
+        result.OrderNumber.Should().Be(created.OrderNumber);
+        List<IOrderItem> items = result.OrderItems.ToList();
+        items.Should().HaveCount(2, "the items are loaded together with the order");
+        items.Select(i => i.ProductId).Should().BeEquivalentTo(new[] { productId1, productId2 });
+        items.Single(i => i.Sku == "WID-001").Quantity.Should().Be(2);
+        items.Single(i => i.Sku == "GAD-002").Total.Should().Be(15.75m, "an item without a total gets price * quantity");
+    }
+
+    [Test, Description("GetOrderAsync should return the customer of the order")]
+    public async Task GetOrderAsync_ReturnsCustomerOfOrder()
+    {
+        await TestContext.Out.WriteLineAsync("Setting up test");
+        Guid customerId = Guid.NewGuid();
+        using (IServiceScope seedScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope())
+        {
+            using OiServiceDbContext seedContext = seedScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
+            seedContext.Customers.Add(new Customer
+            {
+                Id = customerId,
+                LastName = "Smith",
+                FirstName = "Jane",
+                PhoneNumber = "512-555-0100",
+                Created = DateTime.UtcNow
+            });
+            await seedContext.SaveChangesAsync();
+        }
+
+        IOrder created = await SeedOrderAsync(customerId);
+        using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
+        OrderRepo sut = new(context);
+
+        await TestContext.Out.WriteLineAsync("Executing test");
+        IOrder? result = await sut.GetOrderAsync(created.Id, TestContext.CurrentContext.CancellationToken);
+
+        await TestContext.Out.WriteLineAsync("Examining results");
+        result.Should().NotBeNull();
+        result!.Customer.Should().NotBeNull("the customer is loaded with the order from a context that never saw it");
+        result.Customer!.Id.Should().Be(customerId);
+        result.Customer.LastName.Should().Be("Smith");
+        result.Customer.FirstName.Should().Be("Jane");
+    }
+
+    [Test, Description("GetOrderAsync should return an empty OrderItems collection for an order without items")]
+    public async Task GetOrderAsync_ReturnsEmptyItemsForOrderWithoutItems()
+    {
+        await TestContext.Out.WriteLineAsync("Setting up test");
+        IOrder created = await SeedOrderAsync(Guid.NewGuid());
+        using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
+        OrderRepo sut = new(context);
+
+        await TestContext.Out.WriteLineAsync("Executing test");
+        IOrder? result = await sut.GetOrderAsync(created.Id, TestContext.CurrentContext.CancellationToken);
+
+        await TestContext.Out.WriteLineAsync("Examining results");
+        result.Should().NotBeNull();
+        result!.OrderItems.Should().NotBeNull().And.BeEmpty();
+    }
+
+    [Test, Description("CreateOrderAsync should save an order with no billing and no shipping address because both are optional")]
+    public async Task CreateOrderAsync_AllowsOrderWithoutAnyAddress()
+    {
+        await TestContext.Out.WriteLineAsync("Setting up test");
+        using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
+        OrderRepo sut = new(context);
+        Mock<ICreateOrder> requestMock = new();
+        requestMock.Setup(r => r.CustomerId).Returns(Guid.NewGuid());
+        requestMock.Setup(r => r.BillingAddress1).Returns((string?)null);
+        requestMock.Setup(r => r.BillingAddress2).Returns((string?)null);
+        requestMock.Setup(r => r.BillingCity).Returns((string?)null);
+        requestMock.Setup(r => r.BillingStateCode).Returns((string?)null);
+        requestMock.Setup(r => r.BillingZipCode).Returns((string?)null);
+        requestMock.Setup(r => r.ShippingAddress1).Returns((string?)null);
+        requestMock.Setup(r => r.ShippingAddress2).Returns((string?)null);
+        requestMock.Setup(r => r.ShippingCity).Returns((string?)null);
+        requestMock.Setup(r => r.ShippingStateCode).Returns((string?)null);
+        requestMock.Setup(r => r.ShippingZipCode).Returns((string?)null);
+
+        await TestContext.Out.WriteLineAsync("Executing test");
+        IOrder result = await sut.CreateOrderAsync(requestMock.Object, 1000, true, TestContext.CurrentContext.CancellationToken);
+
+        await TestContext.Out.WriteLineAsync("Examining results");
+        using IServiceScope verifyScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
+        using OiServiceDbContext verifyContext = verifyScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
+        Order saved = await verifyContext.Set<Order>().SingleAsync(o => o.Id == result.Id);
+        saved.BillingAddress1.Should().BeNull();
+        saved.BillingZipCode.Should().BeNull();
+        saved.ShippingAddress1.Should().BeNull();
+        saved.ShippingZipCode.Should().BeNull();
+        result.BillingAddress1.Should().BeEmpty("the order that is returned shows a missing address as empty");
+        result.ShippingAddress1.Should().BeEmpty("the order that is returned shows a missing address as empty");
+    }
+
+    [Test, Description("CreateOrderAsync should save an order with a shipping address and no billing address")]
+    public async Task CreateOrderAsync_AllowsShippingAddressWithoutBillingAddress()
+    {
+        await TestContext.Out.WriteLineAsync("Setting up test");
+        using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
+        OrderRepo sut = new(context);
+        Mock<ICreateOrder> requestMock = new();
+        requestMock.Setup(r => r.CustomerId).Returns(Guid.NewGuid());
+        requestMock.Setup(r => r.BillingAddress1).Returns((string?)null);
+        requestMock.Setup(r => r.ShippingAddress1).Returns("9 Ship Rd");
+        requestMock.Setup(r => r.ShippingCity).Returns("Dallas");
+
+        await TestContext.Out.WriteLineAsync("Executing test");
+        IOrder result = await sut.CreateOrderAsync(requestMock.Object, 1001, true, TestContext.CurrentContext.CancellationToken);
+
+        await TestContext.Out.WriteLineAsync("Examining results");
+        result.BillingAddress1.Should().BeEmpty();
+        result.ShippingAddress1.Should().Be("9 Ship Rd");
+        result.ShippingCity.Should().Be("Dallas");
+    }
+
+    [Test, Description("UpdateOrder should clear the billing and shipping address when the request leaves them out")]
+    public async Task UpdateOrder_ClearsAddressesWhenNotSupplied()
+    {
+        await TestContext.Out.WriteLineAsync("Setting up test");
+        IOrder created = await SeedOrderAsync(Guid.NewGuid());
+        Mock<IUpdateOrder> requestMock = BuildUpdateRequestMock(created.Id, Guid.NewGuid(), 0m, 0m, 0m, 0m, []);
+        requestMock.Setup(r => r.BillingAddress1).Returns((string?)null);
+        requestMock.Setup(r => r.BillingCity).Returns((string?)null);
+        requestMock.Setup(r => r.ShippingAddress1).Returns((string?)null);
+        requestMock.Setup(r => r.ShippingCity).Returns((string?)null);
+        using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
+        OrderRepo sut = new(context);
+
+        await TestContext.Out.WriteLineAsync("Executing test");
+        await sut.UpdateOrder(requestMock.Object, TestContext.CurrentContext.CancellationToken);
+
+        await TestContext.Out.WriteLineAsync("Examining results");
+        using IServiceScope verifyScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
+        using OiServiceDbContext verifyContext = verifyScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
+        Order saved = await verifyContext.Set<Order>().SingleAsync(o => o.Id == created.Id);
+        saved.BillingAddress1.Should().BeNull();
+        saved.BillingCity.Should().BeNull();
+        saved.ShippingAddress1.Should().BeNull();
+        saved.ShippingCity.Should().BeNull();
+    }
+
+// ---------- UPDATE ORDER ----------
+
+    [Test, Description("UpdateOrder should throw a RequiredObjectException when no order has the id")]
+    public async Task UpdateOrder_ThrowsWhenOrderDoesNotExist()
+    {
+        await TestContext.Out.WriteLineAsync("Setting up test");
+        using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
+        OrderRepo sut = new(context);
+        IUpdateOrder request = CreateUpdateRequest(Guid.NewGuid(), Guid.NewGuid());
+
+        await TestContext.Out.WriteLineAsync("Executing test");
+        Func<Task> act = () => sut.UpdateOrder(request, TestContext.CurrentContext.CancellationToken);
+
+        await TestContext.Out.WriteLineAsync("Examining results");
+        await act.Should().ThrowAsync<RequiredObjectException>("there is no order to update");
+    }
+
+    [Test, Description("UpdateOrder should save the new customer, addresses and totals")]
+    public async Task UpdateOrder_SavesOrderFields()
+    {
+        await TestContext.Out.WriteLineAsync("Setting up test");
+        IOrder created = await SeedOrderAsync(Guid.NewGuid());
+        Guid newCustomerId = Guid.NewGuid();
+        IUpdateOrder request = CreateUpdateRequest(created.Id, newCustomerId, subTotal: 49.99m, shipping: 5.99m, tax: 4.12m, total: 60.10m);
+        using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
+        OrderRepo sut = new(context);
+
+        await TestContext.Out.WriteLineAsync("Executing test");
+        await sut.UpdateOrder(request, TestContext.CurrentContext.CancellationToken);
+
+        await TestContext.Out.WriteLineAsync("Examining results");
+        using IServiceScope verifyScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
+        using OiServiceDbContext verifyContext = verifyScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
+        Order saved = await verifyContext.Set<Order>().SingleAsync(o => o.Id == created.Id);
+        saved.CustomerId.Should().Be(newCustomerId);
+        saved.BillingAddress1.Should().Be("789 Oak Ave");
+        saved.BillingCity.Should().Be("Houston");
+        saved.ShippingAddress1.Should().Be("789 Oak Ave");
+        saved.ShippingZipCode.Should().Be("77001");
+        saved.SubTotal.Should().Be(49.99m);
+        saved.Shipping.Should().Be(5.99m);
+        saved.Tax.Should().Be(4.12m);
+        saved.Total.Should().Be(60.10m);
+        saved.OrderNumber.Should().Be(created.OrderNumber, "an update never renumbers an order");
+        saved.Modified.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
+    }
+
+    [Test, Description("UpdateOrder should change the quantity and total of an item the order already has, keeping the same row")]
+    public async Task UpdateOrder_UpdatesQuantityAndTotalOfExistingItem()
+    {
+        await TestContext.Out.WriteLineAsync("Setting up test");
+        Guid productId = Guid.NewGuid();
+        IOrder created = await SeedOrderAsync(Guid.NewGuid(), CreateItem(productId, "WID-001", 10m, 2));
+        Guid originalItemId = created.OrderItems.Single().Id;
+        IUpdateOrder request = CreateUpdateRequest(created.Id, Guid.NewGuid(), CreateItem(productId, "WID-001", 10m, 5, originalItemId));
+        using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
+        OrderRepo sut = new(context);
+
+        await TestContext.Out.WriteLineAsync("Executing test");
+        await sut.UpdateOrder(request, TestContext.CurrentContext.CancellationToken);
+
+        await TestContext.Out.WriteLineAsync("Examining results");
+        using IServiceScope verifyScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
+        using OiServiceDbContext verifyContext = verifyScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
+        OrderItem item = await verifyContext.Set<OrderItem>().SingleAsync(i => i.OrderId == created.Id);
+        item.Id.Should().Be(originalItemId, "the item is updated in place and not replaced");
+        item.ProductId.Should().Be(productId);
+        item.Quantity.Should().Be(5);
+        item.Total.Should().Be(50m, "an item without a total gets price * quantity");
+    }
+
+    [Test, Description("UpdateOrder should add an item for a product the order does not have yet and keep the existing ones")]
+    public async Task UpdateOrder_AddsItemForNewProduct()
+    {
+        await TestContext.Out.WriteLineAsync("Setting up test");
+        Guid existingProductId = Guid.NewGuid();
+        Guid newProductId = Guid.NewGuid();
+        IOrder created = await SeedOrderAsync(Guid.NewGuid(), CreateItem(existingProductId, "WID-001", 10m, 2));
+        Guid existingItemId = created.OrderItems.Single().Id;
+        IUpdateOrder request = CreateUpdateRequest(created.Id, Guid.NewGuid(),
+            CreateItem(existingProductId, "WID-001", 10m, 2, existingItemId),
+            CreateItem(newProductId, "GAD-002", 5.25m, 3));
+        using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
+        OrderRepo sut = new(context);
+
+        await TestContext.Out.WriteLineAsync("Executing test");
+        await sut.UpdateOrder(request, TestContext.CurrentContext.CancellationToken);
+
+        await TestContext.Out.WriteLineAsync("Examining results");
+        using IServiceScope verifyScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
+        using OiServiceDbContext verifyContext = verifyScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
+        List<OrderItem> items = await verifyContext.Set<OrderItem>().Where(i => i.OrderId == created.Id).ToListAsync();
+        items.Should().HaveCount(2);
+        items.Select(i => i.ProductId).Should().BeEquivalentTo(new[] { existingProductId, newProductId });
+        OrderItem added = items.Single(i => i.ProductId == newProductId);
+        added.Sku.Should().Be("GAD-002");
+        added.Quantity.Should().Be(3);
+        added.Total.Should().Be(15.75m);
+        added.OrderId.Should().Be(created.Id);
+    }
+
+    [Test, Description("UpdateOrder should remove the items whose product is no longer in the request")]
+    public async Task UpdateOrder_RemovesItemsMissingFromRequest()
+    {
+        await TestContext.Out.WriteLineAsync("Setting up test");
+        Guid keptProductId = Guid.NewGuid();
+        Guid removedProductId = Guid.NewGuid();
+        IOrder created = await SeedOrderAsync(Guid.NewGuid(),
+            CreateItem(keptProductId, "WID-001", 10m, 2),
+            CreateItem(removedProductId, "GAD-002", 5.25m, 3));
+        Guid keptItemId = created.OrderItems.Single(i => i.ProductId == keptProductId).Id;
+        IUpdateOrder request = CreateUpdateRequest(created.Id, Guid.NewGuid(), CreateItem(keptProductId, "WID-001", 10m, 2, keptItemId));
+        using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
+        OrderRepo sut = new(context);
+
+        await TestContext.Out.WriteLineAsync("Executing test");
+        await sut.UpdateOrder(request, TestContext.CurrentContext.CancellationToken);
+
+        await TestContext.Out.WriteLineAsync("Examining results");
+        using IServiceScope verifyScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
+        using OiServiceDbContext verifyContext = verifyScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
+        List<OrderItem> items = await verifyContext.Set<OrderItem>().Where(i => i.OrderId == created.Id).ToListAsync();
+        items.Should().ContainSingle("the item that was left out of the request is gone");
+        items.Single().ProductId.Should().Be(keptProductId);
+    }
+
+    [Test, Description("UpdateOrder should throw when the token is already cancelled")]
+    public async Task UpdateOrder_ThrowsWhenCancelled()
+    {
+        await TestContext.Out.WriteLineAsync("Setting up test");
+        IOrder created = await SeedOrderAsync(Guid.NewGuid());
+        IUpdateOrder request = CreateUpdateRequest(created.Id, Guid.NewGuid());
+        using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
+        OrderRepo sut = new(context);
+        using CancellationTokenSource cts = new();
+        await cts.CancelAsync();
+
+        await TestContext.Out.WriteLineAsync("Executing test");
+        Func<Task> act = () => sut.UpdateOrder(request, cts.Token);
+
+        await TestContext.Out.WriteLineAsync("Examining results");
+        await act.Should().ThrowAsync<OperationCanceledException>("the token was cancelled before the call");
+    }
+
+// ---------- HELPERS FOR GET / UPDATE ----------
+
+    /// <summary>
+    /// Saves an order (and its items) with its own context so the test starts from what is really in the database
+    /// </summary>
+    private async Task<IOrder> SeedOrderAsync(Guid customerId, params ICreateOrderItem[] items)
+    {
+        using IServiceScope scope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
+        using OiServiceDbContext context = scope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
+        OrderRepo repo = new(context);
+        Mock<ICreateOrder> requestMock = new();
+        requestMock.Setup(r => r.CustomerId).Returns(customerId);
+        requestMock.Setup(r => r.BillingAddress1).Returns("123 Main St");
+        requestMock.Setup(r => r.BillingAddress2).Returns(string.Empty);
+        requestMock.Setup(r => r.BillingCity).Returns("Austin");
+        requestMock.Setup(r => r.BillingStateCode).Returns("TX");
+        requestMock.Setup(r => r.BillingZipCode).Returns("78701");
+        requestMock.Setup(r => r.ShippingAddress1).Returns("123 Main St");
+        requestMock.Setup(r => r.ShippingAddress2).Returns(string.Empty);
+        requestMock.Setup(r => r.ShippingCity).Returns("Austin");
+        requestMock.Setup(r => r.ShippingStateCode).Returns("TX");
+        requestMock.Setup(r => r.ShippingZipCode).Returns("78701");
+        requestMock.Setup(r => r.OrderItems).Returns(items.Length == 0 ? null : items);
+        int orderNumber = await repo.GetNextOrderNumberAsync(TestContext.CurrentContext.CancellationToken);
+        return await repo.CreateOrderAsync(requestMock.Object, orderNumber, true, TestContext.CurrentContext.CancellationToken);
+    }
+
+    /// <summary>
+    /// An item of a create or update request. Pass the id of the saved item to update it, leave it out to add a new item.
+    /// </summary>
+    private static ICreateOrderItem CreateItem(Guid productId, string sku, decimal price, int quantity, Guid? id = null)
+    {
+        Mock<ICreateOrderItem> itemMock = new();
+        itemMock.Setup(i => i.Id).Returns(id);
+        itemMock.Setup(i => i.ProductId).Returns(productId);
+        itemMock.Setup(i => i.Name).Returns($"Product {sku}");
+        itemMock.Setup(i => i.Description).Returns($"Description {sku}");
+        itemMock.Setup(i => i.Sku).Returns(sku);
+        itemMock.Setup(i => i.Price).Returns(price);
+        itemMock.Setup(i => i.Quantity).Returns(quantity);
+        itemMock.Setup(i => i.Total).Returns((decimal?)null); // left out so the repo works it out from price * quantity
+        return itemMock.Object;
+    }
+
+    private static IUpdateOrder CreateUpdateRequest(Guid orderId, Guid customerId, params ICreateOrderItem[] items)
+        => BuildUpdateRequestMock(orderId, customerId, 0m, 0m, 0m, 0m, items).Object;
+
+    private static IUpdateOrder CreateUpdateRequest(Guid orderId, Guid customerId, decimal subTotal, decimal shipping,
+        decimal tax, decimal total, params ICreateOrderItem[] items)
+        => BuildUpdateRequestMock(orderId, customerId, subTotal, shipping, tax, total, items).Object;
+
+    /// <summary>
+    /// The mock behind an update request, for the tests that need to change a value after the defaults were set up
+    /// </summary>
+    private static Mock<IUpdateOrder> BuildUpdateRequestMock(Guid orderId, Guid customerId, decimal subTotal, decimal shipping,
+        decimal tax, decimal total, ICreateOrderItem[] items)
+    {
+        Mock<IUpdateOrder> mock = new();
+        mock.Setup(r => r.Id).Returns(orderId);
+        mock.Setup(r => r.OrderNumber).Returns(0);
+        mock.Setup(r => r.CustomerId).Returns(customerId);
+        mock.Setup(r => r.OrderDate).Returns(DateTime.UtcNow);
+        mock.Setup(r => r.BillingAddress1).Returns("789 Oak Ave");
+        mock.Setup(r => r.BillingAddress2).Returns(string.Empty);
+        mock.Setup(r => r.BillingCity).Returns("Houston");
+        mock.Setup(r => r.BillingStateCode).Returns("TX");
+        mock.Setup(r => r.BillingZipCode).Returns("77001");
+        mock.Setup(r => r.ShippingAddress1).Returns("789 Oak Ave");
+        mock.Setup(r => r.ShippingAddress2).Returns(string.Empty);
+        mock.Setup(r => r.ShippingCity).Returns("Houston");
+        mock.Setup(r => r.ShippingStateCode).Returns("TX");
+        mock.Setup(r => r.ShippingZipCode).Returns("77001");
+        mock.Setup(r => r.SubTotal).Returns(subTotal);
+        mock.Setup(r => r.Shipping).Returns(shipping);
+        mock.Setup(r => r.Tax).Returns(tax);
+        mock.Setup(r => r.Total).Returns(total);
+        mock.Setup(r => r.OrderItems).Returns(items);
+        return mock;
+    }
 }

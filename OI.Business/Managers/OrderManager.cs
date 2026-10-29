@@ -127,7 +127,7 @@ internal class OrderManager(IOrderRepo orderRepo, ICustomerRepo customerRepo, IL
             request.OrderDate = preexistingOrder.OrderDate;
         }
 
-        if (request.OrderNumber.IsEmpty() && preexistingOrder.OrderNumber.IsNotEmpty())
+        if (request.OrderNumber == 0 && preexistingOrder.OrderNumber > -1)
         {
             request.OrderNumber = preexistingOrder.OrderNumber;
         }

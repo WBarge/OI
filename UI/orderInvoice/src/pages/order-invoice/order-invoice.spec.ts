@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { NEVER, of } from 'rxjs';
 import { vi } from 'vitest';
@@ -8,12 +8,14 @@ import { Configuration } from '../../model/configuration';
 import { Customer } from '../../model/results/customer';
 import { CustomerListResult } from '../../model/results/customer-list-result';
 import { CustomerSearch } from '../../model/results/customer-search';
+import { Order } from '../../model/results/order';
 import { ProductOrdered } from '../../model/results/product-ordered';
 import { Product } from '../../model/results/product';
 import { Address } from '../../model/address';
 import { CustomerSelection } from '../../components/customer-selection/customer-selection';
 import { ConfigService } from '../../services/config-service';
 import { CustomerService } from '../../services/customer-service';
+import { OrdersService } from '../../services/orders-service';
 import { ProductService } from '../../services/product.service';
 import { ProductSelection } from '../../components/product-selection/product-selection';
 import { FilterTransformerService } from '../../services/transformers/filter-transformer.service';
@@ -106,7 +108,7 @@ describe('OrderInvoice', () => {
     it('should be a new order when the route has no order id', () => {
       fixture.detectChanges();
 
-      expect(component.mode).toBe('NEW');
+      expect(component.mode()).toBe('NEW');
       expect(component.orderId).toBeNull();
     });
 
@@ -116,7 +118,7 @@ describe('OrderInvoice', () => {
 
       fixture.detectChanges();
 
-      expect(component.mode).toBe('EDIT');
+      expect(component.mode()).toBe('EDIT');
       expect(component.orderId).toBe('order-123');
     });
 
@@ -126,7 +128,7 @@ describe('OrderInvoice', () => {
 
       fixture.detectChanges();
 
-      expect(component.mode).toBe('VIEW');
+      expect(component.mode()).toBe('VIEW');
       expect(component.orderId).toBe('order-123');
     });
 
@@ -136,7 +138,7 @@ describe('OrderInvoice', () => {
 
       fixture.detectChanges();
 
-      expect(component.mode).toBe('VIEW');
+      expect(component.mode()).toBe('VIEW');
     });
   });
 
@@ -685,6 +687,128 @@ describe('OrderInvoice', () => {
 
       const inputs = (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLInputElement>('#itemsTable tbody p-inputnumber input');
       expect(Array.from(inputs).map(input => input.value)).toEqual(['2', '1', '3']);
+    });
+  });
+
+  describe('saving the order', () => {
+    let orders: OrdersService;
+    let addSpy: ReturnType<typeof vi.spyOn>;
+
+    /** what the API sends back once the order is saved */
+    const savedOrder = () => Object.assign(new Order(), {
+      idValue: 'order-9', orderNumber: '1001', customerId: 'c-7', customerName: 'Ada Lovelace', phoneNumber: '5551234567',
+      orderDate: new Date('2026-03-15T10:30:00Z'),
+      orderItems: [Object.assign(line('1', 10, 2), { idValue: 'line-1' })],
+      subTotal: 20, shipping: 5, tax: 1.65, total: 26.65
+    });
+
+    /** a customer and one line, so the order can be submitted */
+    const readyToSubmit = () => {
+      component.customerId = 'c-7';
+      component.items = [line('1', 10, 2)];
+      component.calculateTotals();
+      fixture.detectChanges();
+    };
+
+    beforeEach(() => {
+      orders = TestBed.inject(OrdersService);
+      addSpy = vi.spyOn(TestBed.inject(MessageService), 'add');
+      fixture.detectChanges();
+    });
+
+    const buttonLabels = () => Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('.buttonRow button'))
+      .map(button => button.textContent?.trim());
+
+    it('should offer Create and Done on a new order that is ready to submit', () => {
+      readyToSubmit();
+
+      expect(buttonLabels()).toEqual(['Create', 'Done']);
+    });
+
+    it('should only offer Done until there is a customer and an item', () => {
+      expect(buttonLabels()).toEqual(['Done']);
+    });
+
+    it('should send the order to the order service when Create is pressed', () => {
+      const createOrder = vi.spyOn(orders, 'createOrder').mockReturnValue(of(savedOrder()));
+      readyToSubmit();
+
+      component.createOrder(new Event('click'));
+
+      expect(createOrder).toHaveBeenCalledTimes(1);
+      const sent: Order = createOrder.mock.calls[0][0];
+      expect(sent.customerId).toBe('c-7');
+      expect(sent.orderItems).toHaveLength(1);
+      expect(sent.idValue).toBeFalsy();
+      expect(sent.subTotal).toBe(20);
+    });
+
+    it('should show the saved order and switch to editing it once it was created', () => {
+      vi.spyOn(orders, 'createOrder').mockReturnValue(of(savedOrder()));
+      readyToSubmit();
+      expect(component.mode()).toBe('NEW');
+
+      component.createOrder(new Event('click'));
+
+      expect(component.mode()).toBe('EDIT');
+      expect(component.orderId).toBe('order-9');
+      expect(component.orderNumber).toBe('1001');
+      expect(component.total).toBe(26.65);
+    });
+
+    it('should offer Update instead of Create once the order was created', () => {
+      vi.spyOn(orders, 'createOrder').mockReturnValue(of(savedOrder()));
+      readyToSubmit();
+
+      component.createOrder(new Event('click'));
+      fixture.detectChanges();
+
+      expect(buttonLabels()).toEqual(['Update', 'Done']);
+    });
+
+    it('should send the id and the order number when an order that is being edited is updated', async () => {
+      TestBed.resetTestingModule();
+      await setup({}, { id: 'order-9' });
+      orders = TestBed.inject(OrdersService);
+      vi.spyOn(orders, 'getOrderById').mockReturnValue(of(savedOrder()));
+      const updateOrder = vi.spyOn(orders, 'updateOrder').mockReturnValue(of({}));
+      fixture.detectChanges();
+
+      component.updateOrder(new Event('click'));
+
+      expect(updateOrder).toHaveBeenCalledTimes(1);
+      const sent: Order = updateOrder.mock.calls[0][0];
+      expect(sent.idValue).toBe('order-9');
+      expect(sent.orderNumber).toBe('1001');
+      expect(sent.customerId).toBe('c-7');
+    });
+
+    it('should not create an order without a customer and should say why', () => {
+      const createOrder = vi.spyOn(orders, 'createOrder');
+      component.items = [line('1', 10, 2)];
+
+      component.createOrder(new Event('click'));
+
+      expect(createOrder).not.toHaveBeenCalled();
+      expect(addSpy).toHaveBeenCalledWith(expect.objectContaining({ severity: 'error', detail: 'A Customer must be selected!' }));
+    });
+
+    it('should not create an order without an item and should say why', () => {
+      const createOrder = vi.spyOn(orders, 'createOrder');
+      component.customerId = 'c-7';
+
+      component.createOrder(new Event('click'));
+
+      expect(createOrder).not.toHaveBeenCalled();
+      expect(addSpy).toHaveBeenCalledWith(expect.objectContaining({ severity: 'error', detail: 'At least one item must be added to the order' }));
+    });
+
+    it('should go back to the home page when Done is pressed', () => {
+      const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+      component.done(new Event('click'));
+
+      expect(navigate).toHaveBeenCalledWith(['/home']);
     });
   });
 

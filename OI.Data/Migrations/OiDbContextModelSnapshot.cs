@@ -11,7 +11,7 @@ using OI.Data.Contexts;
 namespace OI.Data.Migrations
 {
     [DbContext(typeof(OiServiceDbContext))]
-    partial class OiDbContextModelSnapshot : ModelSnapshot
+    partial class OiServiceDbContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
         {

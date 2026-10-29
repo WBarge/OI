@@ -1,5 +1,4 @@
 ﻿using FluentAssertions;
-using OI.Data.Model;
 using OI.Data.Model.Orders;
 using OI.Data.Translators;
 using OI.Glue.Models;
@@ -484,6 +483,8 @@ public class OrderTranslatorTests
     {
         Guid itemId1 = Guid.NewGuid();
         Guid itemId2 = Guid.NewGuid();
+        Guid productId1 = Guid.NewGuid();
+        Guid productId2 = Guid.NewGuid();
         Order order = new()
         {
             Id = Guid.NewGuid(),
@@ -508,8 +509,8 @@ public class OrderTranslatorTests
             Total = 36.75m,
             OrderItems =
             [
-                new OrderItem { Id = itemId1, ProductId = Guid.NewGuid(), Name = "Widget", Description = "A widget", Sku = "WID-001", Price = 10.50m, Quantity = 2, Total = 21.00m },
-                new OrderItem { Id = itemId2, ProductId = Guid.NewGuid(), Name = "Gadget", Description = "A gadget", Sku = "GAD-002", Price = 5.25m, Quantity = 3, Total = 15.75m }
+                new OrderItem { Id = itemId1, ProductId = productId1, Name = "Widget", Description = "A widget", Sku = "WID-001", Price = 10.50m, Quantity = 2, Total = 21.00m },
+                new OrderItem { Id = itemId2, ProductId = productId2, Name = "Gadget", Description = "A gadget", Sku = "GAD-002", Price = 5.25m, Quantity = 3, Total = 15.75m }
             ],
             Created = DateTime.UtcNow
         };
@@ -520,12 +521,14 @@ public class OrderTranslatorTests
         items.Should().HaveCount(2);
         items.Select(i => i.Sku).Should().Equal("WID-001", "GAD-002");
         items[0].Id.Should().Be(itemId1);
+        items[0].ProductId.Should().Be(productId1);
         items[0].Name.Should().Be("Widget");
         items[0].Description.Should().Be("A widget");
         items[0].Price.Should().Be(10.50m);
         items[0].Quantity.Should().Be(2);
         items[0].Total.Should().Be(21.00m);
         items[1].Id.Should().Be(itemId2);
+        items[1].ProductId.Should().Be(productId2);
         items[1].Name.Should().Be("Gadget");
         items[1].Description.Should().Be("A gadget");
         items[1].Price.Should().Be(5.25m);

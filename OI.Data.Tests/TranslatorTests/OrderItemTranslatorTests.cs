@@ -12,11 +12,12 @@ public class OrderItemTranslatorTests
     public void Translate_MapsAllFields()
     {
         Guid itemId = Guid.NewGuid();
+        Guid productId = Guid.NewGuid();
         OrderItem orderItem = new()
         {
             Id = itemId,
             OrderId = Guid.NewGuid(),
-            ProductId = Guid.NewGuid(),
+            ProductId = productId,
             Name = "Widget",
             Description = "A widget",
             Sku = "WID-001",
@@ -29,6 +30,7 @@ public class OrderItemTranslatorTests
         IOrderItem result = orderItem.Translate();
 
         result.Id.Should().Be(itemId);
+        result.ProductId.Should().Be(productId, "the product is what ties an order item back to the catalog");
         result.Name.Should().Be("Widget");
         result.Description.Should().Be("A widget");
         result.Sku.Should().Be("WID-001");
