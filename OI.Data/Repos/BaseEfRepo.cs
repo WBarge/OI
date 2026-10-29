@@ -1,5 +1,6 @@
 ﻿using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
+using OI.Data.Contexts;
 using OI.Data.Helpers;
 using OI.Glue.Models;
 
@@ -16,16 +17,16 @@ internal abstract class BaseEfRepo<T> where T : class
     /// Gets the database context.
     /// </summary>
     /// <value>The database context.</value>
-    protected OiDbContext DbContext { get; private set; }
+    protected OiServiceDbContext ServiceDbContext { get; private set; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="BaseEfRepo{T}" /> class.
     /// </summary>
-    /// <param name="dbContext">The database context.</param>
-    /// <exception cref="ArgumentNullException">dbContext</exception>
-    protected BaseEfRepo(OiDbContext dbContext)
+    /// <param name="serviceDbContext">The database context.</param>
+    /// <exception cref="ArgumentNullException">serviceDbContext</exception>
+    protected BaseEfRepo(OiServiceDbContext serviceDbContext)
     {
-        DbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
+        ServiceDbContext = serviceDbContext ?? throw new ArgumentNullException(nameof(serviceDbContext));
     }
 
     /// <summary>
@@ -35,7 +36,7 @@ internal abstract class BaseEfRepo<T> where T : class
     /// <returns>List&lt;T&gt;.</returns>
     protected virtual async Task<List<T>> GetAllRecordsAsync(CancellationToken cancellationToken = default)
     {
-        return await DbContext.Set<T>().ToListAsync(cancellationToken);
+        return await ServiceDbContext.Set<T>().ToListAsync(cancellationToken);
     }
 
     /// <summary>
@@ -48,7 +49,7 @@ internal abstract class BaseEfRepo<T> where T : class
     protected virtual async Task<List<T>> GetAllRecordsPagedAsync(int pageNumber = 1, int pageSize = 10,
         CancellationToken cancellationToken = default)
     {
-        return await DbContext.Set<T>().Skip(pageSize * (pageNumber - 1)).Take(pageSize).ToListAsync(cancellationToken);
+        return await ServiceDbContext.Set<T>().Skip(pageSize * (pageNumber - 1)).Take(pageSize).ToListAsync(cancellationToken);
     }
 
 
@@ -63,7 +64,7 @@ internal abstract class BaseEfRepo<T> where T : class
     protected virtual async Task<List<T>> FindByConditionPagedAsync(Dictionary<string, IFilterMetaData[]> filterCriteria = null!, int pageNumber = 1,
         int pageSize = 10, CancellationToken cancellationToken = default)
     {
-        IQueryable<T> query = await DbContext.Set<T>().BuildFilterQueryAsync(filterCriteria,cancellationToken);
+        IQueryable<T> query = await ServiceDbContext.Set<T>().BuildFilterQueryAsync(filterCriteria,cancellationToken);
         List<T> results = await query.ToListAsync(cancellationToken: cancellationToken);
         await Task.Run(() =>
         {
@@ -82,7 +83,7 @@ internal abstract class BaseEfRepo<T> where T : class
     protected virtual async Task<List<T>> FindByConditionAsync(Expression<Func<T, bool>> expression,
         CancellationToken cancellationToken = default)
     {
-        return await DbContext.Set<T>().Where(expression).ToListAsync(cancellationToken);
+        return await ServiceDbContext.Set<T>().Where(expression).ToListAsync(cancellationToken);
     }
 
     /// <summary>
@@ -95,7 +96,7 @@ internal abstract class BaseEfRepo<T> where T : class
     protected virtual async Task<T?> FindByIdAsync(Guid id,CancellationToken token=default)
     {
         // ReSharper disable once MethodSupportsCancellation
-        return await DbContext.Set<T>().FindAsync(id, token);
+        return await ServiceDbContext.Set<T>().FindAsync(id, token);
     }
 
     /// <summary>
@@ -114,7 +115,7 @@ internal abstract class BaseEfRepo<T> where T : class
     {
         Type entityType = typeof(T);
         entityType.GetProperty("Created")?.SetValue(entity, DateTime.UtcNow);
-        await DbContext.Set<T>().AddAsync(entity,token);
+        await ServiceDbContext.Set<T>().AddAsync(entity,token);
     }
 
     /// <summary>
@@ -125,7 +126,7 @@ internal abstract class BaseEfRepo<T> where T : class
     {
         Type entityType = typeof(T);
         entityType.GetProperty("Modified")?.SetValue(entity, DateTime.UtcNow);
-        DbContext.Set<T>().Update(entity);
+        ServiceDbContext.Set<T>().Update(entity);
     }
 
     /// <summary>
@@ -134,7 +135,7 @@ internal abstract class BaseEfRepo<T> where T : class
     /// <param name="entity">The entity.</param>
     protected virtual void Delete(T entity)
     {
-        DbContext.Set<T>().Remove(entity);
+        ServiceDbContext.Set<T>().Remove(entity);
     }
 
     /// <summary>
@@ -144,6 +145,6 @@ internal abstract class BaseEfRepo<T> where T : class
     /// <returns>A Task representing the asynchronous operation.</returns>
     protected async Task SaveAsync(CancellationToken cancellationToken = default)
     {
-        await DbContext.SaveChangesAsync(cancellationToken);
+        await ServiceDbContext.SaveChangesAsync(cancellationToken);
     }
 }

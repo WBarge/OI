@@ -1,6 +1,6 @@
 ﻿using CrossCutting.Extensions;
 
-namespace OI.Data.Model;
+namespace OI.Data.Model.Orders;
 
 /// <summary>
 /// Represents an item in an order. Each order can have multiple items, each representing a product and its quantity.

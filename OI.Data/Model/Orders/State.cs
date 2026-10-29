@@ -1,4 +1,4 @@
-﻿namespace OI.Data.Model;
+﻿namespace OI.Data.Model.Orders;
 
 /// <summary>
 /// Represents a state in the system. Each state has a unique identifier, name, and code.

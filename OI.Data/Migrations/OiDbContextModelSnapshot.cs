@@ -4,13 +4,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using OI.Data;
+using OI.Data.Contexts;
 
 #nullable disable
 
 namespace OI.Data.Migrations
 {
-    [DbContext(typeof(OiDbContext))]
+    [DbContext(typeof(OiServiceDbContext))]
     partial class OiDbContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)

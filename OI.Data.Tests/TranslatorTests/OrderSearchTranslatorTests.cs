@@ -1,5 +1,5 @@
 using FluentAssertions;
-using OI.Data.Model;
+using OI.Data.Model.Orders;
 using OI.Data.Translators;
 using OI.Glue.Models;
 using OrderSearch = OI.Data.Translators.Internal_Models.OrderSearch;

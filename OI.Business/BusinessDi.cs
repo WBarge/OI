@@ -10,13 +10,36 @@ namespace OI.Business;
 public static class BusinessDi
 {
     /// <summary>
-    /// Configures dependency injection for the OI.Business project by registering services and dependencies with the provided IServiceCollection.
+    /// Configures dependency injection for the OI.Business project
+    /// by registering services and dependencies with the provided IServiceCollection.
+    /// This specific configuration is for the OI.Service API application
     /// </summary>
     /// <param name="services">The services.</param>
-    public static void ConfigureDi(IServiceCollection services)
+    public static void ConfigureServiceDi(IServiceCollection services)
+    {
+        AddCommonDependencies(services);
+    }
+
+    /// <summary>
+    /// Configures dependency injection for the OI.Business project
+    /// by registering services and dependencies with the provided IServiceCollection.
+    /// This specific configuration is for the OI.Reporting API application
+    /// </summary>
+    /// <param name="services">The services.</param>
+    public static void ConfigureReportingDi(IServiceCollection services)
+    {
+        AddCommonDependencies(services);
+    }
+
+    /// <summary>
+    /// Configure dependencies that are common to all services
+    /// </summary>
+    /// <param name="services"></param>
+    private static void AddCommonDependencies(IServiceCollection services)
     {
         services.AddScoped<IStateManager, StateManager>();
         services.AddScoped<IOrderManager, OrderManager>();
         services.AddScoped<ICustomerManager, CustomerManager>();
     }
+
 }

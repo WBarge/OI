@@ -1,4 +1,4 @@
-﻿namespace OI.Data.Model;
+﻿namespace OI.Data.Model.Orders;
 
 /// <summary>
 /// Represents a customer in the system. Each customer can have multiple orders, and may have default billing and shipping addresses.

@@ -1,4 +1,4 @@
-﻿namespace OI.Data.Model;
+﻿namespace OI.Data.Model.Orders;
 
 /// <summary>
 /// Represents an order in the system. Each order is associated with a customer and can have multiple order items, along with billing and shipping information.

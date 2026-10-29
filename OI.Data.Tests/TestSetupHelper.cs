@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using OI.Data.Contexts;
 
 namespace OI.Data.Tests;
 
@@ -10,7 +11,7 @@ public static class TestSetupHelper
         ServiceCollection services = new ServiceCollection();
 
         services.AddEntityFrameworkInMemoryDatabase()
-            .AddDbContext<OiDbContext>(optionsBuilder =>
+            .AddDbContext<OiServiceDbContext>(optionsBuilder =>
             {
                 optionsBuilder.UseInMemoryDatabase("TestDb");
             });

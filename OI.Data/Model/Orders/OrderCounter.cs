@@ -1,4 +1,4 @@
-namespace OI.Data.Model;
+namespace OI.Data.Model.Orders;
 
 /// <summary>
 /// Represents a counter for tracking the next available order number.

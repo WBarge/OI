@@ -2,7 +2,8 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
-using OI.Data.Model;
+using OI.Data.Contexts;
+using OI.Data.Model.Orders;
 using OI.Data.Repos;
 using OI.Glue.Models;
 // ReSharper disable AccessToDisposedClosure
@@ -21,15 +22,15 @@ public class OrderRepoTests
 
         // Ensure the in-memory database is created and seeded
         using IServiceScope scope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = scope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = scope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         context.Database.EnsureCreated();
     }
 
-    [Test, Description("OrderRepo constructor should throw when dbContext is null")]
+    [Test, Description("OrderRepo constructor should throw when serviceDbContext is null")]
     public void Constructor_ThrowsWhenDbContextIsNull()
     {
         Action act = () => _ = new OrderRepo(null!);
-        act.Should().Throw<ArgumentNullException>("dbContext is required by OrderRepo");
+        act.Should().Throw<ArgumentNullException>("serviceDbContext is required by OrderRepo");
     }
 
     [Test, Description("GetNextOrderNumberAsync should return an order number starting at 1000")]
@@ -37,7 +38,7 @@ public class OrderRepoTests
     {
         await TestContext.Out.WriteLineAsync("Setting up test");
         using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         OrderRepo sut = new(context);
 
         await TestContext.Out.WriteLineAsync("Executing test");
@@ -52,7 +53,7 @@ public class OrderRepoTests
     {
         await TestContext.Out.WriteLineAsync("Setting up test");
         using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         OrderRepo sut = new(context);
 
         await TestContext.Out.WriteLineAsync("Executing test");
@@ -68,7 +69,7 @@ public class OrderRepoTests
     {
         await TestContext.Out.WriteLineAsync("Setting up test");
         using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         OrderRepo sut = new(context);
         ICreateOrder request = CreateRequest();
 
@@ -84,7 +85,7 @@ public class OrderRepoTests
     {
         await TestContext.Out.WriteLineAsync("Setting up test");
         using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         OrderRepo sut = new(context);
         DateTime specificDate = new DateTime(2025, 6, 15, 0, 0, 0, DateTimeKind.Utc);
         Mock<ICreateOrder> requestMock = new();
@@ -112,7 +113,7 @@ public class OrderRepoTests
     {
         await TestContext.Out.WriteLineAsync("Setting up test");
         using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         OrderRepo sut = new(context);
         Guid customerId = Guid.NewGuid();
         Mock<ICreateOrder> requestMock = new();
@@ -151,7 +152,7 @@ public class OrderRepoTests
     {
         await TestContext.Out.WriteLineAsync("Setting up test");
         using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         OrderRepo sut = new(context);
         ICreateOrder request = CreateRequest();
 
@@ -167,7 +168,7 @@ public class OrderRepoTests
     {
         await TestContext.Out.WriteLineAsync("Setting up test");
         using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         OrderRepo sut = new(context);
         ICreateOrder request = CreateRequest();
 
@@ -186,7 +187,7 @@ public class OrderRepoTests
     {
         await TestContext.Out.WriteLineAsync("Setting up test");
         using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         OrderRepo sut = new(context);
         Mock<ICreateOrder> requestMock = new();
         requestMock.Setup(r => r.SubTotal).Returns(49.99m);
@@ -219,7 +220,7 @@ public class OrderRepoTests
     {
         await TestContext.Out.WriteLineAsync("Setting up test");
         using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         OrderRepo sut = new(context);
         Guid productId1 = Guid.NewGuid();
         Guid productId2 = Guid.NewGuid();
@@ -261,7 +262,7 @@ public class OrderRepoTests
 
         await TestContext.Out.WriteLineAsync("Examining results");
         using IServiceScope verifyScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext verifyContext = verifyScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext verifyContext = verifyScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         List<OrderItem> items = await verifyContext.Set<OrderItem>().Where(i => i.OrderId == result.Id).ToListAsync();
         items.Should().HaveCount(2, "both request items should be persisted");
 
@@ -287,7 +288,7 @@ public class OrderRepoTests
     {
         await TestContext.Out.WriteLineAsync("Setting up test");
         using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         OrderRepo sut = new(context);
 
         Mock<ICreateOrderItem> itemMock = new();
@@ -318,7 +319,7 @@ public class OrderRepoTests
 
         await TestContext.Out.WriteLineAsync("Examining results");
         using IServiceScope verifyScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext verifyContext = verifyScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext verifyContext = verifyScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         OrderItem item = await verifyContext.Set<OrderItem>().SingleAsync(i => i.OrderId == result.Id);
         item.Price.Should().Be(0m, "Price should default to zero when not provided");
         item.Quantity.Should().Be(0, "Quantity should default to zero when not provided");
@@ -330,7 +331,7 @@ public class OrderRepoTests
     {
         await TestContext.Out.WriteLineAsync("Setting up test");
         using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         OrderRepo sut = new(context);
 
         Mock<ICreateOrder> requestMock = new();
@@ -352,7 +353,7 @@ public class OrderRepoTests
 
         await TestContext.Out.WriteLineAsync("Examining results");
         using IServiceScope verifyScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext verifyContext = verifyScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext verifyContext = verifyScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         int itemCount = await verifyContext.Set<OrderItem>().CountAsync(i => i.OrderId == result.Id);
         itemCount.Should().Be(0, "no items were supplied");
     }
@@ -362,7 +363,7 @@ public class OrderRepoTests
     {
         await TestContext.Out.WriteLineAsync("Setting up test");
         using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         OrderRepo sut = new(context);
 
         Mock<ICreateOrder> requestMock = new();
@@ -384,7 +385,7 @@ public class OrderRepoTests
 
         await TestContext.Out.WriteLineAsync("Examining results");
         using IServiceScope verifyScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext verifyContext = verifyScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext verifyContext = verifyScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         int itemCount = await verifyContext.Set<OrderItem>().CountAsync(i => i.OrderId == result.Id);
         itemCount.Should().Be(0, "an empty item list should create no items");
     }
@@ -394,7 +395,7 @@ public class OrderRepoTests
     {
         await TestContext.Out.WriteLineAsync("Setting up test");
         using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         OrderRepo sut = new(context);
 
         Mock<ICreateOrderItem> item1Mock = new();
@@ -428,7 +429,7 @@ public class OrderRepoTests
 
         await TestContext.Out.WriteLineAsync("Examining results");
         using IServiceScope verifyScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext verifyContext = verifyScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext verifyContext = verifyScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         List<OrderItem> items = await verifyContext.Set<OrderItem>().Where(i => i.OrderId == result.Id).ToListAsync();
         items.Should().HaveCount(2);
         items.Should().OnlyContain(i => i.OrderId == result.Id, "every item belongs to the new order");
@@ -439,7 +440,7 @@ public class OrderRepoTests
     {
         await TestContext.Out.WriteLineAsync("Setting up test");
         using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         OrderRepo sut = new(context);
 
         Mock<ICreateOrderItem> item1Mock = new();
@@ -473,7 +474,7 @@ public class OrderRepoTests
 
         await TestContext.Out.WriteLineAsync("Examining results");
         using IServiceScope verifyScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext verifyContext = verifyScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext verifyContext = verifyScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         List<Guid> itemIds = await verifyContext.Set<OrderItem>().Where(i => i.OrderId == result.Id).Select(i => i.Id)
             .ToListAsync();
         itemIds.Should().HaveCount(2);
@@ -488,7 +489,7 @@ public class OrderRepoTests
     {
         await TestContext.Out.WriteLineAsync("Setting up test");
         using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         OrderRepo sut = new(context);
         Guid customerId = Guid.NewGuid();
 
@@ -514,7 +515,7 @@ public class OrderRepoTests
 
         await TestContext.Out.WriteLineAsync("Examining results");
         using IServiceScope verifyScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext verifyContext = verifyScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext verifyContext = verifyScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         Order? saved = await verifyContext.Set<Order>().SingleOrDefaultAsync(o => o.Id == result.Id);
         saved.Should().NotBeNull("the order should have been saved");
         saved!.OrderNumber.Should().Be(1234);
@@ -532,7 +533,7 @@ public class OrderRepoTests
     {
         await TestContext.Out.WriteLineAsync("Setting up test");
         using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         OrderRepo sut = new(context);
 
         Mock<ICreateOrderItem> itemMock = new();
@@ -563,7 +564,7 @@ public class OrderRepoTests
 
         await TestContext.Out.WriteLineAsync("Examining results");
         using IServiceScope verifyScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext verifyContext = verifyScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext verifyContext = verifyScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         Order saved = await verifyContext.Set<Order>().Include(o => o.OrderItems).SingleAsync(o => o.Id == result.Id);
         saved.Should().NotBeNull();
         saved.OrderItems.Should().NotBeEmpty();
@@ -576,7 +577,7 @@ public class OrderRepoTests
     {
         await TestContext.Out.WriteLineAsync("Setting up test");
         using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         OrderRepo sut = new(context);
 
         await TestContext.Out.WriteLineAsync("Executing test");
@@ -584,7 +585,7 @@ public class OrderRepoTests
 
         await TestContext.Out.WriteLineAsync("Examining results");
         using IServiceScope verifyScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext verifyContext = verifyScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext verifyContext = verifyScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         OrderCounter counter = await verifyContext.OrderCounters.FirstAsync();
         counter.NextOrderNumber.Should().Be(orderNumber + 1, "the counter should be saved after being incremented");
     }
@@ -594,7 +595,7 @@ public class OrderRepoTests
     {
         await TestContext.Out.WriteLineAsync("Setting up test");
         using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         OrderRepo sut = new(context);
 
         await TestContext.Out.WriteLineAsync("Executing test");
@@ -602,7 +603,7 @@ public class OrderRepoTests
 
         await TestContext.Out.WriteLineAsync("Examining results");
         using IServiceScope verifyScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext verifyContext = verifyScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext verifyContext = verifyScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         OrderCounter counter = await verifyContext.OrderCounters.FirstAsync();
         counter.Modified.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5),
             "Modified should be set when the counter is incremented");
@@ -615,7 +616,7 @@ public class OrderRepoTests
     {
         await TestContext.Out.WriteLineAsync("Setting up test");
         using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         OrderRepo sut = new(context);
         ICreateOrder request = CreateRequest();
 
@@ -631,7 +632,7 @@ public class OrderRepoTests
     {
         await TestContext.Out.WriteLineAsync("Setting up test");
         using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         OrderRepo sut = new(context);
         ICreateOrder request = CreateRequest();
 
@@ -647,7 +648,7 @@ public class OrderRepoTests
     {
         await TestContext.Out.WriteLineAsync("Setting up test");
         using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         OrderRepo sut = new(context);
         ICreateOrder request = CreateRequest();
 
@@ -656,7 +657,7 @@ public class OrderRepoTests
 
         await TestContext.Out.WriteLineAsync("Examining results");
         using IServiceScope verifyScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext verifyContext = verifyScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext verifyContext = verifyScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         Order saved = await verifyContext.Set<Order>().SingleAsync(o => o.Id == result.Id);
         saved.CompletedDate.Should().BeNull("a new order has not been completed");
     }
@@ -666,7 +667,7 @@ public class OrderRepoTests
     {
         await TestContext.Out.WriteLineAsync("Setting up test");
         using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         OrderRepo sut = new(context);
         ICreateOrder request = CreateRequest();
 
@@ -675,7 +676,7 @@ public class OrderRepoTests
 
         await TestContext.Out.WriteLineAsync("Examining results");
         using IServiceScope verifyScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext verifyContext = verifyScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext verifyContext = verifyScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         Order saved = await verifyContext.Set<Order>().SingleAsync(o => o.Id == result.Id);
         saved.Created.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
     }
@@ -685,7 +686,7 @@ public class OrderRepoTests
     {
         await TestContext.Out.WriteLineAsync("Setting up test");
         using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         OrderRepo sut = new(context);
         ICreateOrder request1 = CreateRequest();
         ICreateOrder request2 = CreateRequest();
@@ -707,7 +708,7 @@ public class OrderRepoTests
     {
         await TestContext.Out.WriteLineAsync("Setting up test");
         using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         OrderRepo sut = new(context);
         using CancellationTokenSource cts = new();
         await cts.CancelAsync();
@@ -724,7 +725,7 @@ public class OrderRepoTests
     {
         await TestContext.Out.WriteLineAsync("Setting up test");
         using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         OrderRepo sut = new(context);
         ICreateOrder request = CreateRequest();
         using CancellationTokenSource cts = new();
@@ -744,11 +745,11 @@ public class OrderRepoTests
         await TestContext.Out.WriteLineAsync("Setting up test");
         ServiceCollection services = new();
         services.AddEntityFrameworkInMemoryDatabase()
-            .AddDbContext<OiDbContext>(optionsBuilder =>
+            .AddDbContext<OiServiceDbContext>(optionsBuilder =>
                 optionsBuilder.UseInMemoryDatabase($"NoCounter-{Guid.NewGuid()}"));
         using ServiceProvider isolatedProvider = services.BuildServiceProvider();
         using IServiceScope serviceScope = isolatedProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         await context.Database.EnsureCreatedAsync();
         context.OrderCounters.RemoveRange(context.OrderCounters);
         await context.SaveChangesAsync();
@@ -787,7 +788,7 @@ public class OrderRepoTests
     {
         await TestContext.Out.WriteLineAsync("Setting up test");
         using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         OrderRepo sut = new(context);
 
         Mock<ICreateOrderItem> item1Mock = new();
@@ -846,7 +847,7 @@ public class OrderRepoTests
     {
         await TestContext.Out.WriteLineAsync("Setting up test");
         using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         OrderRepo sut = new(context);
 
         Mock<ICreateOrder> requestMock = new();
@@ -877,7 +878,7 @@ public class OrderRepoTests
         await TestContext.Out.WriteLineAsync("Setting up test");
         Guid customerId = Guid.NewGuid();
         using IServiceScope seedScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext seedContext = seedScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext seedContext = seedScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         seedContext.Customers.Add(new Customer
         {
             Id = customerId,
@@ -890,7 +891,7 @@ public class OrderRepoTests
         });
         await seedContext.SaveChangesAsync();
         using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         OrderRepo sut = new(context);
         Mock<ICreateOrder> requestMock = new();
         requestMock.Setup(r => r.CustomerId).Returns(customerId);
@@ -924,7 +925,7 @@ public class OrderRepoTests
         await TestContext.Out.WriteLineAsync("Setting up test");
         Guid customerId = Guid.NewGuid();
         using IServiceScope serviceScope = _serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
-        using OiDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiDbContext>();
+        using OiServiceDbContext context = serviceScope.ServiceProvider.GetRequiredService<OiServiceDbContext>();
         context.Customers.Add(new Customer
         {
             Id = customerId,

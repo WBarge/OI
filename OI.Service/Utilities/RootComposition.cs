@@ -16,8 +16,8 @@ public static class RootComposition
     /// <param name="configuration"></param>
     public static void ConfigureDi(this IServiceCollection services, IConfiguration configuration)
     {
-        DataDi.ConfigureDi(services, configuration);
-        BusinessDi.ConfigureDi(services);
+        DataDi.ConfigureServiceDi(services, configuration);
+        BusinessDi.ConfigureServiceDi(services);
     }   
 
 }

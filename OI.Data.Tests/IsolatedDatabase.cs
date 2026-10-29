@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using OI.Data.Contexts;
 
 namespace OI.Data.Tests;
 
@@ -19,12 +20,12 @@ internal sealed class IsolatedDatabase
     /// Creates a new context on this database. Several contexts can be open on it at once, which lets a test
     /// seed with one context and run the code under test with another, so nothing is served from the change tracker.
     /// </summary>
-    public OiDbContext CreateContext()
+    public OiServiceDbContext CreateContext()
     {
-        DbContextOptions<OiDbContext> options = new DbContextOptionsBuilder<OiDbContext>()
+        DbContextOptions<OiServiceDbContext> options = new DbContextOptionsBuilder<OiServiceDbContext>()
             .UseInMemoryDatabase(_name, _root)
             .Options;
-        OiDbContext context = new(options);
+        OiServiceDbContext context = new(options);
         context.Database.EnsureCreated();
         return context;
     }

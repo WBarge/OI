@@ -1,6 +1,8 @@
 using FluentAssertions;
+using OI.Data.Contexts;
 using OI.Data.Helpers;
 using OI.Data.Model;
+using OI.Data.Model.Orders;
 using OI.Data.Repos;
 using OI.Glue.Models;
 
@@ -23,7 +25,7 @@ public class CustomerRepoFilterAndCountTests
     public async Task GetCustomerCountAsync_CountsOnlyMatchingCustomers()
     {
         await SeedAsync("Smith", "Smith", "Jones");
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         CustomerRepo sut = new(context);
 
         long count = await sut.GetCustomerCountAsync(Filter("LastName", "Smith", "equals"), CancellationToken.None);
@@ -35,7 +37,7 @@ public class CustomerRepoFilterAndCountTests
     public async Task GetCustomerCountAsync_CountsEveryCustomer_WhenFiltersAreNull()
     {
         await SeedAsync("Alpha", "Beta", "Zeta");
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         CustomerRepo sut = new(context);
 
         long count = await sut.GetCustomerCountAsync(null, CancellationToken.None);
@@ -47,7 +49,7 @@ public class CustomerRepoFilterAndCountTests
     public async Task GetCustomerCountAsync_ReturnsZero_WhenNothingMatches()
     {
         await SeedAsync("Smith");
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         CustomerRepo sut = new(context);
 
         long count = await sut.GetCustomerCountAsync(Filter("LastName", "Nobody", "equals"), CancellationToken.None);
@@ -59,12 +61,12 @@ public class CustomerRepoFilterAndCountTests
     public async Task GetCustomerCountAsync_CombinesFiltersOnDifferentProperties()
     {
         await SeedAsync("Smith", "Smith", "Jones");
-        await using (OiDbContext seed = _db.CreateContext())
+        await using (OiServiceDbContext seed = _db.CreateContext())
         {
             seed.Customers.Add(new Customer { Id = Guid.NewGuid(), LastName = "Smith", PhoneNumber = "214-555-0199", Created = DateTime.UtcNow });
             await seed.SaveChangesAsync();
         }
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         CustomerRepo sut = new(context);
         Dictionary<string, IFilterMetaData[]> filters = new()
         {
@@ -81,7 +83,7 @@ public class CustomerRepoFilterAndCountTests
     public async Task GetCustomerCountAsync_MatchesTheNumberOfCustomersAcrossAllPages()
     {
         await SeedAsync("Smith", "Smith", "Smith", "Smith", "Smith", "Jones");
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         CustomerRepo sut = new(context);
         Dictionary<string, IFilterMetaData[]> filters = Filter("LastName", "Smith", "equals");
 
@@ -98,7 +100,7 @@ public class CustomerRepoFilterAndCountTests
     [Test, Description("GetCustomerCountAsync should fail with an ArgumentException when a filter names a property that does not exist")]
     public async Task GetCustomerCountAsync_Throws_WhenPropertyDoesNotExist()
     {
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         CustomerRepo sut = new(context);
 
         Func<Task> act = () => sut.GetCustomerCountAsync(Filter("NoSuchProperty", "x", "equals"), CancellationToken.None);
@@ -110,7 +112,7 @@ public class CustomerRepoFilterAndCountTests
     [Test, Description("GetCustomerCountAsync should fail with a cancellation exception when the token is already cancelled")]
     public async Task GetCustomerCountAsync_Throws_WhenCancelled()
     {
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         CustomerRepo sut = new(context);
         using CancellationTokenSource cts = new();
         await cts.CancelAsync();
@@ -130,7 +132,7 @@ public class CustomerRepoFilterAndCountTests
     public async Task FindPagedCustomerRecordsAsync_AppliesMatchMode(string matchMode, string searchValue, string[] expected)
     {
         await SeedAsync("Smith", "Smithers", "Jones");
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         CustomerRepo sut = new(context);
 
         IEnumerable<ICustomerSearch> result = await sut.FindPagedCustomerRecordsAsync(
@@ -143,7 +145,7 @@ public class CustomerRepoFilterAndCountTests
     public async Task FindPagedCustomerRecordsAsync_PagesDoNotOverlap_WhenNamesAreIdentical()
     {
         await SeedAsync("Smith", "Smith", "Smith", "Smith", "Smith");
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         CustomerRepo sut = new(context);
 
         List<Guid> ids = [];
@@ -160,7 +162,7 @@ public class CustomerRepoFilterAndCountTests
     public async Task FindPagedCustomerRecordsAsync_ReturnsEmpty_WhenOffsetOverflowsInt()
     {
         await SeedAsync("Smith");
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         CustomerRepo sut = new(context);
 
         IEnumerable<ICustomerSearch> result = await sut.FindPagedCustomerRecordsAsync(null, int.MaxValue, int.MaxValue, CancellationToken.None);
@@ -171,7 +173,7 @@ public class CustomerRepoFilterAndCountTests
     [Test, Description("FindPagedCustomerRecordsAsync should fail with an ArgumentException when a filter names a property that does not exist")]
     public async Task FindPagedCustomerRecordsAsync_Throws_WhenPropertyDoesNotExist()
     {
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         CustomerRepo sut = new(context);
 
         Func<Task> act = () => sut.FindPagedCustomerRecordsAsync(Filter("NoSuchProperty", "x", "equals"), 1, 10, CancellationToken.None);
@@ -183,7 +185,7 @@ public class CustomerRepoFilterAndCountTests
     [Test, Description("FindPagedCustomerRecordsAsync should fail with a cancellation exception when the token is already cancelled")]
     public async Task FindPagedCustomerRecordsAsync_Throws_WhenCancelled()
     {
-        using OiDbContext context = _db.CreateContext();
+        using OiServiceDbContext context = _db.CreateContext();
         CustomerRepo sut = new(context);
         using CancellationTokenSource cts = new();
         await cts.CancelAsync();
@@ -206,7 +208,7 @@ public class CustomerRepoFilterAndCountTests
 
     private async Task SeedAsync(params string[] lastNames)
     {
-        await using OiDbContext seed = _db.CreateContext();
+        await using OiServiceDbContext seed = _db.CreateContext();
         foreach (string lastName in lastNames)
         {
             seed.Customers.Add(new Customer { Id = Guid.NewGuid(), LastName = lastName, PhoneNumber = "512-555-0100", Created = DateTime.UtcNow });
