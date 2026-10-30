@@ -17,9 +17,21 @@ public static class DbSchemaExtension
     public static void HandleDbSchema(this IServiceCollection services)
     {
         ServiceProvider provider = services.BuildServiceProvider();
+        //**************************************************************************************
+        //a context may not be present depending on which application is invoking this helper
+        //**************************************************************************************
         OiServiceDbContext serviceDbContext = provider.GetRequiredService<OiServiceDbContext>();
-        serviceDbContext.Required(nameof(serviceDbContext));
-        serviceDbContext.Database.Migrate();
+        if (serviceDbContext != null)
+        {
+            serviceDbContext.Required(nameof(serviceDbContext));
+            serviceDbContext.Database.Migrate();
+        }
 
+        OiReportingDbContext reportDbContext = provider.GetRequiredService<OiReportingDbContext>();
+        if (reportDbContext != null)
+        {
+            reportDbContext.Required(nameof(reportDbContext));
+            reportDbContext.Database.Migrate();
+        }
     }
 }

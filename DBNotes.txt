@@ -1,0 +1,7 @@
+10.29.26 -	The persistance stores can currently configured to be on the same database.
+			However if scaling is needed then they can be configure to be seperate DBs.
+			The connection string will just need to be changed.  Each DBContext can be a 
+			seperate DB.  The contexts should not be crossed.  If they are then the system
+			will break on start-up.
+			To Do this will require data transfer if the system has already been running
+			on a single database to preserve the data.

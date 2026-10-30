@@ -5,3 +5,8 @@ Set this project (OI.Tool.MigrationHelper) as the start up project by right clic
 open the package manager console
 set OI.Data as the default project by setting the drop down in the PM command window
 type the command  add-migration {name} in the console where the name gives meaning to the change you made in the model
+************************************
+Make sure to use the context parameter since this solution has multiple context objects
+************************************
+Add-Migration InitialCreate -Context OiServiceDbContext
+Add-Migration InitialCreate -Context OiReportingDbContext -OutputDir Migrations/Second

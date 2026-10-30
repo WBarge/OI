@@ -1,5 +1,5 @@
+using OI.Common.Middleware;
 using OI.Data.DBSchemaHelper;
-using OI.Service.Middleware;
 using OI.Service.Utilities;
 using Scalar.AspNetCore;
 
@@ -34,7 +34,7 @@ public static class Program
         if (app.Environment.IsDevelopment())
         {
             app.MapOpenApi();
-            app.MapScalarApiReference();
+            //app.MapScalarApiReference();
             app.UseSwaggerUI(options =>
             {
                 options.SwaggerEndpoint("/openapi/v1.json", "v1");

@@ -32,7 +32,7 @@ namespace OI.Service.Controllers
         /// </returns>
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetOrders(CancellationToken cancellationToken, [FromBody] ListRequest request)
+        public async Task<IActionResult> GetOrders(CancellationToken cancellationToken, [FromBody] ListRequest? request)
         {
             _logger.LogInformation("POST api/orders called");
             request ??= new ListRequest();

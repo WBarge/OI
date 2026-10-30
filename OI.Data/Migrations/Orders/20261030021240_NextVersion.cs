@@ -5,10 +5,10 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
 
-namespace OI.Data.Migrations
+namespace OI.Data.Migrations.Orders
 {
     /// <inheritdoc />
-    public partial class InitDBCreation : Migration
+    public partial class NextVersion : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -40,6 +40,20 @@ namespace OI.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "OrderCounters",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    NextOrderNumber = table.Column<int>(type: "int", nullable: false),
+                    Created = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Modified = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OrderCounters", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "States",
                 columns: table => new
                 {
@@ -57,9 +71,10 @@ namespace OI.Data.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    OrderNumber = table.Column<int>(type: "int", nullable: false),
                     OrderDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CompletedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CustomerId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CompletedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CustomerId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     BillingAddress1 = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
                     BillingAddress2 = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
                     BillingCity = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
@@ -74,6 +89,7 @@ namespace OI.Data.Migrations
                     Shipping = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     Tax = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     Total = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    IsPending = table.Column<bool>(type: "bit", nullable: false),
                     Created = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Modified = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
@@ -84,8 +100,7 @@ namespace OI.Data.Migrations
                         name: "FK_Orders_Customers_CustomerId",
                         column: x => x.CustomerId,
                         principalTable: "Customers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -114,6 +129,11 @@ namespace OI.Data.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
+
+            migrationBuilder.InsertData(
+                table: "OrderCounters",
+                columns: new[] { "Id", "Created", "NextOrderNumber" },
+                values: new object[] { new Guid("c0ffee00-1234-5678-abcd-ef0123456789"), new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 1000 });
 
             migrationBuilder.InsertData(
                 table: "States",
@@ -186,6 +206,9 @@ namespace OI.Data.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "OrderCounters");
+
             migrationBuilder.DropTable(
                 name: "OrderItems");
 

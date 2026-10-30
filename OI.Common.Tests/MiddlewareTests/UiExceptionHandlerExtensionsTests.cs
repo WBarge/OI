@@ -2,15 +2,16 @@ using System.Text;
 using CrossCutting.Exceptions;
 using FluentAssertions;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder.Internal;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Moq;
 using Newtonsoft.Json;
-using OI.Service.Middleware;
-using OI.Service.Models.Results;
+using OI.Common.Middleware;
+using OI.Common.Models.Results;
 
-namespace OI.Service.Tests.MiddlewareTests;
+namespace OI.Common.Tests.MiddlewareTests;
 
 [TestFixture, Description("Tests for UiExceptionHandlerExtensions")]
 public class UiExceptionHandlerExtensionsTests

@@ -21,7 +21,7 @@ public static class DataDi
     /// <param name="configuration"></param>
     public static void ConfigureServiceDi(IServiceCollection services, IConfiguration configuration)
     {
-
+        //dependencies needed to access order information
         AddCommonDependencies(services,configuration);
     }
 
@@ -34,8 +34,13 @@ public static class DataDi
     /// <param name="configuration"></param>
     public static void ConfigureReportingDi(IServiceCollection services, IConfiguration configuration)
     {
-        //TODO configure the data dependencies needed in the reporting service
+        //dependencies needed to access reporting information
         AddCommonDependencies(services, configuration);
+        services.AddDbContextPool<OiReportingDbContext>(builder =>
+        {
+            builder.UseSqlServer(configuration["ConnectionString"], b =>
+                b.MigrationsHistoryTable("__EFMigrationsHistory_Reporting"));
+        });
     }
 
     /// <summary>
@@ -47,7 +52,8 @@ public static class DataDi
     {
         services.AddDbContextPool<OiServiceDbContext>(builder =>
         {
-            builder.UseSqlServer(configuration["ConnectionString"]);
+            builder.UseSqlServer(configuration["ConnectionString"], b =>
+                b.MigrationsHistoryTable("__EFMigrationsHistory_Service"));
         });
         services.AddScoped<IStateRepo, StateRepo>();
         services.AddScoped<IOrderRepo, OrderRepo>();

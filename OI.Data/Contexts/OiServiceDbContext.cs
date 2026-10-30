@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using Microsoft.EntityFrameworkCore;
+using OI.Data.Configuration.ConfigurationTags;
 using OI.Data.Model.Orders;
 
 namespace OI.Data.Contexts;
@@ -18,7 +19,14 @@ internal class OiServiceDbContext(DbContextOptions<OiServiceDbContext> options) 
     /// <param name="modelBuilder"></param>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+        //this assembly has multiple contexts in it
+        //this is a tagging approach so migrations can be created
+        //and there is no cross over between contexts
+        //NOTE:if the context boundaries are crossed
+        //THEN THE SYSTEM WILL BREAK!!!!!!!
+        modelBuilder.ApplyConfigurationsFromAssembly(
+            typeof(OiServiceDbContext).Assembly,
+            t => typeof(IServiceConfiguration).IsAssignableFrom(t));
     }
 
     public DbSet<Order> Orders { get; set; }

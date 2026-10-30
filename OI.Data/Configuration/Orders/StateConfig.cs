@@ -1,10 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using OI.Data.Configuration.ConfigurationTags;
 using OI.Data.Model.Orders;
 
-namespace OI.Data.Configuration;
+namespace OI.Data.Configuration.Orders;
 
-internal class StateConfig : IEntityTypeConfiguration<State>
+internal class StateConfig : IEntityTypeConfiguration<State>,IServiceConfiguration
 {
     public void Configure(EntityTypeBuilder<State> builder)
     {

@@ -3,29 +3,26 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OI.Data.Contexts;
 
 #nullable disable
 
-namespace OI.Data.Migrations
+namespace OI.Data.Migrations.Orders
 {
     [DbContext(typeof(OiServiceDbContext))]
-    [Migration("20261009162558_InitDBCreation")]
-    partial class InitDBCreation
+    partial class OiServiceDbContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.12")
+                .HasAnnotation("ProductVersion", "10.0.13")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("OI.Data.Model.Customer", b =>
+            modelBuilder.Entity("OI.Data.Model.Orders.Customer", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -114,7 +111,7 @@ namespace OI.Data.Migrations
                     b.ToTable("Customers", (string)null);
                 });
 
-            modelBuilder.Entity("OI.Data.Model.Order", b =>
+            modelBuilder.Entity("OI.Data.Model.Orders.Order", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -146,7 +143,7 @@ namespace OI.Data.Migrations
                         .HasColumnType("nvarchar(10)")
                         .HasColumnName("BillingZipCode");
 
-                    b.Property<DateTime>("CompletedDate")
+                    b.Property<DateTime?>("CompletedDate")
                         .HasColumnType("datetime2")
                         .HasColumnName("CompletedDate");
 
@@ -155,9 +152,13 @@ namespace OI.Data.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("Created");
 
-                    b.Property<Guid>("CustomerId")
+                    b.Property<Guid?>("CustomerId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("CustomerId");
+
+                    b.Property<bool>("IsPending")
+                        .HasColumnType("bit")
+                        .HasColumnName("IsPending");
 
                     b.Property<DateTime?>("Modified")
                         .ValueGeneratedOnUpdate()
@@ -167,6 +168,10 @@ namespace OI.Data.Migrations
                     b.Property<DateTime>("OrderDate")
                         .HasColumnType("datetime2")
                         .HasColumnName("OrderDate");
+
+                    b.Property<int>("OrderNumber")
+                        .HasColumnType("int")
+                        .HasColumnName("OrderNumber");
 
                     b.Property<decimal>("Shipping")
                         .HasColumnType("decimal(18,2)")
@@ -216,7 +221,41 @@ namespace OI.Data.Migrations
                     b.ToTable("Orders", (string)null);
                 });
 
-            modelBuilder.Entity("OI.Data.Model.OrderItem", b =>
+            modelBuilder.Entity("OI.Data.Model.Orders.OrderCounter", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("Id");
+
+                    b.Property<DateTime>("Created")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasColumnName("Created");
+
+                    b.Property<DateTime?>("Modified")
+                        .ValueGeneratedOnUpdate()
+                        .HasColumnType("datetime2")
+                        .HasColumnName("Modified");
+
+                    b.Property<int>("NextOrderNumber")
+                        .HasColumnType("int")
+                        .HasColumnName("NextOrderNumber");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("OrderCounters", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("c0ffee00-1234-5678-abcd-ef0123456789"),
+                            Created = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            NextOrderNumber = 1000
+                        });
+                });
+
+            modelBuilder.Entity("OI.Data.Model.Orders.OrderItem", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -278,7 +317,7 @@ namespace OI.Data.Migrations
                     b.ToTable("OrderItems", (string)null);
                 });
 
-            modelBuilder.Entity("OI.Data.Model.State", b =>
+            modelBuilder.Entity("OI.Data.Model.Orders.State", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -604,20 +643,18 @@ namespace OI.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("OI.Data.Model.Order", b =>
+            modelBuilder.Entity("OI.Data.Model.Orders.Order", b =>
                 {
-                    b.HasOne("OI.Data.Model.Customer", "Customer")
+                    b.HasOne("OI.Data.Model.Orders.Customer", "Customer")
                         .WithMany()
-                        .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("CustomerId");
 
                     b.Navigation("Customer");
                 });
 
-            modelBuilder.Entity("OI.Data.Model.OrderItem", b =>
+            modelBuilder.Entity("OI.Data.Model.Orders.OrderItem", b =>
                 {
-                    b.HasOne("OI.Data.Model.Order", "Order")
+                    b.HasOne("OI.Data.Model.Orders.Order", "Order")
                         .WithMany("OrderItems")
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -626,7 +663,7 @@ namespace OI.Data.Migrations
                     b.Navigation("Order");
                 });
 
-            modelBuilder.Entity("OI.Data.Model.Order", b =>
+            modelBuilder.Entity("OI.Data.Model.Orders.Order", b =>
                 {
                     b.Navigation("OrderItems");
                 });

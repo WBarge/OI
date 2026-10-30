@@ -1,10 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using OI.Data.Configuration.ConfigurationTags;
 using OI.Data.Model.Orders;
 
-namespace OI.Data.Configuration;
+namespace OI.Data.Configuration.Orders;
 
-internal class OrderItemConfig : IEntityTypeConfiguration<OrderItem>
+internal class OrderItemConfig : IEntityTypeConfiguration<OrderItem>,IServiceConfiguration
 {
     public void Configure(EntityTypeBuilder<OrderItem> builder)
     {

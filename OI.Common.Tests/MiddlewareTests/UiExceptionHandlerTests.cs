@@ -6,9 +6,9 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Newtonsoft.Json;
-using OI.Service.Middleware;
-using OI.Service.Models.Results;
 using System.Text;
+using OI.Common.Middleware;
+using OI.Common.Models.Results;
 
 namespace OI.Service.Tests.MiddlewareTests;
 

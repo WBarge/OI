@@ -3,26 +3,29 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OI.Data.Contexts;
 
 #nullable disable
 
-namespace OI.Data.Migrations
+namespace OI.Data.Migrations.Orders
 {
     [DbContext(typeof(OiServiceDbContext))]
-    partial class OiServiceDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261030021240_NextVersion")]
+    partial class NextVersion
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.12")
+                .HasAnnotation("ProductVersion", "10.0.13")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("OI.Data.Model.Customer", b =>
+            modelBuilder.Entity("OI.Data.Model.Orders.Customer", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -111,7 +114,7 @@ namespace OI.Data.Migrations
                     b.ToTable("Customers", (string)null);
                 });
 
-            modelBuilder.Entity("OI.Data.Model.Order", b =>
+            modelBuilder.Entity("OI.Data.Model.Orders.Order", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -221,7 +224,7 @@ namespace OI.Data.Migrations
                     b.ToTable("Orders", (string)null);
                 });
 
-            modelBuilder.Entity("OI.Data.Model.OrderCounter", b =>
+            modelBuilder.Entity("OI.Data.Model.Orders.OrderCounter", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -255,7 +258,7 @@ namespace OI.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("OI.Data.Model.OrderItem", b =>
+            modelBuilder.Entity("OI.Data.Model.Orders.OrderItem", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -317,7 +320,7 @@ namespace OI.Data.Migrations
                     b.ToTable("OrderItems", (string)null);
                 });
 
-            modelBuilder.Entity("OI.Data.Model.State", b =>
+            modelBuilder.Entity("OI.Data.Model.Orders.State", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -643,18 +646,18 @@ namespace OI.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("OI.Data.Model.Order", b =>
+            modelBuilder.Entity("OI.Data.Model.Orders.Order", b =>
                 {
-                    b.HasOne("OI.Data.Model.Customer", "Customer")
+                    b.HasOne("OI.Data.Model.Orders.Customer", "Customer")
                         .WithMany()
                         .HasForeignKey("CustomerId");
 
                     b.Navigation("Customer");
                 });
 
-            modelBuilder.Entity("OI.Data.Model.OrderItem", b =>
+            modelBuilder.Entity("OI.Data.Model.Orders.OrderItem", b =>
                 {
-                    b.HasOne("OI.Data.Model.Order", "Order")
+                    b.HasOne("OI.Data.Model.Orders.Order", "Order")
                         .WithMany("OrderItems")
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -663,7 +666,7 @@ namespace OI.Data.Migrations
                     b.Navigation("Order");
                 });
 
-            modelBuilder.Entity("OI.Data.Model.Order", b =>
+            modelBuilder.Entity("OI.Data.Model.Orders.Order", b =>
                 {
                     b.Navigation("OrderItems");
                 });

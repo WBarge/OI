@@ -5,7 +5,7 @@ using OI.Data.Contexts;
 
 namespace OI.Tool.MigrationHelper;
 
-internal class DbContextFactory: IDesignTimeDbContextFactory<OiServiceDbContext>
+internal class ServiceDbContextFactory: IDesignTimeDbContextFactory<OiServiceDbContext>
 {
     public OiServiceDbContext CreateDbContext(string[] args)
     {
@@ -19,8 +19,11 @@ internal class DbContextFactory: IDesignTimeDbContextFactory<OiServiceDbContext>
         string? conStr = configurationRoot["ConnectionString"];
 
         dbContextBuilder.UseSqlServer(conStr,
-            b=>b.MigrationsAssembly("OI.Data")
-        );
+            b=>
+            {
+                b.MigrationsAssembly("OI.Data");
+                b.MigrationsHistoryTable("__EFMigrationsHistory_Service");
+            });
 
         return new OiServiceDbContext(dbContextBuilder.Options);
 
