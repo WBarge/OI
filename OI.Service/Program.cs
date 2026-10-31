@@ -2,6 +2,7 @@ using OI.Common.Middleware;
 using OI.Data.DBSchemaHelper;
 using OI.Service.Utilities;
 using Scalar.AspNetCore;
+using OI.Integration.Security;
 
 namespace OI.Service;
 
@@ -26,6 +27,8 @@ public static class Program
 
         builder.Services.ConfigureDi(builder.Configuration);
         builder.Services.HandleDbSchema();
+        builder.Services.AddOiJwtBearer(builder.Configuration);  //trust tokens from OI.Auth
+        builder.Services.AddOiAuthorization(); //every endpoint needs a signed-in user unless it is marked with [AllowAnonymous]
 
 
         WebApplication app = builder.Build();
@@ -33,7 +36,7 @@ public static class Program
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
         {
-            app.MapOpenApi();
+            app.MapOpenApi().AllowAnonymous();
             //app.MapScalarApiReference();
             app.UseSwaggerUI(options =>
             {
@@ -71,6 +74,7 @@ public static class Program
 
         app.UseHttpsRedirection();
 
+        app.UseAuthentication();
         app.UseAuthorization();
 
 

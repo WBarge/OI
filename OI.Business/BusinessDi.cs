@@ -1,6 +1,8 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using OI.Business.Managers;
 using OI.Glue.Managers;
+using OI.Glue.Models;
 
 namespace OI.Business;
 
@@ -29,6 +31,21 @@ public static class BusinessDi
     public static void ConfigureReportingDi(IServiceCollection services)
     {
         AddCommonDependencies(services);
+    }
+
+    /// <summary>
+    /// Configures dependency injection for the OI.Business project
+    /// by registering services and dependencies with the provided IServiceCollection.
+    /// This specific configuration is for the OI.Auth API application.
+    /// Deliberately does not register the order managers.
+    /// The application must also provide IPasswordService, IAccessTokenFactory and TimeProvider.
+    /// Register your own AuthPolicy first to change the lockout or password rules.
+    /// </summary>
+    /// <param name="services">The services.</param>
+    public static void ConfigureAuthDi(IServiceCollection services)
+    {
+        services.TryAddSingleton(new AuthPolicy());
+        services.AddScoped<IAuthManager, AuthManager>();
     }
 
     /// <summary>

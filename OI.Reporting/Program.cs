@@ -2,6 +2,7 @@
 using OI.Common.Middleware;
 using OI.Data.DBSchemaHelper;
 using OI.Reporting.Utilities;
+using OI.Integration.Security;
 
 namespace OI.Reporting
 {
@@ -22,6 +23,8 @@ namespace OI.Reporting
 
             builder.Services.ConfigureDi(builder.Configuration);
             builder.Services.HandleDbSchema();
+            builder.Services.AddOiJwtBearer(builder.Configuration);
+            builder.Services.AddOiAuthorization();
 
 
             WebApplication app = builder.Build();
@@ -29,7 +32,7 @@ namespace OI.Reporting
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
-                app.MapOpenApi(); 
+                app.MapOpenApi().AllowAnonymous(); 
                 //app.MapScalarApiReference();
                 app.UseSwaggerUI(options =>
                 {
@@ -63,12 +66,12 @@ namespace OI.Reporting
                 policyBuilder.AllowAnyOrigin();
                 policyBuilder.AllowAnyMethod();
                 policyBuilder.AllowAnyHeader();
-                policyBuilder.AllowCredentials();
             });
 
 
             app.UseHttpsRedirection();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
 

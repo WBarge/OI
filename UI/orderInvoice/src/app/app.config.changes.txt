@@ -1,0 +1,25 @@
+src/app/app.config.ts  -  two changes in the providers array
+
+1) provideHttpClient()   becomes   provideHttpClient(withInterceptors([authInterceptor]))
+     import { provideHttpClient, withInterceptors } from '@angular/common/http';
+     import { authInterceptor } from '../services/auth-interceptor';
+
+2) provideAppInitializer(() => inject(ConfigService).load())   becomes
+
+     provideAppInitializer(async () => {
+       const config = inject(ConfigService);
+       const auth = inject(AuthService);
+       await config.load();
+       await auth.restore();
+     }),
+     import { AuthService } from '../services/auth-service';
+
+   One initializer, not two: restore() needs the API URLs that load() reads from config.json,
+   and separate initializers do not wait for each other.
+
+src/app/app.routes.ts
+     import { authGuard, roleGuard } from '../services/auth-guard';
+   Add a { path: 'login', component: Login } route (the login page is not included yet) and put
+   canActivate: [authGuard] on the existing pages. roleGuard('Admin') is for admin-only pages.
+
+Tests: model/configuration.spec.ts may assert the old property list; add the three new properties there.

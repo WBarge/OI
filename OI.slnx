@@ -2,6 +2,7 @@
   <Folder Name="/DevNotes/">
     <File Path="DBNotes.txt" />
   </Folder>
+  <Project Path="OI.Auth/OI.Auth.csproj" Id="23fa6c36-e138-4e5f-8980-379a30fa44ae" />
   <Project Path="OI.Business.Tests/OI.Business.Tests.csproj" Id="f0e5b7f0-0777-4c3c-aef8-226d335148e1" />
   <Project Path="OI.Business/OI.Business.csproj" Id="4d11459d-a33f-46ee-8b14-00f60eab4c28" />
   <Project Path="OI.Common.Tests/OI.Common.Tests.csproj" Id="4e21a87a-ab72-4825-8eda-9928fd6f8666" />
@@ -9,6 +10,8 @@
   <Project Path="OI.Data.Tests/OI.Data.Tests.csproj" Id="11d0e869-5bf1-459f-9df6-2db019ca5793" />
   <Project Path="OI.Data/OI.Data.csproj" Id="9008a198-45a8-469a-b850-474445afb46c" />
   <Project Path="OI.Glue/OI.Glue.csproj" Id="d24b1c9e-8c7d-4058-8167-6371c1d2072e" />
+  <Project Path="OI.Hub/OI.Hub.csproj" Id="880f0ea8-54ca-4076-a845-94b72451d3f4" />
+  <Project Path="OI.Integration/OI.Integration.csproj" Id="a4aad1ed-02c7-45b0-87bc-2466f91f8db1" />
   <Project Path="OI.Reporting.Tests/OI.Reporting.Tests.csproj" Id="26b76382-3e1c-4c98-ad94-db8599cb0bab" />
   <Project Path="OI.Reporting/OI.Reporting.csproj" Id="8a936803-3166-4845-a12f-01375001a2fe" />
   <Project Path="OI.Service.Tests/OI.Service.Tests.csproj" Id="0f55371f-9dcd-4190-adac-cf1069de31ed" />

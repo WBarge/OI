@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OI.Data.Contexts;
@@ -41,6 +41,28 @@ public static class DataDi
             builder.UseSqlServer(configuration["ConnectionString"], b =>
                 b.MigrationsHistoryTable("__EFMigrationsHistory_Reporting"));
         });
+    }
+
+    /// <summary>
+    /// Configures dependency injection for the OI.Data project
+    /// by registering services and dependencies with the provided IServiceCollection.
+    /// This specific configuration is for the OI.Auth API application.
+    /// It registers ONLY the auth context, so the order and reporting contexts never exist in that application.
+    /// </summary>
+    /// <param name="services"></param>
+    /// <param name="configuration"></param>
+    public static void ConfigureAuthDi(IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddDbContextPool<OiAuthDbContext>(builder =>
+        {
+            builder.UseSqlServer(configuration["ConnectionString"], b =>
+                b.MigrationsHistoryTable("__EFMigrationsHistory_Auth"));
+        });
+
+        // Persistence only: the Identity tables are part of the context, but UserManager/SignInManager are not used.
+        // Passwords, lockout and the other sign-in rules live in OI.Business (AuthManager).
+        services.AddScoped<IAuthRepo, AuthRepo>();
+        services.AddScoped<IRefreshTokenRepo, RefreshTokenRepo>();
     }
 
     /// <summary>

@@ -4,4 +4,7 @@ export class Configuration {
   public EnableCustomProducts: boolean = false;
   public productApiUrl: string = "";
   public oiApiUrl:string = "";
+  public authApiUrl: string = "";
+  public reportingApiUrl: string = "";
+  public hubUrl: string = "";
 }

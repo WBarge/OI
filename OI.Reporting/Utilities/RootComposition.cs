@@ -1,5 +1,6 @@
-﻿using OI.Business;
+using OI.Business;
 using OI.Data;
+using OI.Integration;
 
 namespace OI.Reporting.Utilities;
 
@@ -18,6 +19,10 @@ public static class RootComposition
     {
         DataDi.ConfigureReportingDi(services, configuration);
         BusinessDi.ConfigureReportingDi(services);
+
+        // Lets reporting code tell the browser a report is ready: inject INotificationPublisher (OI.Glue.Notifications)
+        // and call PublishAsync(NotificationTarget.User(job.CreatedBy), "report-ready", "Your report is ready").
+        services.AddNotificationPublisher(configuration);
     }   
 
 }

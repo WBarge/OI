@@ -19,6 +19,7 @@
     <ProjectReference Include="..\OI.Business\OI.Business.csproj" />
     <ProjectReference Include="..\OI.Common\OI.Common.csproj" />
     <ProjectReference Include="..\OI.Data\OI.Data.csproj" />
+    <ProjectReference Include="..\OI.Integration\OI.Integration.csproj" />
   </ItemGroup>
 
 </Project>
