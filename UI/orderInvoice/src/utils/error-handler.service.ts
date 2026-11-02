@@ -5,6 +5,7 @@ import { Observable, of } from 'rxjs';
 
 import { MessageService } from 'primeng/api'; //want it coupled to the message service and not the notification service
 import { SystemError } from '../model/system-error';
+import { SessionEndedError } from '../model/session-ended-error';
 
 /** Type of the handleError function returned by HttpErrorHandler.createHandleError */
 export type HandleError =
@@ -33,6 +34,11 @@ export class ErrorHandlerService {
   handleError<T>(serviceName = '', operation = 'operation', result = {} as T) {
 
     return (error: HttpErrorResponse): Observable<T> => {
+
+      // the user is already being sent to the sign-in page; a toast on top of that would only add noise
+      if (error instanceof SessionEndedError) {
+        return of( result );
+      }
 
       //send a message to the user via the message service
       const systemError:SystemError = this.toSystemError(error);

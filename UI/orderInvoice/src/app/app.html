@@ -1,3 +1,10 @@
 <p-toast position="top-center" [life]="2000"></p-toast>
-<p-menubar [model]="items"></p-menubar>
+@if (auth.isAuthenticated()) {
+  <p-menubar [model]="items">
+    <ng-template #end>
+      <span class="signedInAs">{{ auth.userName() }}</span>
+      <button type="button" pButton severity="secondary" size="small" (click)="signOut()">Sign out</button>
+    </ng-template>
+  </p-menubar>
+}
 <router-outlet></router-outlet>

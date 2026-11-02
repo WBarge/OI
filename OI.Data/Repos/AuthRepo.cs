@@ -15,12 +15,14 @@ namespace OI.Data.Repos;
 /// </summary>
 internal class AuthRepo(OiAuthDbContext authDbContext) : IAuthRepo
 {
+    private readonly OiAuthDbContext _authDbContext = authDbContext ?? throw new ArgumentNullException(nameof(authDbContext));
+    
     private static string Normalize(string value) => value.ToUpperInvariant();
 
     public async Task<IAuthCredential?> FindCredentialAsync(string email, CancellationToken cancellationToken = default)
     {
         string normalized = Normalize(email);
-        AuthCredential? credential = await authDbContext.Users.AsNoTracking()
+        AuthCredential? credential = await _authDbContext.Users.AsNoTracking()
             .Where(u => u.NormalizedEmail == normalized)
             .Select(u => new AuthCredential
             {
@@ -35,7 +37,7 @@ internal class AuthRepo(OiAuthDbContext authDbContext) : IAuthRepo
 
     public async Task<IAuthUser?> FindUserAsync(string userId, CancellationToken cancellationToken = default)
     {
-        ApplicationUser? user = await authDbContext.Users.AsNoTracking()
+        ApplicationUser? user = await _authDbContext.Users.AsNoTracking()
             .SingleOrDefaultAsync(u => u.Id == userId, cancellationToken);
         if (user is null)
         {
@@ -43,13 +45,13 @@ internal class AuthRepo(OiAuthDbContext authDbContext) : IAuthRepo
         }
 
         List<string> roles = await (
-                from ur in authDbContext.UserRoles
+                from ur in _authDbContext.UserRoles
                 where ur.UserId == userId
-                join r in authDbContext.Roles on ur.RoleId equals r.Id
+                join r in _authDbContext.Roles on ur.RoleId equals r.Id
                 select r.Name!)
             .ToListAsync(cancellationToken);
 
-        var claimRows = await authDbContext.UserClaims.AsNoTracking()
+        var claimRows = await _authDbContext.UserClaims.AsNoTracking()
             .Where(c => c.UserId == userId)
             .Select(c => new { c.ClaimType, c.ClaimValue })
             .ToListAsync(cancellationToken);
@@ -70,19 +72,19 @@ internal class AuthRepo(OiAuthDbContext authDbContext) : IAuthRepo
 
     public async Task<int> IncrementAccessFailedAsync(string userId, CancellationToken cancellationToken = default)
     {
-        await authDbContext.Users.Where(u => u.Id == userId)
+        await _authDbContext.Users.Where(u => u.Id == userId)
             .ExecuteUpdateAsync(s => s.SetProperty(u => u.AccessFailedCount, u => u.AccessFailedCount + 1), cancellationToken);
-        return await authDbContext.Users.Where(u => u.Id == userId)
+        return await _authDbContext.Users.Where(u => u.Id == userId)
             .Select(u => u.AccessFailedCount)
             .SingleAsync(cancellationToken);
     }
 
     public Task ResetAccessFailedAsync(string userId, CancellationToken cancellationToken = default) =>
-        authDbContext.Users.Where(u => u.Id == userId)
+        _authDbContext.Users.Where(u => u.Id == userId)
             .ExecuteUpdateAsync(s => s.SetProperty(u => u.AccessFailedCount, 0), cancellationToken);
 
     public Task SetLockoutAsync(string userId, DateTimeOffset lockoutEnd, CancellationToken cancellationToken = default) =>
-        authDbContext.Users.Where(u => u.Id == userId)
+        _authDbContext.Users.Where(u => u.Id == userId)
             .ExecuteUpdateAsync(s => s
                 .SetProperty(u => u.LockoutEnd, lockoutEnd)
                 .SetProperty(u => u.AccessFailedCount, 0), cancellationToken);
@@ -90,7 +92,7 @@ internal class AuthRepo(OiAuthDbContext authDbContext) : IAuthRepo
     public Task<bool> UserExistsAsync(string email, CancellationToken cancellationToken = default)
     {
         string normalized = Normalize(email);
-        return authDbContext.Users.AnyAsync(u => u.NormalizedEmail == normalized, cancellationToken);
+        return _authDbContext.Users.AnyAsync(u => u.NormalizedEmail == normalized, cancellationToken);
     }
 
     public async Task<string> CreateUserAsync(NewAuthUser newUser, CancellationToken cancellationToken = default)
@@ -109,47 +111,47 @@ internal class AuthRepo(OiAuthDbContext authDbContext) : IAuthRepo
             ConcurrencyStamp = Guid.NewGuid().ToString(),
             LockoutEnabled = true,
         };
-        authDbContext.Users.Add(user);
-        await authDbContext.SaveChangesAsync(cancellationToken);
+        _authDbContext.Users.Add(user);
+        await _authDbContext.SaveChangesAsync(cancellationToken);
         return user.Id;
     }
 
     public async Task EnsureRoleAsync(string role, CancellationToken cancellationToken = default)
     {
         string normalized = Normalize(role);
-        if (await authDbContext.Roles.AnyAsync(r => r.NormalizedName == normalized, cancellationToken))
+        if (await _authDbContext.Roles.AnyAsync(r => r.NormalizedName == normalized, cancellationToken))
         {
             return;
         }
-        authDbContext.Roles.Add(new IdentityRole
+        _authDbContext.Roles.Add(new IdentityRole
         {
             Id = Guid.NewGuid().ToString(),
             Name = role,
             NormalizedName = normalized,
             ConcurrencyStamp = Guid.NewGuid().ToString(),
         });
-        await authDbContext.SaveChangesAsync(cancellationToken);
+        await _authDbContext.SaveChangesAsync(cancellationToken);
     }
 
     public async Task AddToRoleAsync(string userId, string role, CancellationToken cancellationToken = default)
     {
         string normalized = Normalize(role);
-        string roleId = await authDbContext.Roles
+        string roleId = await _authDbContext.Roles
             .Where(r => r.NormalizedName == normalized)
             .Select(r => r.Id)
             .SingleAsync(cancellationToken);
 
-        if (await authDbContext.UserRoles.AnyAsync(ur => ur.UserId == userId && ur.RoleId == roleId, cancellationToken))
+        if (await _authDbContext.UserRoles.AnyAsync(ur => ur.UserId == userId && ur.RoleId == roleId, cancellationToken))
         {
             return;
         }
-        authDbContext.UserRoles.Add(new IdentityUserRole<string> { UserId = userId, RoleId = roleId });
-        await authDbContext.SaveChangesAsync(cancellationToken);
+        _authDbContext.UserRoles.Add(new IdentityUserRole<string> { UserId = userId, RoleId = roleId });
+        await _authDbContext.SaveChangesAsync(cancellationToken);
     }
 
     public async Task AddClaimAsync(string userId, string type, string value, CancellationToken cancellationToken = default)
     {
-        authDbContext.UserClaims.Add(new IdentityUserClaim<string> { UserId = userId, ClaimType = type, ClaimValue = value });
-        await authDbContext.SaveChangesAsync(cancellationToken);
+        _authDbContext.UserClaims.Add(new IdentityUserClaim<string> { UserId = userId, ClaimType = type, ClaimValue = value });
+        await _authDbContext.SaveChangesAsync(cancellationToken);
     }
 }

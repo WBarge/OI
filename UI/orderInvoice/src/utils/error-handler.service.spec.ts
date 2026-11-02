@@ -3,6 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { MessageService } from 'primeng/api';
 import { vi } from 'vitest';
 import { ErrorHandlerService } from './error-handler.service';
+import { SessionEndedError } from '../model/session-ended-error';
 
 describe('ErrorHandlerService', () => {
   let service: ErrorHandlerService;
@@ -236,6 +237,28 @@ describe('ErrorHandlerService', () => {
       expect(addSpy).toHaveBeenCalledWith(expect.objectContaining({
         detail: 'ProductService: operation failed: boom'
       }));
+    });
+  });
+
+  describe('when the session has ended', () => {
+    it('should stay quiet and return the safe result, because the user is already being sent to the sign-in page', () => {
+      const addSpy = vi.spyOn(messageService, 'add');
+      const next = vi.fn();
+
+      service.handleError('OrdersService', 'getOrders', ['fallback'])(new SessionEndedError('https://oi.test/api/Orders')).subscribe({ next });
+
+      expect(addSpy).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(['fallback']);
+    });
+
+    it('should still report an ordinary 401, for example from an api that does not use our tokens', () => {
+      const addSpy = vi.spyOn(messageService, 'add');
+      const error = new HttpErrorResponse({ status: 401, statusText: 'Unauthorized', error: null });
+
+      service.handleError('ProductService', 'getProducts')(error);
+
+      expect(addSpy).toHaveBeenCalledTimes(1);
+      expect(addSpy).toHaveBeenCalledWith(expect.objectContaining({ severity: 'error' }));
     });
   });
 

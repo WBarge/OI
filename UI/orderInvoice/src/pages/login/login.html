@@ -1,0 +1,26 @@
+<div class="loginPage">
+  <p-card class="loginCard" header="Order Invoice" subheader="Sign in to continue">
+    <form (ngSubmit)="signIn()" novalidate>
+      @if (sessionExpired()) {
+        <p-message severity="info" class="loginMessage">Your session has expired. Please sign in again.</p-message>
+      }
+      @if (error(); as message) {
+        <p-message severity="error" class="loginMessage" role="alert">{{ message }}</p-message>
+      }
+
+      <div class="loginField">
+        <label for="loginEmail">Email</label>
+        <input id="loginEmail" name="email" type="email" pInputText autocomplete="username" autofocus
+               [ngModel]="email()" (ngModelChange)="email.set($event)" />
+      </div>
+
+      <div class="loginField">
+        <label for="loginPassword">Password</label>
+        <input id="loginPassword" name="password" type="password" pInputText autocomplete="current-password"
+               [ngModel]="password()" (ngModelChange)="password.set($event)" />
+      </div>
+
+      <button type="submit" pButton class="loginSubmit" [disabled]="!canSubmit()">{{ busy() ? 'Signing in...' : 'Sign in' }}</button>
+    </form>
+  </p-card>
+</div>

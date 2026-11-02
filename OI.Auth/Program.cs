@@ -36,8 +36,8 @@ public static class Program
                 _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(1) }));
         });
 
-        string[] origins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>()
-                           ?? ["http://localhost:4201"];   // `ng serve --port 4201`
+        //string[] origins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>()
+        //                   ?? ["http://localhost:4201"];   // `ng serve --port 4201`
 
         WebApplication app = builder.Build();
 
@@ -64,7 +64,8 @@ public static class Program
 
         app.UseCors(policyBuilder =>
         {
-            policyBuilder.WithOrigins(origins);
+           // policyBuilder.WithOrigins(origins);
+            policyBuilder.AllowAnyOrigin();
             policyBuilder.AllowAnyMethod();
             policyBuilder.AllowAnyHeader();
         });

@@ -21,6 +21,11 @@ export class ConfigService {
     this._config = Object.assign(new Configuration(), raw);
   }
 
+  /** False until load() has finished. The auth interceptor checks this because it also sees the request that loads the configuration. */
+  get isLoaded(): boolean {
+    return this._config !== null;
+  }
+
   /** Synchronous access after startup. */
   get config(): Configuration {
     if (!this._config) {

@@ -1,0 +1,31 @@
+.loginPage {
+  display: flex;
+  justify-content: center;
+  padding: 4rem 1rem;
+}
+
+.loginCard {
+  width: 100%;
+  max-width: 24rem;
+}
+
+.loginMessage {
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.loginField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.loginField input {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.loginSubmit {
+  width: 100%;
+}

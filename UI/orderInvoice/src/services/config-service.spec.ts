@@ -40,6 +40,10 @@ describe('ConfigService', () => {
       expect(() => service.config).toThrow('Configuration accessed before it was loaded.');
     });
 
+    it('should report that it is not loaded yet', () => {
+      expect(service.isLoaded).toBe(false);
+    });
+
     it('should not call the server until load is called', () => {
       httpTestingController.expectNone(isConfigRequest);
     });
@@ -89,6 +93,14 @@ describe('ConfigService', () => {
 
       expect(disableAddresses).toBe(true); // the full config does disable them, so the false below is the default
       expect(service.config.disableAddresses).toBe(false);
+    });
+
+    it('should report that it is loaded once load has finished', async () => {
+      const loading = service.load();
+      httpTestingController.expectOne(isConfigRequest).flush(serverConfig);
+      await loading;
+
+      expect(service.isLoaded).toBe(true);
     });
 
     it('should hand back the same configuration object on every read', async () => {
@@ -142,6 +154,7 @@ describe('ConfigService', () => {
 
       await expect(loading).rejects.toBeDefined();
       expect(() => service.config).toThrow('Configuration accessed before it was loaded.');
+      expect(service.isLoaded).toBe(false);
     });
   });
 });
