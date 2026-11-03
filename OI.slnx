@@ -1,6 +1,6 @@
 <Solution>
-  <Folder Name="/Notes/">
-    <File Path="DevDBNotes.txt" />
+  <Folder Name="/DevNotes/">
+    <File Path="DBNotes.txt" />
     <File Path="SettingsNotes.md" />
   </Folder>
   <Project Path="OI.Auth/OI.Auth.csproj" Id="23fa6c36-e138-4e5f-8980-379a30fa44ae" />
@@ -12,6 +12,7 @@
   <Project Path="OI.Data/OI.Data.csproj" Id="9008a198-45a8-469a-b850-474445afb46c" />
   <Project Path="OI.Glue/OI.Glue.csproj" Id="d24b1c9e-8c7d-4058-8167-6371c1d2072e" />
   <Project Path="OI.Hub/OI.Hub.csproj" Id="880f0ea8-54ca-4076-a845-94b72451d3f4" />
+  <Project Path="OI.Integration.Tests/OI.Integration.Tests.csproj" Id="5c7e1f0a-3b6d-4a52-9d84-17e0b8a6c2f3" />
   <Project Path="OI.Integration/OI.Integration.csproj" Id="a4aad1ed-02c7-45b0-87bc-2466f91f8db1" />
   <Project Path="OI.Reporting.Tests/OI.Reporting.Tests.csproj" Id="26b76382-3e1c-4c98-ad94-db8599cb0bab" />
   <Project Path="OI.Reporting/OI.Reporting.csproj" Id="8a936803-3166-4845-a12f-01375001a2fe" />

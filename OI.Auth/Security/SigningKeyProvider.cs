@@ -44,7 +44,7 @@ public sealed class SigningKeyProvider : IDisposable
     public SigningKeyProvider(IOptions<JwtOptions> options, IHostEnvironment environment, ILogger<SigningKeyProvider> logger)
     {
         string? pem = options.Value.SigningKeyPem?.Replace("\\n", "\n");
-        _rsa = RSA.Create(2048);
+        _rsa = RSA.Create(4096);
 
         if (!string.IsNullOrWhiteSpace(pem))
         {

@@ -8,12 +8,13 @@ export type Severity = 'success' | 'info' | 'warn' | 'error' | 'secondary' | 'co
 export class NotificationService {
   private msgService = inject(MessageService);
 
-  private send(severity: Severity, summary: string, detail: string): void {
-    this.msgService.add({ severity, summary, detail });
+  // life (milliseconds) is only passed on when given, otherwise the toast uses the default of the toast component
+  private send(severity: Severity, summary: string, detail: string, life?: number): void {
+    this.msgService.add({ severity, summary, detail, ...(life === undefined ? {} : { life }) });
   }
 
-  public success(summary: string, detail: string) { this.send('success', summary, detail); }
-  public info(summary: string, detail: string)    { this.send('info', summary, detail); }
-  public warn(summary: string, detail: string)    { this.send('warn', summary, detail); }
-  public error(summary: string, detail: string)   { this.send('error', summary, detail); }
+  public success(summary: string, detail: string, life?: number) { this.send('success', summary, detail, life); }
+  public info(summary: string, detail: string, life?: number)    { this.send('info', summary, detail, life); }
+  public warn(summary: string, detail: string, life?: number)    { this.send('warn', summary, detail, life); }
+  public error(summary: string, detail: string, life?: number)   { this.send('error', summary, detail, life); }
 }

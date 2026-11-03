@@ -73,6 +73,7 @@ namespace OI.Reporting
 
             app.UseAuthentication();
             app.UseAuthorization();
+            app.UseClientContext();   // who is calling: needs the user from the two lines above
 
 
             app.MapControllers();

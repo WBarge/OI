@@ -1,4 +1,4 @@
-import { OnDestroy, Service, computed, signal } from '@angular/core';
+import { InjectionToken, OnDestroy, Service, computed, inject, signal } from '@angular/core';
 import {
   HubConnection,
   HubConnectionBuilder,
@@ -17,16 +17,37 @@ export interface SignalRConfig {
 }
 
 /** Retries after 0s, 2s, 5s, 10s, 30s, then every 30s forever. */
-class BackoffRetryPolicy implements IRetryPolicy {
+export class BackoffRetryPolicy implements IRetryPolicy {
   private readonly delays = [0, 2000, 5000, 10000, 30000];
   nextRetryDelayInMilliseconds(ctx: { previousRetryCount: number }): number {
     return this.delays[Math.min(ctx.previousRetryCount, this.delays.length - 1)];
   }
 }
 
+export type HubConnectionFactory = (config: SignalRConfig) => HubConnection;
+
+/** Builds the real connection. */
+export const defaultHubConnectionFactory: HubConnectionFactory = (config) =>
+  new HubConnectionBuilder()
+    .withUrl(config.url, {
+      accessTokenFactory: config.accessTokenFactory,
+    })
+    .withAutomaticReconnect(new BackoffRetryPolicy())
+    .configureLogging(config.logLevel ?? LogLevel.Information)
+    .build();
+
+/** How the service gets its connection. A token, so a spec can hand it a stand-in and test without a server. */
+export const HUB_CONNECTION_FACTORY = new InjectionToken<HubConnectionFactory>('HUB_CONNECTION_FACTORY', {
+  providedIn: 'root',
+  factory: () => defaultHubConnectionFactory,
+});
+
 @Service()
 export class SignalRService implements OnDestroy {
+  private readonly createConnection = inject(HUB_CONNECTION_FACTORY);
   private connection?: HubConnection;
+  /** Set by stop(), so a connection attempt that is still retrying gives up instead of reconnecting after sign-out. */
+  private stopRequested = false;
 
   private readonly _state = signal<HubConnectionState>(HubConnectionState.Disconnected);
   private readonly _error = signal<string | null>(null);
@@ -39,13 +60,7 @@ export class SignalRService implements OnDestroy {
   configure(config: SignalRConfig): void {
     if (this.connection) return;
 
-    this.connection = new HubConnectionBuilder()
-      .withUrl(config.url, {
-        accessTokenFactory: config.accessTokenFactory,
-      })
-      .withAutomaticReconnect(new BackoffRetryPolicy())
-      .configureLogging(config.logLevel ?? LogLevel.Information)
-      .build();
+    this.connection = this.createConnection(config);
 
     const sync = () => this._state.set(this.connection!.state);
     this.connection.onreconnecting((err:any) => {
@@ -68,25 +83,42 @@ export class SignalRService implements OnDestroy {
     const conn = this.requireConnection();
     if (conn.state !== HubConnectionState.Disconnected) return;
 
+    this.stopRequested = false;
     this._state.set(HubConnectionState.Connecting);
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
         await conn.start();
+        if (this.stopRequested) {
+          // stop() was called while this attempt was in flight
+          await conn.stop();
+          this._state.set(HubConnectionState.Disconnected);
+          return;
+        }
         this._error.set(null);
         this._state.set(conn.state);
         return;
       } catch (err) {
+        if (this.stopRequested) {
+          // stopping on purpose interrupts the attempt; that is not a failure to report or retry
+          this._state.set(HubConnectionState.Disconnected);
+          return;
+        }
         this._error.set((err as Error).message);
         if (attempt === maxAttempts) {
           this._state.set(HubConnectionState.Disconnected);
           throw err;
         }
         await new Promise((r) => setTimeout(r, Math.min(1000 * 2 ** attempt, 15000)));
+        if (this.stopRequested) {
+          this._state.set(HubConnectionState.Disconnected);
+          return;
+        }
       }
     }
   }
 
   async stop(): Promise<void> {
+    this.stopRequested = true;
     await this.connection?.stop();
     this._state.set(HubConnectionState.Disconnected);
   }

@@ -54,7 +54,7 @@ Where local-only values go in development:
 | `Jwt:AccessTokenMinutes` | no | no | Life of a user's access token. Default 15. | 15 | |
 | `Jwt:ServiceTokenMinutes` | no | no | Life of an application's service token. Default 10. | 10 | |
 | `Jwt:RefreshTokenDays` | no | no | How long a user stays signed in without using the app. Default 7. | 7 | |
-| `Jwt:SigningKeyPem` | **yes** | yes outside Development | RSA **private** key, PEM, 2048 bits or more, written on one line with `\n` for line breaks. Signs every token. | *(empty: a temporary key is made at each start)* | Outside Development: startup throws. In Development: **tokens stop working whenever Auth restarts**, and other apps can reject new tokens for several minutes. |
+| `Jwt:SigningKeyPem` | **yes** | yes outside Development | RSA **private** key, PEM, 4096 bits or more, written on one line with `\n` for line breaks. Signs every token. | *(empty: a temporary key is made at each start)* | Outside Development: startup throws. In Development: **tokens stop working whenever Auth restarts**, and other apps can reject new tokens for several minutes. |
 | `Seed:AdminEmail` | no | first run only | Creates the first administrator (role Admin, group `default`) if no such user exists. | | **Silent:** no users exist, so nobody can sign in. |
 | `Seed:AdminPassword` | **yes** | first run only | That user's password, **at least 12 characters** or startup throws. Remove both `Seed` keys once the user exists. | | Same as above. |
 | `ServiceClients:N:ClientId` | no | yes, one block per calling application | The id of an application allowed to request service tokens, e.g. `oi-reporting`. | `oi-reporting` | Auth answers 401 to that application. |
@@ -181,7 +181,7 @@ $rng.GetBytes($bytes); $rng.Dispose()
 Signing key (Git for Windows ships `openssl`):
 
 ```powershell
-& "C:\Program Files\Git\usr\bin\openssl.exe" genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out oi-auth.pem
+& "C:\Program Files\Git\usr\bin\openssl.exe" genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:4096 -out oi-auth.pem
 $pem = " " + ((Get-Content oi-auth.pem -Raw) -replace "`r?`n", "\n")   # value for Jwt:SigningKeyPem
 Remove-Item oi-auth.pem                                                   # never commit the file
 ```

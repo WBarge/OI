@@ -7,6 +7,7 @@ import { vi } from 'vitest';
 import { App } from './app';
 import { routes } from './app.routes';
 import { AuthService } from '../services/auth-service';
+import { HubConnectionService } from '../services/hub-connection-service';
 
 describe('App', () => {
   const signedIn = signal(true);
@@ -33,7 +34,9 @@ describe('App', () => {
       providers: [
         provideRouter([]),
         MessageService,
-        { provide: AuthService, useValue: { isAuthenticated: signedIn, userName, logout } }
+        { provide: AuthService, useValue: { isAuthenticated: signedIn, userName, logout } },
+        // the real one opens a connection to the hub; what it does is covered by its own spec
+        { provide: HubConnectionService, useValue: {} }
       ]
     })
       .compileComponents();
@@ -59,10 +62,28 @@ describe('App', () => {
     expect(compiled.querySelector('router-outlet')).toBeTruthy();
   });
 
-  it('should offer Home, Customers and About in the menu', () => {
+  it('should offer Home, Customers, About and Hub Test in the menu', () => {
     const app = TestBed.createComponent(App).componentInstance;
 
-    expect(app.items.map(item => item.label)).toEqual(['Home', 'Customers', 'About']);
+    expect(app.items.map(item => item.label)).toEqual(['Home', 'Customers', 'About', 'Hub Test']);
+  });
+
+  it('should start the hub connection, which stays connected while someone is signed in', () => {
+    const started = vi.fn();
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      imports: [App],
+      providers: [
+        provideRouter([]),
+        MessageService,
+        { provide: AuthService, useValue: { isAuthenticated: signedIn, userName, logout } },
+        { provide: HubConnectionService, useFactory: () => { started(); return {}; } }
+      ]
+    });
+
+    TestBed.createComponent(App);
+
+    expect(started).toHaveBeenCalledTimes(1);
   });
 
   it('should hand its menu items to the menubar', async () => {
@@ -105,6 +126,12 @@ describe('App', () => {
     const app = TestBed.createComponent(App).componentInstance;
 
     expect(app.items.find(item => item.label === 'Customers')?.routerLink).toBe('/customers');
+  });
+
+  it('should link Hub Test to the hub test page', () => {
+    const app = TestBed.createComponent(App).componentInstance;
+
+    expect(app.items.find(item => item.label === 'Hub Test')?.routerLink).toBe('/hubTest');
   });
 
   it('should link About to the about page', () => {

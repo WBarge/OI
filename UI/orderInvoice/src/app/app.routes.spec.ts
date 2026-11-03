@@ -6,6 +6,7 @@ import { OrderInvoice } from '../pages/order-invoice/order-invoice';
 import { About } from '../pages/about/about';
 import { Home } from '../pages/home/home';
 import { Login } from '../pages/login/login';
+import { HubTest } from '../pages/hub-test/hub-test';
 import { OrderSelection } from '../pages/order-selection/order-selection';
 import { CustomerManager } from '../pages/customer-manager/customer-manager';
 import { AuthService } from '../services/auth-service';
@@ -73,6 +74,10 @@ describe('routes', () => {
     expect(find('about')?.component).toBe(About);
   });
 
+  it('should route hubTest to the HubTest page', () => {
+    expect(find('hubTest')?.component).toBe(HubTest);
+  });
+
   it('should not define the same path twice', () => {
     const topLevel = routes.map(route => route.path);
     const inside = pages.map(route => route.path);
@@ -115,7 +120,7 @@ describe('routes', () => {
       expect(router.url).toBe('/home');
     });
 
-    it.each(['/home', '/orderInvoice', '/orderInvoice/abc-123', '/orderInvoice-view/abc-123', '/orderSelection', '/customers', '/about'])(
+    it.each(['/home', '/orderInvoice', '/orderInvoice/abc-123', '/orderInvoice-view/abc-123', '/orderSelection', '/customers', '/about', '/hubTest'])(
       'should navigate to %s',
       async url => {
         const router = configure();
@@ -156,7 +161,7 @@ describe('routes', () => {
       expect(router.url).toBe('/login?returnUrl=%2Fhome');
     });
 
-    it.each(['/home', '/orderInvoice', '/orderInvoice/abc-123', '/orderInvoice-view/abc-123', '/orderSelection', '/customers', '/about'])(
+    it.each(['/home', '/orderInvoice', '/orderInvoice/abc-123', '/orderInvoice-view/abc-123', '/orderSelection', '/customers', '/about', '/hubTest'])(
       'should send %s to the sign-in page and remember it',
       async url => {
         const router = configure();

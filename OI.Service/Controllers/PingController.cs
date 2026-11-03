@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace OI.Service.Controllers;
 
@@ -9,6 +10,7 @@ namespace OI.Service.Controllers;
 /// <seealso cref="ControllerBase" />
 [Route("api/[controller]")]
 [ApiController]
+[AllowAnonymous]
 public class PingController : ControllerBase
 {
     /// <summary>

@@ -31,6 +31,27 @@ describe('NotificationService', () => {
     expect(addSpy).toHaveBeenCalledWith({ severity, summary: 'The summary', detail: 'The detail' });
   });
 
+  it.each([
+    ['success'],
+    ['info'],
+    ['warn'],
+    ['error']
+  ] as const)('should keep a toast on screen for the time asked for (%s)', (severity) => {
+    const addSpy = vi.spyOn(messageService, 'add');
+
+    service[severity]('The summary', 'The detail', 6000);
+
+    expect(addSpy).toHaveBeenCalledWith({ severity, summary: 'The summary', detail: 'The detail', life: 6000 });
+  });
+
+  it('should not set a time of its own when none is asked for, so the toast component default applies', () => {
+    const addSpy = vi.spyOn(messageService, 'add');
+
+    service.info('The summary', 'The detail');
+
+    expect(addSpy.mock.calls[0][0]).not.toHaveProperty('life');
+  });
+
   it('should show one toast per call', () => {
     const addSpy = vi.spyOn(messageService, 'add');
 

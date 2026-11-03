@@ -1,6 +1,7 @@
 using OI.Business;
 using OI.Data;
 using OI.Integration;
+using OI.Integration.Security;
 
 namespace OI.Reporting.Utilities;
 
@@ -23,6 +24,10 @@ public static class RootComposition
         // Lets reporting code tell the browser a report is ready: inject INotificationPublisher (OI.Glue.Notifications)
         // and call PublishAsync(NotificationTarget.User(job.CreatedBy), "report-ready", "Your report is ready").
         services.AddNotificationPublisher(configuration);
+
+        // Lets controllers and managers ask who is calling: inject IClientContext (OI.Glue.Security).
+        // The middleware that fills it in is added in Program.cs with app.UseClientContext().
+        services.AddClientContext();
     }   
 
 }

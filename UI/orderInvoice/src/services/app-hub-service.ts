@@ -18,12 +18,20 @@ export class AppHubService {
   private auth = inject(AuthService);
   private configService = inject(ConfigService);
 
-  /** Call after sign-in. The token is read again on every (re)connect, so refreshes are picked up. */
-  async connect(): Promise<void> {
+  /**
+   * Builds the connection (once) without starting it, so handlers can be attached before any message can arrive.
+   * The token is read again on every (re)connect, so refreshed tokens are picked up.
+   */
+  configure(): void {
     this.hub.configure({
       url: this.configService.config.hubUrl,
       accessTokenFactory: () => this.auth.getAccessToken(),
     });
+  }
+
+  /** Call after sign-in. */
+  async connect(): Promise<void> {
+    this.configure();
     await this.hub.start();
   }
 

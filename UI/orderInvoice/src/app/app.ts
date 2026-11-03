@@ -6,6 +6,7 @@ import { MenubarModule} from 'primeng/menubar';
 import { ToastModule } from 'primeng/toast';
 
 import { AuthService } from '../services/auth-service';
+import { HubConnectionService } from '../services/hub-connection-service';
 
 
 @Component({
@@ -24,8 +25,11 @@ export class App {
     this.items = [
       {label:'Home', routerLink:'/'},
       {label:'Customers', routerLink:'/customers'},
-      {label:'About',routerLink:'/about'}
+      {label:'About',routerLink:'/about'},
+      {label:'Hub Test',routerLink:'/hubTest'}
     ];
+    // injecting it is what starts it: connected to the hub while signed in, toasts for what the back end sends
+    inject(HubConnectionService);
   }
 
   protected signOut(): void {
