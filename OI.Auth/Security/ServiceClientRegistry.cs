@@ -16,7 +16,9 @@ public sealed class ServiceClientRegistry(IConfiguration configuration)
     private readonly List<ServiceClient> _clients =
         configuration.GetSection("ServiceClients").Get<List<ServiceClient>>() ?? [];
 
-    /// <summary>The client if the id and secret match, otherwise null. The comparison takes the same time either way.</summary>
+    /// <summary>
+    /// The client if the id and secret match, otherwise null. The comparison takes the same time either way.
+    /// </summary>
     public ServiceClient? Validate(string clientId, string secret)
     {
         ServiceClient? client = _clients.FirstOrDefault(c => string.Equals(c.ClientId, clientId, StringComparison.Ordinal));

@@ -5,7 +5,7 @@ import { NotificationService, Severity } from '../utils/notification-service';
 import { AppHubService, AppNotification } from './app-hub-service';
 import { AuthService } from './auth-service';
 
-const TOAST_LIFE_MS = 6000;
+const TOAST_LIFE_MS = 10000;
 const RETRY_AFTER_MS = 30_000;
 
 /** The hub sends a free-text type; these are the ones that map onto a toast colour, anything else is shown as info. */

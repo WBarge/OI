@@ -3,7 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using OI.Data.Contexts;
-using OI.Data.Repos;
+using OI.Data.Repos.Orders;
 using OI.Glue.Repos;
 
 namespace OI.Data.Tests;

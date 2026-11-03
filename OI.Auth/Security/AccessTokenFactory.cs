@@ -7,7 +7,9 @@ using OI.Glue.Services;
 
 namespace OI.Auth.Security;
 
-/// <summary>Builds and signs (RS256) the JWTs for users and for other applications.</summary>
+/// <summary>
+/// Builds and signs (RS256) the JWTs for users and for other applications.
+/// </summary>
 public sealed class AccessTokenFactory(SigningKeyProvider keys, IOptions<JwtOptions> options, TimeProvider clock) : IAccessTokenFactory
 {
     private readonly JwtOptions _options = options.Value;

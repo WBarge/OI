@@ -6,7 +6,7 @@ using OI.Data.Translators.Internal_Models;
 using OI.Glue.Models;
 using OI.Glue.Repos;
 
-namespace OI.Data.Repos;
+namespace OI.Data.Repos.Auth;
 
 /// <summary>
 /// Reads and writes the Identity tables directly. No password checks, no lockout decisions:

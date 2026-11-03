@@ -4,7 +4,7 @@ using OI.Data.Model.Auth;
 using OI.Glue.Models;
 using OI.Glue.Repos;
 
-namespace OI.Data.Repos;
+namespace OI.Data.Repos.Auth;
 
 internal class RefreshTokenRepo(OiAuthDbContext authDbContext) : IRefreshTokenRepo
 {

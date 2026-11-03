@@ -7,7 +7,7 @@ using OI.Data.Translators;
 using OI.Glue.Models;
 using OI.Glue.Repos;
 
-namespace OI.Data.Repos;
+namespace OI.Data.Repos.Orders;
 
 internal class OrderRepo(OiServiceDbContext serviceDbContext) : BaseEfRepo<Order>(serviceDbContext), IOrderRepo
 {

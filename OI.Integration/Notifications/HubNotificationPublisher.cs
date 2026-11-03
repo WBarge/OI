@@ -5,7 +5,9 @@ using OI.Glue.Notifications;
 
 namespace OI.Integration.Notifications;
 
-/// <summary>Sends a notification to the central OI.Hub over HTTP using this application's service token.</summary>
+/// <summary>
+/// Sends a notification to the central OI.Hub over HTTP using this application's service token.
+/// </summary>
 public sealed class HubNotificationPublisher(
     IHttpClientFactory httpClientFactory,
     ServiceTokenProvider tokens,

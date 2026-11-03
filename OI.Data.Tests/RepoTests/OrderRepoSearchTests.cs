@@ -2,7 +2,7 @@ using FluentAssertions;
 using OI.Data.Contexts;
 using OI.Data.Helpers;
 using OI.Data.Model.Orders;
-using OI.Data.Repos;
+using OI.Data.Repos.Orders;
 using OI.Glue.Models;
 
 namespace OI.Data.Tests.RepoTests;

@@ -4,7 +4,9 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace OI.Auth.Security;
 
-/// <summary>Holds the RSA key pair. Only this application ever sees the private half.</summary>
+/// <summary>
+/// Holds the RSA key pair. Only this application ever sees the private half.
+/// </summary>
 public sealed class SigningKeyProvider : IDisposable
 {
     private readonly RSA _rsa;

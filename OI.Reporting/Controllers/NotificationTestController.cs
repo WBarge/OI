@@ -38,7 +38,6 @@ public class NotificationTestController(
         {
             return Unauthorized();
         }
-
         bool accepted = await _notificationPublisher.PublishAsync(
             NotificationTarget.User(_clientContext.UserId), MessageType, MessageTitle, MessageBody, cancellationToken);
 

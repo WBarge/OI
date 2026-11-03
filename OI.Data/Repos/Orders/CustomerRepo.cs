@@ -8,7 +8,7 @@ using OI.Glue.Models;
 using OI.Glue.Repos;
 using Customer = OI.Data.Model.Orders.Customer;
 
-namespace OI.Data.Repos;
+namespace OI.Data.Repos.Orders;
 
 internal class CustomerRepo(OiServiceDbContext serviceDbContext) : BaseEfRepo<Customer>(serviceDbContext), ICustomerRepo
 {
