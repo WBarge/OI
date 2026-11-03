@@ -1,6 +1,7 @@
 <Solution>
-  <Folder Name="/DevNotes/">
-    <File Path="DBNotes.txt" />
+  <Folder Name="/Notes/">
+    <File Path="DevDBNotes.txt" />
+    <File Path="SettingsNotes.md" />
   </Folder>
   <Project Path="OI.Auth/OI.Auth.csproj" Id="23fa6c36-e138-4e5f-8980-379a30fa44ae" />
   <Project Path="OI.Business.Tests/OI.Business.Tests.csproj" Id="f0e5b7f0-0777-4c3c-aef8-226d335148e1" />
