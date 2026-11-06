@@ -26,3 +26,8 @@ OI.Service/appsettings.Development.json
 /OI.Reporting/appsettings.Development.json
 /OI.Tool.MigrationHelper/appsettings.json
 /OI.Auth/oi-auth.pem
+/OI.Auth/appsettings.json
+/OI.Hub/appsettings.json
+/OI.Reporting/appsettings.json
+/OI.Service/appsettings.json
+/TestPlatForm/appsettings.json
