@@ -15,13 +15,15 @@ internal class AuthGroupMemberConfig : IEntityTypeConfiguration<AuthGroupMember>
         builder.Property(m => m.GroupId).IsRequired().HasMaxLength(36);
         builder.HasIndex(m => m.GroupId);
 
-        builder.HasOne<ApplicationUser>()
-            .WithMany()
+        // Both relationships name their navigations on BOTH sides. If a navigation exists on a type but is left
+        // out of the configuration, EF conventions build a second, shadow relationship (UserId1/GroupId1) next to it.
+        builder.HasOne(m => m.User)
+            .WithMany(u => u.GroupMemberships)
             .HasForeignKey(m => m.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasOne<AuthGroup>()
-            .WithMany()
+        builder.HasOne(m => m.Group)
+            .WithMany(g => g.Members)
             .HasForeignKey(m => m.GroupId)
             .OnDelete(DeleteBehavior.Cascade);
     }

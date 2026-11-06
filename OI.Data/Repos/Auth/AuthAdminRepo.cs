@@ -78,7 +78,7 @@ internal class AuthAdminRepo(OiAuthDbContext authDbContext) : IAuthAdminRepo
         }
         foreach (string groupId in await FindGroupIdsAsync(groups, cancellationToken))
         {
-            _db.AuthUserGroups.Add(new AuthGroupMember { UserId = user.Id, GroupId = groupId });
+            user.GroupMemberships.Add(new AuthGroupMember { UserId = user.Id, GroupId = groupId });
         }
 
         await _db.SaveChangesAsync(cancellationToken);
@@ -87,7 +87,9 @@ internal class AuthAdminRepo(OiAuthDbContext authDbContext) : IAuthAdminRepo
 
     public async Task UpdateUserAsync(string userId, string displayName, IReadOnlyCollection<string> roles, IReadOnlyCollection<string> groups, CancellationToken cancellationToken = default)
     {
-        ApplicationUser user = await _db.Users.SingleAsync(u => u.Id == userId, cancellationToken);
+        ApplicationUser user = await _db.Users
+            .Include(u => u.GroupMemberships)
+            .SingleAsync(u => u.Id == userId, cancellationToken);
         user.DisplayName = displayName;
 
         List<string> wantedRoleIds = await FindRoleIdsAsync(roles, cancellationToken);
@@ -99,11 +101,11 @@ internal class AuthAdminRepo(OiAuthDbContext authDbContext) : IAuthAdminRepo
         }
 
         List<string> wantedGroupIds = await FindGroupIdsAsync(groups, cancellationToken);
-        List<AuthGroupMember> currentGroups = await _db.AuthUserGroups.Where(m => m.UserId == userId).ToListAsync(cancellationToken);
+        List<AuthGroupMember> currentGroups = user.GroupMemberships.ToList();
         _db.AuthUserGroups.RemoveRange(currentGroups.Where(m => !wantedGroupIds.Contains(m.GroupId)));
         foreach (string groupId in wantedGroupIds.Where(id => currentGroups.All(m => m.GroupId != id)))
         {
-            _db.AuthUserGroups.Add(new AuthGroupMember { UserId = userId, GroupId = groupId });
+            user.GroupMemberships.Add(new AuthGroupMember { UserId = userId, GroupId = groupId });
         }
 
         await _db.SaveChangesAsync(cancellationToken);
@@ -202,7 +204,7 @@ internal class AuthAdminRepo(OiAuthDbContext authDbContext) : IAuthAdminRepo
     {
         var rows = await _db.AuthGroups.AsNoTracking()
             .OrderBy(g => g.Name)
-            .Select(g => new { g.Name, g.Description, MemberCount = _db.AuthUserGroups.Count(m => m.GroupId == g.Id) })
+            .Select(g => new { g.Name, g.Description, MemberCount = g.Members.Count })
             .ToListAsync(cancellationToken);
         return rows.Select(g => new AdminGroup(g.Name, g.Description, g.MemberCount)).ToList();
     }
@@ -214,12 +216,12 @@ internal class AuthAdminRepo(OiAuthDbContext authDbContext) : IAuthAdminRepo
         {
             return null;
         }
-        List<string> groupMembers = await _db.AuthUserGroups.AsNoTracking()
-            .Where(u=>u.GroupId == group.Id ).Select(u=>u.UserId).ToListAsync(cancellationToken);
-        List<AdminGroupMember> members = await _db.Users.AsNoTracking()
-            .Where(u => groupMembers.Contains(u.Id))
-            .OrderBy(u=>u.Email)
-            .Select(u => new AdminGroupMember(u.Id, u.Email ?? string.Empty, u.DisplayName ?? u.UserName ?? u.Email ?? u.Id)).ToListAsync(cancellationToken);
+        List<AdminGroupMember> members = await _db.AuthUserGroups.AsNoTracking()
+            .Where(m => m.GroupId == group.Id)
+            .Select(m => m.User)
+            .OrderBy(u => u.Email)
+            .Select(u => new AdminGroupMember(u.Id, u.Email ?? string.Empty, u.DisplayName ?? u.UserName ?? u.Email ?? u.Id))
+            .ToListAsync(cancellationToken);
 
         return new AdminGroupDetail(
             group.Name,
@@ -243,15 +245,16 @@ internal class AuthAdminRepo(OiAuthDbContext authDbContext) : IAuthAdminRepo
 
     public async Task<IReadOnlyCollection<string>> DeleteGroupAsync(string name, CancellationToken cancellationToken = default)
     {
-        AuthGroup? group = await _db.AuthGroups.SingleOrDefaultAsync(g => g.Name == name, cancellationToken);
+        AuthGroup? group = await _db.AuthGroups
+            .Include(g => g.Members)
+            .SingleOrDefaultAsync(g => g.Name == name, cancellationToken);
         if (group is null)
         {
             return [];
         }
 
-        List<AuthGroupMember> memberships = await _db.AuthUserGroups.Where(m => m.GroupId == group.Id).ToListAsync(cancellationToken);
-        List<string> userIds = memberships.Select(m => m.UserId).ToList();
-        _db.AuthUserGroups.RemoveRange(memberships);
+        List<string> userIds = group.Members.Select(m => m.UserId).ToList();
+        _db.AuthUserGroups.RemoveRange(group.Members.ToList());
         _db.AuthGroups.Remove(group);
         await _db.SaveChangesAsync(cancellationToken);
         return userIds;
@@ -270,11 +273,9 @@ internal class AuthAdminRepo(OiAuthDbContext authDbContext) : IAuthAdminRepo
                 select new { ur.UserId, Name = r.Name! })
             .ToListAsync(cancellationToken);
 
-        var groupRows = await (
-                from m in _db.AuthUserGroups.AsNoTracking()
-                where ids.Contains(m.UserId)
-                join g in _db.AuthGroups.AsNoTracking() on m.GroupId equals g.Id
-                select new { m.UserId, g.Name })
+        var groupRows = await _db.AuthUserGroups.AsNoTracking()
+            .Where(m => ids.Contains(m.UserId))
+            .Select(m => new { m.UserId, m.Group.Name })
             .ToListAsync(cancellationToken);
 
         return users.Select(u => new AdminUser(

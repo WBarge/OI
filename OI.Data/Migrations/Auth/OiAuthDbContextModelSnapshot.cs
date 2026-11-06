@@ -262,21 +262,9 @@ namespace OI.Data.Migrations.Auth
                         .HasMaxLength(36)
                         .HasColumnType("nvarchar(36)");
 
-                    b.Property<string>("GroupId1")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(36)");
-
-                    b.Property<string>("UserId1")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
                     b.HasKey("UserId", "GroupId");
 
                     b.HasIndex("GroupId");
-
-                    b.HasIndex("GroupId1");
-
-                    b.HasIndex("UserId1");
 
                     b.ToTable("AuthUserGroups", (string)null);
                 });
@@ -375,27 +363,15 @@ namespace OI.Data.Migrations.Auth
 
             modelBuilder.Entity("OI.Data.Model.Auth.AuthGroupMember", b =>
                 {
-                    b.HasOne("OI.Data.Model.Auth.AuthGroup", null)
-                        .WithMany()
+                    b.HasOne("OI.Data.Model.Auth.AuthGroup", "Group")
+                        .WithMany("Members")
                         .HasForeignKey("GroupId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("OI.Data.Model.Auth.AuthGroup", "Group")
-                        .WithMany()
-                        .HasForeignKey("GroupId1")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("OI.Data.Model.Auth.ApplicationUser", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("OI.Data.Model.Auth.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId1")
+                        .WithMany("GroupMemberships")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -411,6 +387,16 @@ namespace OI.Data.Migrations.Auth
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("OI.Data.Model.Auth.ApplicationUser", b =>
+                {
+                    b.Navigation("GroupMemberships");
+                });
+
+            modelBuilder.Entity("OI.Data.Model.Auth.AuthGroup", b =>
+                {
+                    b.Navigation("Members");
                 });
 #pragma warning restore 612, 618
         }
