@@ -15,7 +15,6 @@ public class AuthAdminManagerTests
     private const string ACTOR_ID = "actor-1";
     private const string USER_ID = "user-1";
 
-    private Mock<IAuthAdminRepo> _adminRepo = null!;
     private Mock<IAuthRepo> _authRepo = null!;
     private Mock<IRefreshTokenRepo> _tokens = null!;
     private Mock<IPasswordService> _passwords = null!;
@@ -25,7 +24,6 @@ public class AuthAdminManagerTests
     [SetUp]
     public void SetUp()
     {
-        _adminRepo = new Mock<IAuthAdminRepo>();
         _authRepo = new Mock<IAuthRepo>();
         _tokens = new Mock<IRefreshTokenRepo>();
         _passwords = new Mock<IPasswordService>();
@@ -41,7 +39,7 @@ public class AuthAdminManagerTests
     }
 
     private AuthAdminManager Create() => new(
-        _adminRepo.Object, _authRepo.Object, _tokens.Object, _passwords.Object, _actor.Object,
+        _authRepo.Object, _tokens.Object, _passwords.Object, _actor.Object,
         new AuthPolicy(), TimeProvider.System, NullLogger<AuthAdminManager>.Instance);
 
     private static CancellationToken Ct => TestContext.CurrentContext.CancellationToken;
@@ -49,20 +47,20 @@ public class AuthAdminManagerTests
     private void SetupRoles(params AdminRole[] roles)
     {
         IReadOnlyCollection<AdminRole> list = roles;
-        _adminRepo.Setup(r => r.ListRolesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(list);
+        _authRepo.Setup(r => r.ListRolesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(list);
     }
 
     private void SetupGroups(params AdminGroup[] groups)
     {
         IReadOnlyCollection<AdminGroup> list = groups;
-        _adminRepo.Setup(r => r.ListGroupsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(list);
+        _authRepo.Setup(r => r.ListGroupsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(list);
     }
 
     private void SetupCountOfEnabledAdmins(int count) =>
-        _adminRepo.Setup(r => r.CountEnabledUsersInRoleAsync("Admin", It.IsAny<CancellationToken>())).ReturnsAsync(count);
+        _authRepo.Setup(r => r.CountEnabledUsersInRoleAsync("Admin", It.IsAny<CancellationToken>())).ReturnsAsync(count);
 
     private void SetupUser(AdminUser? user, string id = USER_ID) =>
-        _adminRepo.Setup(r => r.GetUserAsync(id, It.IsAny<CancellationToken>())).ReturnsAsync(user);
+        _authRepo.Setup(r => r.GetUserAsync(id, It.IsAny<CancellationToken>())).ReturnsAsync(user);
 
     private static AdminUser User(string id = USER_ID, string[]? roles = null, string[]? groups = null, DateTimeOffset? lockoutEnd = null) =>
         new(id, $"{id}@example.com", "Pat Example", lockoutEnd, roles ?? ["User"], groups ?? []);
@@ -76,59 +74,52 @@ public class AuthAdminManagerTests
 
     // ------------------------------------------------------------------ constructor
 
-    [Test, Description("Constructor should throw when adminRepo is null")]
-    public void Constructor_ThrowsWhenAdminRepoIsNull()
-    {
-        Action act = () => _ = new AuthAdminManager(null!, _authRepo.Object, _tokens.Object, _passwords.Object, _actor.Object, new AuthPolicy(), TimeProvider.System, NullLogger<AuthAdminManager>.Instance);
-        act.Should().Throw<ArgumentNullException>().WithParameterName("adminRepo");
-    }
-
     [Test, Description("Constructor should throw when authRepo is null")]
     public void Constructor_ThrowsWhenAuthRepoIsNull()
     {
-        Action act = () => _ = new AuthAdminManager(_adminRepo.Object, null!, _tokens.Object, _passwords.Object, _actor.Object, new AuthPolicy(), TimeProvider.System, NullLogger<AuthAdminManager>.Instance);
+        Action act = () => _ = new AuthAdminManager(null!, _tokens.Object, _passwords.Object, _actor.Object, new AuthPolicy(), TimeProvider.System, NullLogger<AuthAdminManager>.Instance);
         act.Should().Throw<ArgumentNullException>().WithParameterName("authRepo");
     }
 
     [Test, Description("Constructor should throw when refreshTokenRepo is null")]
     public void Constructor_ThrowsWhenRefreshTokenRepoIsNull()
     {
-        Action act = () => _ = new AuthAdminManager(_adminRepo.Object, _authRepo.Object, null!, _passwords.Object, _actor.Object, new AuthPolicy(), TimeProvider.System, NullLogger<AuthAdminManager>.Instance);
+        Action act = () => _ = new AuthAdminManager(_authRepo.Object, null!, _passwords.Object, _actor.Object, new AuthPolicy(), TimeProvider.System, NullLogger<AuthAdminManager>.Instance);
         act.Should().Throw<ArgumentNullException>().WithParameterName("refreshTokenRepo");
     }
 
     [Test, Description("Constructor should throw when passwords is null")]
     public void Constructor_ThrowsWhenPasswordsIsNull()
     {
-        Action act = () => _ = new AuthAdminManager(_adminRepo.Object, _authRepo.Object, _tokens.Object, null!, _actor.Object, new AuthPolicy(), TimeProvider.System, NullLogger<AuthAdminManager>.Instance);
+        Action act = () => _ = new AuthAdminManager(_authRepo.Object, _tokens.Object, null!, _actor.Object, new AuthPolicy(), TimeProvider.System, NullLogger<AuthAdminManager>.Instance);
         act.Should().Throw<ArgumentNullException>().WithParameterName("passwords");
     }
 
     [Test, Description("Constructor should throw when actor is null")]
     public void Constructor_ThrowsWhenActorIsNull()
     {
-        Action act = () => _ = new AuthAdminManager(_adminRepo.Object, _authRepo.Object, _tokens.Object, _passwords.Object, null!, new AuthPolicy(), TimeProvider.System, NullLogger<AuthAdminManager>.Instance);
+        Action act = () => _ = new AuthAdminManager(_authRepo.Object, _tokens.Object, _passwords.Object, null!, new AuthPolicy(), TimeProvider.System, NullLogger<AuthAdminManager>.Instance);
         act.Should().Throw<ArgumentNullException>().WithParameterName("actor");
     }
 
     [Test, Description("Constructor should throw when policy is null")]
     public void Constructor_ThrowsWhenPolicyIsNull()
     {
-        Action act = () => _ = new AuthAdminManager(_adminRepo.Object, _authRepo.Object, _tokens.Object, _passwords.Object, _actor.Object, null!, TimeProvider.System, NullLogger<AuthAdminManager>.Instance);
+        Action act = () => _ = new AuthAdminManager(_authRepo.Object, _tokens.Object, _passwords.Object, _actor.Object, null!, TimeProvider.System, NullLogger<AuthAdminManager>.Instance);
         act.Should().Throw<ArgumentNullException>().WithParameterName("policy");
     }
 
     [Test, Description("Constructor should throw when clock is null")]
     public void Constructor_ThrowsWhenClockIsNull()
     {
-        Action act = () => _ = new AuthAdminManager(_adminRepo.Object, _authRepo.Object, _tokens.Object, _passwords.Object, _actor.Object, new AuthPolicy(), null!, NullLogger<AuthAdminManager>.Instance);
+        Action act = () => _ = new AuthAdminManager(_authRepo.Object, _tokens.Object, _passwords.Object, _actor.Object, new AuthPolicy(), null!, NullLogger<AuthAdminManager>.Instance);
         act.Should().Throw<ArgumentNullException>().WithParameterName("clock");
     }
 
     [Test, Description("Constructor should throw when logger is null")]
     public void Constructor_ThrowsWhenLoggerIsNull()
     {
-        Action act = () => _ = new AuthAdminManager(_adminRepo.Object, _authRepo.Object, _tokens.Object, _passwords.Object, _actor.Object, new AuthPolicy(), TimeProvider.System, null!);
+        Action act = () => _ = new AuthAdminManager(_authRepo.Object, _tokens.Object, _passwords.Object, _actor.Object, new AuthPolicy(), TimeProvider.System, null!);
         act.Should().Throw<ArgumentNullException>().WithParameterName("logger");
     }
 
@@ -138,31 +129,31 @@ public class AuthAdminManagerTests
     [Description("GetUsersAsync should never ask the repo for a page below 1")]
     public async Task GetUsersAsync_ClampsThePage(int requested, int expected)
     {
-        _adminRepo.Setup(r => r.FindUsersAsync(It.IsAny<string?>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+        _authRepo.Setup(r => r.FindUsersAsync(It.IsAny<string?>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PagedResult<AdminUser>([], 0));
 
         await _sut.GetUsersAsync(null, requested, 25, Ct);
 
-        _adminRepo.Verify(r => r.FindUsersAsync(null, expected, 25, It.IsAny<CancellationToken>()), Times.Once);
+        _authRepo.Verify(r => r.FindUsersAsync(null, expected, 25, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [TestCase(0, 1), TestCase(-1, 1), TestCase(50, 50), TestCase(100, 100), TestCase(5000, 100)]
     [Description("GetUsersAsync should keep the page size between 1 and 100")]
     public async Task GetUsersAsync_ClampsThePageSize(int requested, int expected)
     {
-        _adminRepo.Setup(r => r.FindUsersAsync(It.IsAny<string?>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+        _authRepo.Setup(r => r.FindUsersAsync(It.IsAny<string?>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PagedResult<AdminUser>([], 0));
 
         await _sut.GetUsersAsync(null, 1, requested, Ct);
 
-        _adminRepo.Verify(r => r.FindUsersAsync(null, 1, expected, It.IsAny<CancellationToken>()), Times.Once);
+        _authRepo.Verify(r => r.FindUsersAsync(null, 1, expected, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test, Description("GetUsersAsync should trim the search and return what the repo found")]
     public async Task GetUsersAsync_TrimsTheSearchAndReturnsTheRepoResult()
     {
         PagedResult<AdminUser> expected = new([User()], 1);
-        _adminRepo.Setup(r => r.FindUsersAsync("pat", 1, 25, It.IsAny<CancellationToken>())).ReturnsAsync(expected);
+        _authRepo.Setup(r => r.FindUsersAsync("pat", 1, 25, It.IsAny<CancellationToken>())).ReturnsAsync(expected);
 
         PagedResult<AdminUser> result = await _sut.GetUsersAsync("  pat  ", 1, 25, Ct);
 
@@ -201,7 +192,7 @@ public class AuthAdminManagerTests
 
         result.Status.Should().Be(AdminStatus.Invalid);
         result.Message.Should().Contain("email");
-        _adminRepo.Verify(r => r.CreateUserAsync(It.IsAny<NewAuthUser>(), It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<CancellationToken>()), Times.Never);
+        _authRepo.Verify(r => r.CreateUserAsync(It.IsAny<NewAuthUser>(), It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Test, Description("CreateUserAsync should refuse an email longer than 256 characters")]
@@ -274,14 +265,14 @@ public class AuthAdminManagerTests
         AdminResult<AdminUser> result = await _sut.CreateUserAsync(NewUser(), Ct);
 
         result.Status.Should().Be(AdminStatus.Conflict);
-        _adminRepo.Verify(r => r.CreateUserAsync(It.IsAny<NewAuthUser>(), It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<CancellationToken>()), Times.Never);
+        _authRepo.Verify(r => r.CreateUserAsync(It.IsAny<NewAuthUser>(), It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Test, Description("CreateUserAsync should store a hash of the password, never the password, and the trimmed email and name")]
     public async Task CreateUserAsync_StoresTheHashAndTheTrimmedValues()
     {
         NewAuthUser? stored = null;
-        _adminRepo.Setup(r => r.CreateUserAsync(It.IsAny<NewAuthUser>(), It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<CancellationToken>()))
+        _authRepo.Setup(r => r.CreateUserAsync(It.IsAny<NewAuthUser>(), It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<CancellationToken>()))
             .Callback<NewAuthUser, IReadOnlyCollection<string>, IReadOnlyCollection<string>, CancellationToken>((u, _, _, _) => stored = u)
             .ReturnsAsync("new-id");
         SetupUser(User("new-id"), "new-id");
@@ -299,7 +290,7 @@ public class AuthAdminManagerTests
     public async Task CreateUserAsync_ResolvesRolesToTheirStoredNames()
     {
         IReadOnlyCollection<string>? roles = null;
-        _adminRepo.Setup(r => r.CreateUserAsync(It.IsAny<NewAuthUser>(), It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<CancellationToken>()))
+        _authRepo.Setup(r => r.CreateUserAsync(It.IsAny<NewAuthUser>(), It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<CancellationToken>()))
             .Callback<NewAuthUser, IReadOnlyCollection<string>, IReadOnlyCollection<string>, CancellationToken>((_, r, _, _) => roles = r)
             .ReturnsAsync("new-id");
         SetupUser(User("new-id"), "new-id");
@@ -313,7 +304,7 @@ public class AuthAdminManagerTests
     public async Task CreateUserAsync_NormalisesGroupNames()
     {
         IReadOnlyCollection<string>? groups = null;
-        _adminRepo.Setup(r => r.CreateUserAsync(It.IsAny<NewAuthUser>(), It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<CancellationToken>()))
+        _authRepo.Setup(r => r.CreateUserAsync(It.IsAny<NewAuthUser>(), It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<CancellationToken>()))
             .Callback<NewAuthUser, IReadOnlyCollection<string>, IReadOnlyCollection<string>, CancellationToken>((_, _, g, _) => groups = g)
             .ReturnsAsync("new-id");
         SetupUser(User("new-id"), "new-id");
@@ -327,7 +318,7 @@ public class AuthAdminManagerTests
     public async Task CreateUserAsync_ReturnsTheCreatedUser()
     {
         AdminUser created = User("new-id");
-        _adminRepo.Setup(r => r.CreateUserAsync(It.IsAny<NewAuthUser>(), It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<CancellationToken>()))
+        _authRepo.Setup(r => r.CreateUserAsync(It.IsAny<NewAuthUser>(), It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("new-id");
         SetupUser(created, "new-id");
 
@@ -381,7 +372,7 @@ public class AuthAdminManagerTests
 
         result.Status.Should().Be(AdminStatus.Conflict);
         result.Message.Should().Be("You cannot remove your own Admin role.");
-        _adminRepo.Verify(r => r.UpdateUserAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<CancellationToken>()), Times.Never);
+        _authRepo.Verify(r => r.UpdateUserAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Test, Description("UpdateUserAsync should let administrators change their own name and groups while keeping Admin")]
@@ -435,7 +426,7 @@ public class AuthAdminManagerTests
 
         await _sut.UpdateUserAsync(USER_ID, Update(name: "  New Name ", roles: ["manager"], groups: ["Sales"]), Ct);
 
-        _adminRepo.Verify(r => r.UpdateUserAsync(USER_ID, "New Name",
+        _authRepo.Verify(r => r.UpdateUserAsync(USER_ID, "New Name",
             It.Is<IReadOnlyCollection<string>>(x => x.SequenceEqual(new[] { "Manager" })),
             It.Is<IReadOnlyCollection<string>>(x => x.SequenceEqual(new[] { "sales" })),
             It.IsAny<CancellationToken>()), Times.Once);
@@ -493,7 +484,7 @@ public class AuthAdminManagerTests
         AdminResult result = await _sut.ResetPasswordAsync(USER_ID, "short", Ct);
 
         result.Status.Should().Be(AdminStatus.Invalid);
-        _adminRepo.Verify(r => r.SetPasswordHashAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _authRepo.Verify(r => r.SetPasswordHashAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Test, Description("ResetPasswordAsync should say NotFound for an unknown user")]
@@ -514,7 +505,7 @@ public class AuthAdminManagerTests
         AdminResult result = await _sut.ResetPasswordAsync(USER_ID, "a-long-password-1", Ct);
 
         result.Succeeded.Should().BeTrue();
-        _adminRepo.Verify(r => r.SetPasswordHashAsync(USER_ID, "hashed", It.IsAny<CancellationToken>()), Times.Once);
+        _authRepo.Verify(r => r.SetPasswordHashAsync(USER_ID, "hashed", It.IsAny<CancellationToken>()), Times.Once);
         VerifySessionsRevoked(USER_ID, Times.Once());
     }
 
@@ -562,7 +553,7 @@ public class AuthAdminManagerTests
         AdminResult<AdminUser> result = await _sut.SetDisabledAsync(USER_ID, true, Ct);
 
         result.Succeeded.Should().BeTrue();
-        _adminRepo.Verify(r => r.SetDisabledAsync(USER_ID, true, It.IsAny<CancellationToken>()), Times.Once);
+        _authRepo.Verify(r => r.SetDisabledAsync(USER_ID, true, It.IsAny<CancellationToken>()), Times.Once);
         VerifySessionsRevoked(USER_ID, Times.Once());
     }
 
@@ -574,7 +565,7 @@ public class AuthAdminManagerTests
         AdminResult<AdminUser> result = await _sut.SetDisabledAsync(USER_ID, true, Ct);
 
         result.Succeeded.Should().BeTrue();
-        _adminRepo.Verify(r => r.SetDisabledAsync(USER_ID, true, It.IsAny<CancellationToken>()), Times.Once);
+        _authRepo.Verify(r => r.SetDisabledAsync(USER_ID, true, It.IsAny<CancellationToken>()), Times.Once);
         VerifySessionsRevoked(USER_ID, Times.Once());
     }
 
@@ -586,7 +577,7 @@ public class AuthAdminManagerTests
         AdminResult<AdminUser> result = await _sut.SetDisabledAsync(USER_ID, false, Ct);
 
         result.Succeeded.Should().BeTrue();
-        _adminRepo.Verify(r => r.SetDisabledAsync(USER_ID, false, It.IsAny<CancellationToken>()), Times.Once);
+        _authRepo.Verify(r => r.SetDisabledAsync(USER_ID, false, It.IsAny<CancellationToken>()), Times.Once);
         VerifySessionsRevoked(USER_ID, Times.Never());
     }
 
@@ -598,7 +589,7 @@ public class AuthAdminManagerTests
         AdminResult<AdminUser> result = await _sut.SetDisabledAsync(USER_ID, true, Ct);
 
         result.Succeeded.Should().BeTrue();
-        _adminRepo.Verify(r => r.SetDisabledAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
+        _authRepo.Verify(r => r.SetDisabledAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Test, Description("SetDisabledAsync should do nothing when enabling a user who is not locked at all")]
@@ -608,7 +599,7 @@ public class AuthAdminManagerTests
 
         await _sut.SetDisabledAsync(USER_ID, false, Ct);
 
-        _adminRepo.Verify(r => r.SetDisabledAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
+        _authRepo.Verify(r => r.SetDisabledAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Test, Description("SetDisabledAsync should clear a temporary lockout when asked to enable, which acts as an unlock")]
@@ -618,7 +609,7 @@ public class AuthAdminManagerTests
 
         await _sut.SetDisabledAsync(USER_ID, false, Ct);
 
-        _adminRepo.Verify(r => r.SetDisabledAsync(USER_ID, false, It.IsAny<CancellationToken>()), Times.Once);
+        _authRepo.Verify(r => r.SetDisabledAsync(USER_ID, false, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // ------------------------------------------------------------------ deleting users
@@ -642,7 +633,7 @@ public class AuthAdminManagerTests
 
         result.Status.Should().Be(AdminStatus.Conflict);
         result.Message.Should().Be("You cannot delete your own account.");
-        _adminRepo.Verify(r => r.DeleteUserAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _authRepo.Verify(r => r.DeleteUserAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Test, Description("DeleteUserAsync should not delete the last active administrator")]
@@ -676,7 +667,7 @@ public class AuthAdminManagerTests
         AdminResult result = await _sut.DeleteUserAsync(USER_ID, Ct);
 
         result.Succeeded.Should().BeTrue();
-        _adminRepo.Verify(r => r.DeleteUserAsync(USER_ID, It.IsAny<CancellationToken>()), Times.Once);
+        _authRepo.Verify(r => r.DeleteUserAsync(USER_ID, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // ------------------------------------------------------------------ roles
@@ -716,7 +707,7 @@ public class AuthAdminManagerTests
 
         result.Succeeded.Should().BeTrue();
         result.Value.Should().Be(new AdminRole("Auditor", false, 0));
-        _adminRepo.Verify(r => r.CreateRoleAsync("Auditor", It.IsAny<CancellationToken>()), Times.Once);
+        _authRepo.Verify(r => r.CreateRoleAsync("Auditor", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test, Description("DeleteRoleAsync should say NotFound for an unknown role")]
@@ -734,7 +725,7 @@ public class AuthAdminManagerTests
         AdminResult result = await _sut.DeleteRoleAsync(name, Ct);
 
         result.Status.Should().Be(AdminStatus.Conflict);
-        _adminRepo.Verify(r => r.DeleteRoleAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _authRepo.Verify(r => r.DeleteRoleAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Test, Description("DeleteRoleAsync should refuse to delete a role that is still assigned, and say how many users have it")]
@@ -754,7 +745,7 @@ public class AuthAdminManagerTests
         AdminResult result = await _sut.DeleteRoleAsync("manager", Ct);
 
         result.Succeeded.Should().BeTrue();
-        _adminRepo.Verify(r => r.DeleteRoleAsync("Manager", It.IsAny<CancellationToken>()), Times.Once);
+        _authRepo.Verify(r => r.DeleteRoleAsync("Manager", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // ------------------------------------------------------------------ groups
@@ -800,7 +791,7 @@ public class AuthAdminManagerTests
 
         result.Succeeded.Should().BeTrue();
         result.Value.Should().Be(new AdminGroup("sales-west", "The west team", 0));
-        _adminRepo.Verify(r => r.CreateGroupAsync("sales-west", "The west team", It.IsAny<CancellationToken>()), Times.Once);
+        _authRepo.Verify(r => r.CreateGroupAsync("sales-west", "The west team", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test, Description("CreateGroupAsync should store a blank description as nothing")]
@@ -808,14 +799,14 @@ public class AuthAdminManagerTests
     {
         await _sut.CreateGroupAsync(new NewAdminGroup("fresh", "   "), Ct);
 
-        _adminRepo.Verify(r => r.CreateGroupAsync("fresh", null, It.IsAny<CancellationToken>()), Times.Once);
+        _authRepo.Verify(r => r.CreateGroupAsync("fresh", null, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test, Description("GetGroupAsync should find a group whatever case the name is asked for in")]
     public async Task GetGroupAsync_IgnoresTheCaseOfTheName()
     {
         AdminGroupDetail detail = new("sales", null, []);
-        _adminRepo.Setup(r => r.GetGroupAsync("sales", It.IsAny<CancellationToken>())).ReturnsAsync(detail);
+        _authRepo.Setup(r => r.GetGroupAsync("sales", It.IsAny<CancellationToken>())).ReturnsAsync(detail);
 
         AdminResult<AdminGroupDetail> result = await _sut.GetGroupAsync(" SALES ", Ct);
 
@@ -849,13 +840,13 @@ public class AuthAdminManagerTests
     [Test, Description("UpdateGroupAsync should save the trimmed description and report the member count")]
     public async Task UpdateGroupAsync_SavesTheDescription()
     {
-        _adminRepo.Setup(r => r.GetGroupAsync("sales", It.IsAny<CancellationToken>()))
+        _authRepo.Setup(r => r.GetGroupAsync("sales", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new AdminGroupDetail("sales", null, [new AdminGroupMember("u1", "a@example.com", "A"), new AdminGroupMember("u2", "b@example.com", "B")]));
 
         AdminResult<AdminGroup> result = await _sut.UpdateGroupAsync("Sales", "  The sales team ", Ct);
 
         result.Value.Should().Be(new AdminGroup("sales", "The sales team", 2));
-        _adminRepo.Verify(r => r.UpdateGroupDescriptionAsync("sales", "The sales team", It.IsAny<CancellationToken>()), Times.Once);
+        _authRepo.Verify(r => r.UpdateGroupDescriptionAsync("sales", "The sales team", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test, Description("DeleteGroupAsync should say NotFound for an unknown group")]
@@ -864,15 +855,15 @@ public class AuthAdminManagerTests
         AdminResult result = await _sut.DeleteGroupAsync("nowhere", Ct);
 
         result.Status.Should().Be(AdminStatus.NotFound);
-        _adminRepo.Verify(r => r.DeleteGroupAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _authRepo.Verify(r => r.DeleteGroupAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Test, Description("DeleteGroupAsync should delete the group and end the sessions of everyone who was in it")]
     public async Task DeleteGroupAsync_DeletesTheGroupAndRevokesMemberSessions()
     {
-        _adminRepo.Setup(r => r.GetGroupAsync("sales", It.IsAny<CancellationToken>())).ReturnsAsync(new AdminGroupDetail("sales", null, []));
+        _authRepo.Setup(r => r.GetGroupAsync("sales", It.IsAny<CancellationToken>())).ReturnsAsync(new AdminGroupDetail("sales", null, []));
         IReadOnlyCollection<string> members = ["u1", "u2"];
-        _adminRepo.Setup(r => r.DeleteGroupAsync("sales", It.IsAny<CancellationToken>())).ReturnsAsync(members);
+        _authRepo.Setup(r => r.DeleteGroupAsync("sales", It.IsAny<CancellationToken>())).ReturnsAsync(members);
 
         AdminResult result = await _sut.DeleteGroupAsync("SALES", Ct);
 

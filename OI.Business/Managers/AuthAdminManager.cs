@@ -25,7 +25,6 @@ internal class AuthAdminManager : IAuthAdminManager
     private static readonly Regex RoleNamePattern = new(@"^[A-Za-z][A-Za-z0-9 _-]{1,49}$", RegexOptions.Compiled, PatternTimeout);
     private static readonly Regex GroupNamePattern = new(@"^[a-z0-9][a-z0-9_-]{1,62}$", RegexOptions.Compiled, PatternTimeout);
 
-    private readonly IAuthAdminRepo _adminRepo;
     private readonly IAuthRepo _authRepo;
     private readonly IRefreshTokenRepo _refreshTokenRepo;
     private readonly IPasswordService _passwords;
@@ -35,7 +34,6 @@ internal class AuthAdminManager : IAuthAdminManager
     private readonly ILogger<AuthAdminManager> _logger;
 
     public AuthAdminManager(
-        IAuthAdminRepo adminRepo,
         IAuthRepo authRepo,
         IRefreshTokenRepo refreshTokenRepo,
         IPasswordService passwords,
@@ -44,7 +42,6 @@ internal class AuthAdminManager : IAuthAdminManager
         TimeProvider clock,
         ILogger<AuthAdminManager> logger)
     {
-        _adminRepo = adminRepo ?? throw new ArgumentNullException(nameof(adminRepo));
         _authRepo = authRepo ?? throw new ArgumentNullException(nameof(authRepo));
         _refreshTokenRepo = refreshTokenRepo ?? throw new ArgumentNullException(nameof(refreshTokenRepo));
         _passwords = passwords ?? throw new ArgumentNullException(nameof(passwords));
@@ -58,12 +55,12 @@ internal class AuthAdminManager : IAuthAdminManager
 
     /// <inheritdoc />
     public Task<PagedResult<AdminUser>> GetUsersAsync(string? search, int page, int pageSize, CancellationToken cancellationToken = default) =>
-        _adminRepo.FindUsersAsync(search?.Trim(), Math.Max(1, page), Math.Clamp(pageSize, 1, 100), cancellationToken);
+        _authRepo.FindUsersAsync(search?.Trim(), Math.Max(1, page), Math.Clamp(pageSize, 1, 100), cancellationToken);
 
     /// <inheritdoc />
     public async Task<AdminResult<AdminUser>> GetUserAsync(string userId, CancellationToken cancellationToken = default)
     {
-        AdminUser? user = await _adminRepo.GetUserAsync(userId, cancellationToken);
+        AdminUser? user = await _authRepo.GetUserAsync(userId, cancellationToken);
         return user is null ? AdminResult<AdminUser>.NotFound("That user does not exist.") : AdminResult<AdminUser>.Ok(user);
     }
 
@@ -101,17 +98,17 @@ internal class AuthAdminManager : IAuthAdminManager
             return AdminResult<AdminUser>.Conflict("A user with that email address already exists.");
         }
 
-        string userId = await _adminRepo.CreateUserAsync(new NewAuthUser(email, displayName, _passwords.Hash(request.Password)), roles, groups, cancellationToken);
+        string userId = await _authRepo.CreateUserAsync(new NewAuthUser(email, displayName, _passwords.Hash(request.Password)), roles, groups, cancellationToken);
         _logger.LogInformation("Administrator {ActorId} created user {UserId}", _actor.UserId, userId);
 
-        AdminUser? created = await _adminRepo.GetUserAsync(userId, cancellationToken);
+        AdminUser? created = await _authRepo.GetUserAsync(userId, cancellationToken);
         return AdminResult<AdminUser>.Ok(created!);
     }
 
     /// <inheritdoc />
     public async Task<AdminResult<AdminUser>> UpdateUserAsync(string userId, UpdateAdminUser request, CancellationToken cancellationToken = default)
     {
-        AdminUser? existing = await _adminRepo.GetUserAsync(userId, cancellationToken);
+        AdminUser? existing = await _authRepo.GetUserAsync(userId, cancellationToken);
         if (existing is null)
         {
             return AdminResult<AdminUser>.NotFound("That user does not exist.");
@@ -139,13 +136,13 @@ internal class AuthAdminManager : IAuthAdminManager
             {
                 return AdminResult<AdminUser>.Conflict("You cannot remove your own Admin role.");
             }
-            if (!existing.IsDisabled && await _adminRepo.CountEnabledUsersInRoleAsync(AdminRoleName, cancellationToken) <= 1)
+            if (!existing.IsDisabled && await _authRepo.CountEnabledUsersInRoleAsync(AdminRoleName, cancellationToken) <= 1)
             {
                 return AdminResult<AdminUser>.Conflict(LastAdministratorMessage);
             }
         }
 
-        await _adminRepo.UpdateUserAsync(userId, displayName, roles, groups, cancellationToken);
+        await _authRepo.UpdateUserAsync(userId, displayName, roles, groups, cancellationToken);
 
         // Access that was removed must not outlive the access token the user already holds: end their sessions,
         // so they sign in again (and get the reduced access) once the current token runs out.
@@ -157,7 +154,7 @@ internal class AuthAdminManager : IAuthAdminManager
         }
 
         _logger.LogInformation("Administrator {ActorId} changed user {UserId}", _actor.UserId, userId);
-        AdminUser? updated = await _adminRepo.GetUserAsync(userId, cancellationToken);
+        AdminUser? updated = await _authRepo.GetUserAsync(userId, cancellationToken);
         return AdminResult<AdminUser>.Ok(updated!);
     }
 
@@ -169,12 +166,12 @@ internal class AuthAdminManager : IAuthAdminManager
         {
             return AdminResult.Invalid(passwordError);
         }
-        if (await _adminRepo.GetUserAsync(userId, cancellationToken) is null)
+        if (await _authRepo.GetUserAsync(userId, cancellationToken) is null)
         {
             return AdminResult.NotFound("That user does not exist.");
         }
 
-        await _adminRepo.SetPasswordHashAsync(userId, _passwords.Hash(newPassword), cancellationToken);
+        await _authRepo.SetPasswordHashAsync(userId, _passwords.Hash(newPassword), cancellationToken);
         await RevokeSessionsAsync(userId, cancellationToken);   // whoever had the old password must not stay signed in
         _logger.LogInformation("Administrator {ActorId} reset the password of user {UserId}", _actor.UserId, userId);
         return AdminResult.Ok();
@@ -183,7 +180,7 @@ internal class AuthAdminManager : IAuthAdminManager
     /// <inheritdoc />
     public async Task<AdminResult<AdminUser>> SetDisabledAsync(string userId, bool disabled, CancellationToken cancellationToken = default)
     {
-        AdminUser? existing = await _adminRepo.GetUserAsync(userId, cancellationToken);
+        AdminUser? existing = await _authRepo.GetUserAsync(userId, cancellationToken);
         if (existing is null)
         {
             return AdminResult<AdminUser>.NotFound("That user does not exist.");
@@ -199,27 +196,27 @@ internal class AuthAdminManager : IAuthAdminManager
             {
                 return AdminResult<AdminUser>.Conflict("You cannot disable your own account.");
             }
-            if (HasRole(existing.Roles, AdminRoleName) && await _adminRepo.CountEnabledUsersInRoleAsync(AdminRoleName, cancellationToken) <= 1)
+            if (HasRole(existing.Roles, AdminRoleName) && await _authRepo.CountEnabledUsersInRoleAsync(AdminRoleName, cancellationToken) <= 1)
             {
                 return AdminResult<AdminUser>.Conflict(LastAdministratorMessage);
             }
         }
 
-        await _adminRepo.SetDisabledAsync(userId, disabled, cancellationToken);
+        await _authRepo.SetDisabledAsync(userId, disabled, cancellationToken);
         if (disabled)
         {
             await RevokeSessionsAsync(userId, cancellationToken);
         }
 
         _logger.LogInformation("Administrator {ActorId} {Action} user {UserId}", _actor.UserId, disabled ? "disabled" : "enabled", userId);
-        AdminUser? updated = await _adminRepo.GetUserAsync(userId, cancellationToken);
+        AdminUser? updated = await _authRepo.GetUserAsync(userId, cancellationToken);
         return AdminResult<AdminUser>.Ok(updated!);
     }
 
     /// <inheritdoc />
     public async Task<AdminResult> DeleteUserAsync(string userId, CancellationToken cancellationToken = default)
     {
-        AdminUser? existing = await _adminRepo.GetUserAsync(userId, cancellationToken);
+        AdminUser? existing = await _authRepo.GetUserAsync(userId, cancellationToken);
         if (existing is null)
         {
             return AdminResult.NotFound("That user does not exist.");
@@ -229,12 +226,12 @@ internal class AuthAdminManager : IAuthAdminManager
             return AdminResult.Conflict("You cannot delete your own account.");
         }
         if (HasRole(existing.Roles, AdminRoleName) && !existing.IsDisabled
-            && await _adminRepo.CountEnabledUsersInRoleAsync(AdminRoleName, cancellationToken) <= 1)
+            && await _authRepo.CountEnabledUsersInRoleAsync(AdminRoleName, cancellationToken) <= 1)
         {
             return AdminResult.Conflict(LastAdministratorMessage);
         }
 
-        await _adminRepo.DeleteUserAsync(userId, cancellationToken);
+        await _authRepo.DeleteUserAsync(userId, cancellationToken);
         _logger.LogInformation("Administrator {ActorId} deleted user {UserId}", _actor.UserId, userId);
         return AdminResult.Ok();
     }
@@ -244,7 +241,7 @@ internal class AuthAdminManager : IAuthAdminManager
     /// <inheritdoc />
     public async Task<IReadOnlyCollection<AdminRole>> GetRolesAsync(CancellationToken cancellationToken = default)
     {
-        IReadOnlyCollection<AdminRole> roles = await _adminRepo.ListRolesAsync(cancellationToken);
+        IReadOnlyCollection<AdminRole> roles = await _authRepo.ListRolesAsync(cancellationToken);
         return roles.Select(r => r with { IsBuiltIn = IsBuiltIn(r.Name) }).ToList();
     }
 
@@ -257,13 +254,13 @@ internal class AuthAdminManager : IAuthAdminManager
             return AdminResult<AdminRole>.Invalid("A role name is 2 to 50 characters: letters, digits, spaces, '-' or '_', starting with a letter.");
         }
 
-        IReadOnlyCollection<AdminRole> existing = await _adminRepo.ListRolesAsync(cancellationToken);
+        IReadOnlyCollection<AdminRole> existing = await _authRepo.ListRolesAsync(cancellationToken);
         if (existing.Any(r => string.Equals(r.Name, trimmed, StringComparison.OrdinalIgnoreCase)))
         {
             return AdminResult<AdminRole>.Conflict("A role with that name already exists.");
         }
 
-        await _adminRepo.CreateRoleAsync(trimmed, cancellationToken);
+        await _authRepo.CreateRoleAsync(trimmed, cancellationToken);
         _logger.LogInformation("Administrator {ActorId} created role {Role}", _actor.UserId, trimmed);
         return AdminResult<AdminRole>.Ok(new AdminRole(trimmed, IsBuiltIn(trimmed), 0));
     }
@@ -271,7 +268,7 @@ internal class AuthAdminManager : IAuthAdminManager
     /// <inheritdoc />
     public async Task<AdminResult> DeleteRoleAsync(string name, CancellationToken cancellationToken = default)
     {
-        IReadOnlyCollection<AdminRole> existing = await _adminRepo.ListRolesAsync(cancellationToken);
+        IReadOnlyCollection<AdminRole> existing = await _authRepo.ListRolesAsync(cancellationToken);
         AdminRole? role = existing.FirstOrDefault(r => string.Equals(r.Name, name?.Trim(), StringComparison.OrdinalIgnoreCase));
         if (role is null)
         {
@@ -286,7 +283,7 @@ internal class AuthAdminManager : IAuthAdminManager
             return AdminResult.Conflict($"The role is still assigned to {role.UserCount} user(s). Remove it from them first.");
         }
 
-        await _adminRepo.DeleteRoleAsync(role.Name, cancellationToken);
+        await _authRepo.DeleteRoleAsync(role.Name, cancellationToken);
         _logger.LogInformation("Administrator {ActorId} deleted role {Role}", _actor.UserId, role.Name);
         return AdminResult.Ok();
     }
@@ -295,12 +292,12 @@ internal class AuthAdminManager : IAuthAdminManager
 
     /// <inheritdoc />
     public Task<IReadOnlyCollection<AdminGroup>> GetGroupsAsync(CancellationToken cancellationToken = default) =>
-        _adminRepo.ListGroupsAsync(cancellationToken);
+        _authRepo.ListGroupsAsync(cancellationToken);
 
     /// <inheritdoc />
     public async Task<AdminResult<AdminGroupDetail>> GetGroupAsync(string name, CancellationToken cancellationToken = default)
     {
-        AdminGroupDetail? group = await _adminRepo.GetGroupAsync(NormalizeGroupName(name), cancellationToken);
+        AdminGroupDetail? group = await _authRepo.GetGroupAsync(NormalizeGroupName(name), cancellationToken);
         return group is null ? AdminResult<AdminGroupDetail>.NotFound("That group does not exist.") : AdminResult<AdminGroupDetail>.Ok(group);
     }
 
@@ -318,13 +315,13 @@ internal class AuthAdminManager : IAuthAdminManager
             return AdminResult<AdminGroup>.Invalid(descriptionError);
         }
 
-        IReadOnlyCollection<AdminGroup> existing = await _adminRepo.ListGroupsAsync(cancellationToken);
+        IReadOnlyCollection<AdminGroup> existing = await _authRepo.ListGroupsAsync(cancellationToken);
         if (existing.Any(g => g.Name == name))
         {
             return AdminResult<AdminGroup>.Conflict("A group with that name already exists.");
         }
 
-        await _adminRepo.CreateGroupAsync(name, description, cancellationToken);
+        await _authRepo.CreateGroupAsync(name, description, cancellationToken);
         _logger.LogInformation("Administrator {ActorId} created group {Group}", _actor.UserId, name);
         return AdminResult<AdminGroup>.Ok(new AdminGroup(name, description, 0));
     }
@@ -338,13 +335,13 @@ internal class AuthAdminManager : IAuthAdminManager
         {
             return AdminResult<AdminGroup>.Invalid(descriptionError);
         }
-        AdminGroupDetail? existing = await _adminRepo.GetGroupAsync(normalized, cancellationToken);
+        AdminGroupDetail? existing = await _authRepo.GetGroupAsync(normalized, cancellationToken);
         if (existing is null)
         {
             return AdminResult<AdminGroup>.NotFound("That group does not exist.");
         }
 
-        await _adminRepo.UpdateGroupDescriptionAsync(normalized, cleaned, cancellationToken);
+        await _authRepo.UpdateGroupDescriptionAsync(normalized, cleaned, cancellationToken);
         _logger.LogInformation("Administrator {ActorId} changed group {Group}", _actor.UserId, normalized);
         return AdminResult<AdminGroup>.Ok(new AdminGroup(normalized, cleaned, existing.Members.Count));
     }
@@ -353,12 +350,12 @@ internal class AuthAdminManager : IAuthAdminManager
     public async Task<AdminResult> DeleteGroupAsync(string name, CancellationToken cancellationToken = default)
     {
         string normalized = NormalizeGroupName(name);
-        if (await _adminRepo.GetGroupAsync(normalized, cancellationToken) is null)
+        if (await _authRepo.GetGroupAsync(normalized, cancellationToken) is null)
         {
             return AdminResult.NotFound("That group does not exist.");
         }
 
-        IReadOnlyCollection<string> members = await _adminRepo.DeleteGroupAsync(normalized, cancellationToken);
+        IReadOnlyCollection<string> members = await _authRepo.DeleteGroupAsync(normalized, cancellationToken);
         foreach (string userId in members)
         {
             await RevokeSessionsAsync(userId, cancellationToken);   // their tokens still carry the group
@@ -424,7 +421,7 @@ internal class AuthAdminManager : IAuthAdminManager
             return (new List<string>(), null);
         }
 
-        IReadOnlyCollection<AdminRole> existing = await _adminRepo.ListRolesAsync(cancellationToken);
+        IReadOnlyCollection<AdminRole> existing = await _authRepo.ListRolesAsync(cancellationToken);
         List<string> resolved = [];
         foreach (string name in wanted)
         {
@@ -450,7 +447,7 @@ internal class AuthAdminManager : IAuthAdminManager
             return (new List<string>(), null);
         }
 
-        IReadOnlyCollection<AdminGroup> existing = await _adminRepo.ListGroupsAsync(cancellationToken);
+        IReadOnlyCollection<AdminGroup> existing = await _authRepo.ListGroupsAsync(cancellationToken);
         string? missing = wanted.FirstOrDefault(g => existing.All(e => e.Name != g));
         if (missing is not null)
         {

@@ -9,8 +9,8 @@ using OI.Glue.Models;
 
 namespace OI.Data.Tests.RepoTests;
 
-[TestFixture, Description("Tests for AuthAdminRepo")]
-public class AuthAdminRepoTests
+[TestFixture, Description("Tests for how AuthRepo serves the administration screens: users, roles and groups")]
+public class AuthRepoAdminTests
 {
     private IsolatedAuthDatabase _database = null!;
 
@@ -19,16 +19,16 @@ public class AuthAdminRepoTests
 
     private static CancellationToken Ct => TestContext.CurrentContext.CancellationToken;
 
-    private async Task Do(Func<AuthAdminRepo, Task> action)
+    private async Task Do(Func<AuthRepo, Task> action)
     {
         await using OiAuthDbContext context = _database.CreateContext();
-        await action(new AuthAdminRepo(context));
+        await action(new AuthRepo(context));
     }
 
-    private async Task<T> Get<T>(Func<AuthAdminRepo, Task<T>> action)
+    private async Task<T> Get<T>(Func<AuthRepo, Task<T>> action)
     {
         await using OiAuthDbContext context = _database.CreateContext();
-        return await action(new AuthAdminRepo(context));
+        return await action(new AuthRepo(context));
     }
 
     private async Task SeedRolesAndGroupsAsync()

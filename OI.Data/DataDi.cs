@@ -62,10 +62,9 @@ public static class DataDi
         });
 
         // Persistence only: the Identity tables are part of the context, but UserManager/SignInManager are not used.
-        // Passwords, lockout and the other sign-in rules live in OI.Business (AuthManager).
+        // Passwords, lockout and the other sign-in and administration rules live in OI.Business (AuthManager, AuthAdminManager).
         services.AddScoped<IAuthRepo, AuthRepo>();
         services.AddScoped<IRefreshTokenRepo, RefreshTokenRepo>();
-        services.AddScoped<IAuthAdminRepo, AuthAdminRepo>();
     }
 
     /// <summary>
