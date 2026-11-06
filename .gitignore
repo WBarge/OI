@@ -25,3 +25,4 @@ OI.Service/appsettings.Development.json
 *.user
 /OI.Reporting/appsettings.Development.json
 /OI.Tool.MigrationHelper/appsettings.json
+/OI.Auth/oi-auth.pem
