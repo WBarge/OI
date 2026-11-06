@@ -19,4 +19,6 @@ public interface IAuthRepo
     Task EnsureRoleAsync(string role, CancellationToken cancellationToken = default);
     Task AddToRoleAsync(string userId, string role, CancellationToken cancellationToken = default);
     Task AddClaimAsync(string userId, string type, string value, CancellationToken cancellationToken = default);
+    /// <summary>Puts the user in the group, creating the group first if it does not exist. Does nothing if they are already in it.</summary>
+    Task AddToGroupAsync(string userId, string groupName, CancellationToken cancellationToken = default);
 }

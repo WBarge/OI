@@ -10,7 +10,10 @@ import { HubTest } from '../pages/hub-test/hub-test';
 import { OrderSelection } from '../pages/order-selection/order-selection';
 import { CustomerManager } from '../pages/customer-manager/customer-manager';
 import { AuthService } from '../services/auth-service';
-import { authGuard, guestGuard } from '../services/auth-guard';
+import { adminGuard, authGuard, guestGuard } from '../services/auth-guard';
+import { AdminUsers } from '../pages/admin-users/admin-users';
+import { AdminRoles } from '../pages/admin-roles/admin-roles';
+import { AdminGroups } from '../pages/admin-groups/admin-groups';
 
 describe('routes', () => {
   // every page except the sign-in page sits inside one parent route that requires a signed-in user
@@ -20,15 +23,17 @@ describe('routes', () => {
   const find = (path: string) => pages.find(route => route.path === path);
 
   const signedIn = signal(true);
+  const roles = signal<string[]>([]);
   const configure = () => {
     TestBed.configureTestingModule({
-      providers: [provideRouter(routes), { provide: AuthService, useValue: { isAuthenticated: signedIn, roles: signal([]) } }]
+      providers: [provideRouter(routes), { provide: AuthService, useValue: { isAuthenticated: signedIn, roles } }]
     });
     return TestBed.inject(Router);
   };
 
   beforeEach(() => {
     signedIn.set(true);
+    roles.set([]);
   });
 
   it('should redirect the empty path to the home page', () => {
@@ -86,6 +91,110 @@ describe('routes', () => {
     expect(new Set(inside).size).toBe(inside.length);
   });
 
+  describe('the admin pages', () => {
+    const admin = () => find('admin') as Route;
+    const adminPage = (path: string) => admin().children?.find(route => route.path === path);
+
+    it('should group the admin pages under admin', () => {
+      expect(admin().children?.map(route => route.path)).toEqual(['', 'users', 'roles', 'groups']);
+    });
+
+    it('should send admin on its own to the users page', () => {
+      expect(adminPage('')?.redirectTo).toBe('users');
+      expect(adminPage('')?.pathMatch).toBe('full');
+    });
+
+    it('should route users, roles and groups to their pages', () => {
+      expect(adminPage('users')?.component).toBe(AdminUsers);
+      expect(adminPage('roles')?.component).toBe(AdminRoles);
+      expect(adminPage('groups')?.component).toBe(AdminGroups);
+    });
+
+    it('should let only administrators in, on the way in and on every move between admin pages', () => {
+      expect(admin().canActivate).toEqual([adminGuard]);
+      expect(admin().canActivateChild).toEqual([adminGuard]);
+    });
+
+    it('should not let an admin page sit outside the guarded group', () => {
+      expect(pages.filter(page => page.component && ['AdminUsers', 'AdminRoles', 'AdminGroups'].includes(page.component.name))).toEqual([]);
+    });
+
+    describe('as an administrator', () => {
+      beforeEach(() => roles.set(['Admin', 'User']));
+
+      it.each(['/admin/users', '/admin/roles', '/admin/groups'])('should navigate to %s', async url => {
+        const router = configure();
+
+        await router.navigateByUrl(url);
+
+        expect(router.url).toBe(url);
+      });
+
+      it('should send /admin to the users page', async () => {
+        const router = configure();
+
+        await router.navigateByUrl('/admin');
+
+        expect(router.url).toBe('/admin/users');
+      });
+    });
+
+    describe('as an ordinary user', () => {
+      beforeEach(() => roles.set(['User']));
+
+      it.each(['/admin', '/admin/users', '/admin/roles', '/admin/groups'])('should send %s to the home page', async url => {
+        const router = configure();
+
+        await router.navigateByUrl(url);
+
+        expect(router.url).toBe('/home');
+      });
+
+      it('should still reach the ordinary pages', async () => {
+        const router = configure();
+
+        await router.navigateByUrl('/customers');
+
+        expect(router.url).toBe('/customers');
+      });
+    });
+
+    describe('with no roles at all', () => {
+      it('should send /admin/users to the home page', async () => {
+        const router = configure();
+
+        await router.navigateByUrl('/admin/users');
+
+        expect(router.url).toBe('/home');
+      });
+    });
+
+    describe('when signed out', () => {
+      beforeEach(() => signedIn.set(false));
+
+      it.each(['/admin/users', '/admin/roles', '/admin/groups'])('should ask %s to sign in first, and remember it', async url => {
+        roles.set(['Admin']);   // whatever the roles say, nobody is signed in
+        const router = configure();
+
+        await router.navigateByUrl(url);
+
+        expect(router.url).toBe(`/login?returnUrl=${encodeURIComponent(url)}`);
+      });
+    });
+
+    it('should stop an administrator who loses the role between two admin pages', async () => {
+      roles.set(['Admin']);
+      const router = configure();
+      await router.navigateByUrl('/admin/users');
+      expect(router.url).toBe('/admin/users');
+
+      roles.set(['User']);
+      await router.navigateByUrl('/admin/roles');
+
+      expect(router.url).toBe('/home');
+    });
+  });
+
   describe('sign-in', () => {
     it('should route login to the Login page', () => {
       expect(loginRoute.component).toBe(Login);
@@ -106,8 +215,8 @@ describe('routes', () => {
       expect(protectedParent.canActivateChild).toEqual([authGuard]);
     });
 
-    it('should not put a guard of its own on a page, which would suggest the parent is being bypassed', () => {
-      expect(pages.filter(page => page.canActivate || page.canActivateChild)).toEqual([]);
+    it('should not put a guard of its own on a page, which would suggest the parent is being bypassed (the admin group is the one exception)', () => {
+      expect(pages.filter(page => page.path !== 'admin' && (page.canActivate || page.canActivateChild))).toEqual([]);
     });
   });
 

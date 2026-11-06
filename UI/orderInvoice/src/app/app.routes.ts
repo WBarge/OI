@@ -4,9 +4,12 @@ import { About } from '../pages/about/about';
 import { Home } from '../pages/home/home';
 import { Login } from '../pages/login/login';
 import { HubTest } from '../pages/hub-test/hub-test';
+import { AdminUsers } from '../pages/admin-users/admin-users';
+import { AdminRoles } from '../pages/admin-roles/admin-roles';
+import { AdminGroups } from '../pages/admin-groups/admin-groups';
 import { OrderSelection } from '../pages/order-selection/order-selection';
 import { CustomerManager } from '../pages/customer-manager/customer-manager';
-import { authGuard, guestGuard } from '../services/auth-guard';
+import { adminGuard, authGuard, guestGuard } from '../services/auth-guard';
 
 export const routes: Routes = [
   { path: 'login', component: Login, canActivate: [guestGuard] },
@@ -30,6 +33,18 @@ export const routes: Routes = [
       {path:'customers',component: CustomerManager},
       { path:'about',component: About},
       { path:'hubTest',component: HubTest},
+      {
+        // user, role and group management: administrators only (the server refuses everyone else as well)
+        path: 'admin',
+        canActivate: [adminGuard],
+        canActivateChild: [adminGuard],
+        children: [
+          { path: '', redirectTo: 'users', pathMatch: 'full' },
+          { path: 'users', component: AdminUsers },
+          { path: 'roles', component: AdminRoles },
+          { path: 'groups', component: AdminGroups },
+        ]
+      },
       // anything else: back to the start, which signs in first if needed
       { path: '**', redirectTo: 'home' }
     ]

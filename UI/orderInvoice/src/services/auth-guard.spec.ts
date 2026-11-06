@@ -1,7 +1,7 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot, Router, RouterStateSnapshot, UrlTree, provideRouter } from '@angular/router';
-import { authGuard, guestGuard, roleGuard } from './auth-guard';
+import { adminGuard, authGuard, guestGuard, roleGuard } from './auth-guard';
 import { AuthService } from './auth-service';
 
 describe('route guards', () => {
@@ -76,6 +76,30 @@ describe('route guards', () => {
 
     it('should send a user with no roles to the home page', () => {
       expect(asUrl(run(roleGuard('Admin')))).toBe('/home');
+    });
+  });
+
+  describe('adminGuard', () => {
+    it('should let an administrator through', () => {
+      roles.set(['User', 'Admin']);
+
+      expect(run(adminGuard)).toBe(true);
+    });
+
+    it('should send an ordinary user to the home page', () => {
+      roles.set(['User']);
+
+      expect(asUrl(run(adminGuard))).toBe('/home');
+    });
+
+    it('should send someone with no roles to the home page', () => {
+      expect(asUrl(run(adminGuard))).toBe('/home');
+    });
+
+    it('should not accept a role that only resembles Admin', () => {
+      roles.set(['Administrator', 'admin', 'Admins']);
+
+      expect(asUrl(run(adminGuard))).toBe('/home');
     });
   });
 });

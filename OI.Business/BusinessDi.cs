@@ -46,6 +46,7 @@ public static class BusinessDi
     {
         services.TryAddSingleton(new AuthPolicy());
         services.AddScoped<IAuthManager, AuthManager>();
+        services.AddScoped<IAuthAdminManager, AuthAdminManager>();
     }
 
     /// <summary>

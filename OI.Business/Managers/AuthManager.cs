@@ -152,8 +152,8 @@ internal class AuthManager : IAuthManager
 
         string userId = await _authRepo.CreateUserAsync(new NewAuthUser(email, "Administrator", _passwords.Hash(password)), cancellationToken);
         await _authRepo.AddToRoleAsync(userId, "Admin", cancellationToken);
-        // Placeholder group so the hub has something to target before group management exists.
-        await _authRepo.AddClaimAsync(userId, "group", "default", cancellationToken);
+        // The first administrator starts in the "default" group. More groups are created and assigned in the Admin screens.
+        await _authRepo.AddToGroupAsync(userId, "default", cancellationToken);
         _logger.LogInformation("Created the initial administrator");
     }
 

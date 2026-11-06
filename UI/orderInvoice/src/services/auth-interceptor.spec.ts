@@ -68,6 +68,34 @@ describe('authInterceptor', () => {
       }
     );
 
+    it.each(['https://auth.test/api/admin/users', 'https://auth.test/api/admin/users/abc-123/password', 'https://auth.test/api/admin/roles', 'https://auth.test/api/admin/groups/sales'])(
+      'should add the bearer token to the Auth admin call %s',
+      url => {
+        http.get(url).subscribe();
+
+        const request = backend.expectOne(url);
+        expect(request.request.headers.get('Authorization')).toBe('Bearer token-1');
+        request.flush({});
+      }
+    );
+
+    it('should never add the token to sign-in, refresh or sign-out, which sit next to the admin calls', () => {
+      for (const url of ['https://auth.test/api/auth/login', 'https://auth.test/api/auth/refresh', 'https://auth.test/api/auth/logout', 'https://auth.test/api/auth/service-token']) {
+        http.post(url, {}).subscribe();
+        const request = backend.expectOne(url);
+        expect(request.request.headers.has('Authorization')).toBe(false);
+        request.flush({});
+      }
+    });
+
+    it('should leave out an address that only starts like the admin api', () => {
+      http.get('https://auth.test/api/administrators').subscribe();
+
+      const request = backend.expectOne('https://auth.test/api/administrators');
+      expect(request.request.headers.has('Authorization')).toBe(false);
+      request.flush({});
+    });
+
     it('should add the token to every kind of call, not just GET', () => {
       http.post('https://oi.test/api/Order', {}).subscribe();
       http.put('https://oi.test/api/Order', {}).subscribe();
@@ -216,6 +244,27 @@ describe('authInterceptor', () => {
       backend.expectOne('https://oi.test/api/Orders').flush('boom', { status: 500, statusText: 'Server Error' });
 
       expect(error?.status).toBe(500);
+      expect(sessionExpired).not.toHaveBeenCalled();
+    });
+
+    it('should renew the session and repeat an admin call that came back 401', async () => {
+      http.get('https://auth.test/api/admin/users').subscribe();
+      backend.expectOne('https://auth.test/api/admin/users').flush('no', unauthorized);
+      token = 'token-2';
+      await settle();
+
+      const retry = backend.expectOne('https://auth.test/api/admin/users');
+      expect(retry.request.headers.get('Authorization')).toBe('Bearer token-2');
+      retry.flush({});
+    });
+
+    it('should not touch a 403 from an admin call, which means signed in but not an administrator', () => {
+      let error: HttpErrorResponse | undefined;
+      http.get('https://auth.test/api/admin/users').subscribe({ error: e => (error = e) });
+      backend.expectOne('https://auth.test/api/admin/users').flush('no', { status: 403, statusText: 'Forbidden' });
+
+      expect(error?.status).toBe(403);
+      expect(renewAfterRejection).not.toHaveBeenCalled();
       expect(sessionExpired).not.toHaveBeenCalled();
     });
 

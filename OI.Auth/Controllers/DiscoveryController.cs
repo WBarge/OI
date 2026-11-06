@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -10,6 +11,7 @@ namespace OI.Auth.Controllers;
 /// with nothing but our address: where to find the keys, and the keys themselves.
 /// </summary>
 [ApiController]
+[AllowAnonymous]   // other applications fetch the signing keys without a token
 public class DiscoveryController(SigningKeyProvider keys, IOptions<JwtOptions> options) : ControllerBase
 {
     /// <summary>

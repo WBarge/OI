@@ -1,8 +1,8 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { provideRouter } from '@angular/router';
-import { MessageService } from 'primeng/api';
+import { provideRouter, Routes } from '@angular/router';
+import { MenuItem, MessageService } from 'primeng/api';
 import { vi } from 'vitest';
 import { App } from './app';
 import { routes } from './app.routes';
@@ -11,11 +11,13 @@ import { HubConnectionService } from '../services/hub-connection-service';
 
 describe('App', () => {
   const signedIn = signal(true);
+  const roles = signal<string[]>([]);
   const userName = signal('Pat Example');
   const logout = vi.fn();
 
   beforeEach(async () => {
     signedIn.set(true);
+    roles.set([]);
     userName.set('Pat Example');
     logout.mockReset();
 
@@ -34,7 +36,7 @@ describe('App', () => {
       providers: [
         provideRouter([]),
         MessageService,
-        { provide: AuthService, useValue: { isAuthenticated: signedIn, userName, logout } },
+        { provide: AuthService, useValue: { isAuthenticated: signedIn, userName, roles, logout } },
         // the real one opens a connection to the hub; what it does is covered by its own spec
         { provide: HubConnectionService, useValue: {} }
       ]
@@ -65,7 +67,7 @@ describe('App', () => {
   it('should offer Home, Customers, About and Hub Test in the menu', () => {
     const app = TestBed.createComponent(App).componentInstance;
 
-    expect(app.items.map(item => item.label)).toEqual(['Home', 'Customers', 'About', 'Hub Test']);
+    expect(app.items().map(item => item.label)).toEqual(['Home', 'Customers', 'About', 'Hub Test']);
   });
 
   it('should start the hub connection, which stays connected while someone is signed in', () => {
@@ -76,7 +78,7 @@ describe('App', () => {
       providers: [
         provideRouter([]),
         MessageService,
-        { provide: AuthService, useValue: { isAuthenticated: signedIn, userName, logout } },
+        { provide: AuthService, useValue: { isAuthenticated: signedIn, userName, roles, logout } },
         { provide: HubConnectionService, useFactory: () => { started(); return {}; } }
       ]
     });
@@ -92,7 +94,7 @@ describe('App', () => {
     await fixture.whenStable();
 
     const menubar = fixture.debugElement.query(By.css('p-menubar')).componentInstance;
-    expect(menubar.model()).toBe(fixture.componentInstance.items);
+    expect(menubar.model()).toBe(fixture.componentInstance.items());
   });
 
   it('should render a menu entry for every item', async () => {
@@ -107,11 +109,18 @@ describe('App', () => {
   });
 
   it('should only link to routes that exist', () => {
+    roles.set(['Admin']);
     const app = TestBed.createComponent(App).componentInstance;
-    // the pages sit inside a guarded parent route, so look at the children as well
-    const definedPaths = routes.flatMap(route => route.children ?? [route]).map(route => route.path);
+    // the pages sit inside guarded parent routes, so work out the full path of every route
+    const fullPaths = (list: Routes, prefix = ''): string[] => list.flatMap(route => {
+      const path = [prefix, route.path].filter(part => !!part).join('/');
+      return route.children ? [path, ...fullPaths(route.children, path)] : [path];
+    });
+    const definedPaths = fullPaths(routes);
+    const linked = app.items().flatMap(entry => [entry, ...(entry.items ?? [])] as MenuItem[]).filter(entry => entry.routerLink);
 
-    for (const item of app.items.filter(entry => entry.routerLink)) {
+    expect(linked.length).toBeGreaterThan(4);   // the Admin entries are included
+    for (const item of linked) {
       expect(definedPaths).toContain((item.routerLink as string).replace(/^\//, ''));
     }
   });
@@ -119,25 +128,90 @@ describe('App', () => {
   it('should link Home to the root, which redirects to the home page', () => {
     const app = TestBed.createComponent(App).componentInstance;
 
-    expect(app.items.find(item => item.label === 'Home')?.routerLink).toBe('/');
+    expect(app.items().find(item => item.label === 'Home')?.routerLink).toBe('/');
   });
 
   it('should link Customers to the customers page', () => {
     const app = TestBed.createComponent(App).componentInstance;
 
-    expect(app.items.find(item => item.label === 'Customers')?.routerLink).toBe('/customers');
+    expect(app.items().find(item => item.label === 'Customers')?.routerLink).toBe('/customers');
   });
 
   it('should link Hub Test to the hub test page', () => {
     const app = TestBed.createComponent(App).componentInstance;
 
-    expect(app.items.find(item => item.label === 'Hub Test')?.routerLink).toBe('/hubTest');
+    expect(app.items().find(item => item.label === 'Hub Test')?.routerLink).toBe('/hubTest');
   });
 
   it('should link About to the about page', () => {
     const app = TestBed.createComponent(App).componentInstance;
 
-    expect(app.items.find(item => item.label === 'About')?.routerLink).toBe('/about');
+    expect(app.items().find(item => item.label === 'About')?.routerLink).toBe('/about');
+  });
+
+  describe('the Admin menu', () => {
+    const adminEntry = (app: App) => app.items().find(item => item.label === 'Admin');
+
+    it('should not be offered to someone who is not an administrator', () => {
+      roles.set(['User']);
+
+      expect(adminEntry(TestBed.createComponent(App).componentInstance)).toBeUndefined();
+    });
+
+    it('should not be offered to someone with no roles', () => {
+      expect(adminEntry(TestBed.createComponent(App).componentInstance)).toBeUndefined();
+    });
+
+    it('should be offered to an administrator, with Users, Roles and Groups', () => {
+      roles.set(['User', 'Admin']);
+
+      const admin = adminEntry(TestBed.createComponent(App).componentInstance);
+
+      expect(admin?.items?.map(item => item.label)).toEqual(['Users', 'Roles', 'Groups']);
+      expect(admin?.items?.map(item => item.routerLink)).toEqual(['/admin/users', '/admin/roles', '/admin/groups']);
+    });
+
+    it('should not match a role that only looks like Admin', () => {
+      roles.set(['Administrator', 'admin']);
+
+      expect(adminEntry(TestBed.createComponent(App).componentInstance)).toBeUndefined();
+    });
+
+    it('should appear and disappear as the roles change', () => {
+      const app = TestBed.createComponent(App).componentInstance;
+      expect(adminEntry(app)).toBeUndefined();
+
+      roles.set(['Admin']);
+      expect(adminEntry(app)).toBeDefined();
+
+      roles.set(['User']);
+      expect(adminEntry(app)).toBeUndefined();
+    });
+
+    it('should keep the ordinary entries first, with Admin last', () => {
+      roles.set(['Admin']);
+
+      const labels = TestBed.createComponent(App).componentInstance.items().map(item => item.label);
+
+      expect(labels).toEqual(['Home', 'Customers', 'About', 'Hub Test', 'Admin']);
+    });
+
+    it('should show the Admin entry in the menu bar for an administrator', async () => {
+      roles.set(['Admin']);
+      const fixture = TestBed.createComponent(App);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect((fixture.nativeElement as HTMLElement).querySelector('p-menubar')?.textContent).toContain('Admin');
+    });
+
+    it('should leave the Admin entry out of the menu bar for everyone else', async () => {
+      const fixture = TestBed.createComponent(App);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect((fixture.nativeElement as HTMLElement).querySelector('p-menubar')?.textContent).not.toContain('Admin');
+    });
   });
 
   describe('signed in', () => {

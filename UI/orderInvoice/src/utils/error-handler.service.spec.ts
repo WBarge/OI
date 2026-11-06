@@ -262,6 +262,33 @@ describe('ErrorHandlerService', () => {
     });
   });
 
+  describe('a rule that stopped the request (409)', () => {
+    it('should be shown as a warning with the reason, not as a fatal error, because the user can fix it', () => {
+      const addSpy = vi.spyOn(messageService, 'add');
+      const error = new HttpErrorResponse({
+        status: 409,
+        statusText: 'Conflict',
+        error: { title: 'Conflict', detail: 'There must always be at least one active administrator.' }
+      });
+
+      service.handleError('AdminUsersService', 'update')(error);
+
+      expect(addSpy).toHaveBeenCalledTimes(1);
+      const toast = addSpy.mock.calls[0][0];
+      expect(toast.severity).toBe('warn');
+      expect(toast.summary).toBe('Invalid request');
+      expect(toast.detail).toContain('There must always be at least one active administrator.');
+    });
+
+    it('should still show a 500 as a fatal error', () => {
+      const addSpy = vi.spyOn(messageService, 'add');
+
+      service.handleError('AdminUsersService', 'update')(new HttpErrorResponse({ status: 500, statusText: 'Server Error', error: null }));
+
+      expect(addSpy.mock.calls[0][0].severity).toBe('error');
+    });
+  });
+
   describe('createHandleError', () => {
     it('should create a handler factory that remembers the service name', () => {
       const addSpy = vi.spyOn(messageService, 'add');

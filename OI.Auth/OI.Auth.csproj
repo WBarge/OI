@@ -10,8 +10,8 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.14" />
-    <!-- Brings in Microsoft.IdentityModel.JsonWebTokens, which AccessTokenFactory uses to sign tokens.
-         (OI.Auth only issues tokens; it does not validate them, so no authentication middleware here.) -->
+    <!-- Brings in Microsoft.IdentityModel.JsonWebTokens, which AccessTokenFactory uses to sign tokens,
+         and the JWT bearer handler OI.Auth uses to check its own tokens on the administration endpoints. -->
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.14" />
     <!-- PasswordHasher used by IdentityPasswordService -->
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.3.1" />
@@ -22,6 +22,7 @@
     <ProjectReference Include="..\OI.Common\OI.Common.csproj" />
     <ProjectReference Include="..\OI.Data\OI.Data.csproj" />
     <ProjectReference Include="..\OI.Glue\OI.Glue.csproj" />
+    <ProjectReference Include="..\OI.Integration\OI.Integration.csproj" />
   </ItemGroup>
 
 </Project>

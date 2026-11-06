@@ -1,0 +1,13 @@
+.addRole {
+  display: flex;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.addRole input {
+  min-width: 18rem;
+}
+
+.chip {
+  margin-left: 0.5rem;
+}

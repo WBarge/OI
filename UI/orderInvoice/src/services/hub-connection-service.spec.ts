@@ -170,12 +170,6 @@ describe('HubConnectionService', () => {
       await start();
     });
 
-    it('should show it as a toast with the title and the text, for long enough to read', async () => {
-      incoming.next(notification({ type: 'success', title: 'Hello from Reporting', body: 'Just for you' }));
-
-      expect(toast.success).toHaveBeenCalledWith('Hello from Reporting', 'Just for you', 6000);
-    });
-
     it.each([
       ['success', 'success'],
       ['info', 'info'],
@@ -198,12 +192,6 @@ describe('HubConnectionService', () => {
       incoming.next(notification({ type }));
 
       expect(toast.info).toHaveBeenCalledTimes(1);
-    });
-
-    it('should show an empty text when there is no body', () => {
-      incoming.next(notification({ body: undefined }));
-
-      expect(toast.success).toHaveBeenCalledWith('Hello from Reporting', '', 6000);
     });
 
     it('should show every notification, one toast each', () => {

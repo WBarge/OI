@@ -1,8 +1,9 @@
 <Solution>
   <Folder Name="/DevNotes/">
-    <File Path="DBNotes.txt" />
+    <File Path="DevDBNotes.txt" />
     <File Path="SettingsNotes.md" />
   </Folder>
+  <Project Path="OI.Auth.Tests/OI.Auth.Tests.csproj" Id="7d3a9b52-6c18-4e0f-a5b4-2f81c9d04e67" />
   <Project Path="OI.Auth/OI.Auth.csproj" Id="23fa6c36-e138-4e5f-8980-379a30fa44ae" />
   <Project Path="OI.Business.Tests/OI.Business.Tests.csproj" Id="f0e5b7f0-0777-4c3c-aef8-226d335148e1" />
   <Project Path="OI.Business/OI.Business.csproj" Id="4d11459d-a33f-46ee-8b14-00f60eab4c28" />
@@ -19,5 +20,5 @@
   <Project Path="OI.Service.Tests/OI.Service.Tests.csproj" Id="0f55371f-9dcd-4190-adac-cf1069de31ed" />
   <Project Path="OI.Service/OI.Service.csproj" Id="2ce728b2-f2ba-4b86-9afe-7f0bb8f75c91" />
   <Project Path="OI.Tool.MigrationHelper/OI.Tool.MigrationHelper.csproj" Id="bb48c2f2-e34b-42e4-80fd-735b6d7c526e" />
-  <Project Path="TestPlatForm/TestPlatForm.csproj" Id="232c79e2-cd2d-42cf-bdcb-21850c8ed7eb" />
+  <Project Path="TestPlatForm/TestPlatForm.csproj" />
 </Solution>

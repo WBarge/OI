@@ -6,7 +6,7 @@ using OI.Data.Translators.Internal_Models;
 using OI.Glue.Models;
 using OI.Glue.Repos;
 
-namespace OI.Data.Repos.Auth;
+namespace OI.Data.Repos;
 
 /// <summary>
 /// Reads and writes the Identity tables directly. No password checks, no lockout decisions:
@@ -56,6 +56,14 @@ internal class AuthRepo(OiAuthDbContext authDbContext) : IAuthRepo
             .Select(c => new { c.ClaimType, c.ClaimValue })
             .ToListAsync(cancellationToken);
 
+        // groups are memberships now, not claims rows; a legacy "group" claim row is ignored so a group is never listed twice
+        List<string> groups = await (
+                from m in _authDbContext.AuthUserGroups.AsNoTracking()
+                where m.UserId == userId
+                join g in _authDbContext.AuthGroups.AsNoTracking() on m.GroupId equals g.Id
+                select g.Name)
+            .ToListAsync(cancellationToken);
+
         return new AuthUser
         {
             Id = user.Id,
@@ -64,8 +72,9 @@ internal class AuthRepo(OiAuthDbContext authDbContext) : IAuthRepo
             LockoutEnd = user.LockoutEnd,
             Roles = roles,
             Claims = claimRows
-                .Where(c => c.ClaimType is not null && c.ClaimValue is not null)
+                .Where(c => c.ClaimType is not null && c.ClaimValue is not null && c.ClaimType != "group")
                 .Select(c => new KeyValuePair<string, string>(c.ClaimType!, c.ClaimValue!))
+                .Concat(groups.Select(g => new KeyValuePair<string, string>("group", g)))
                 .ToList(),
         };
     }
@@ -152,6 +161,24 @@ internal class AuthRepo(OiAuthDbContext authDbContext) : IAuthRepo
     public async Task AddClaimAsync(string userId, string type, string value, CancellationToken cancellationToken = default)
     {
         _authDbContext.UserClaims.Add(new IdentityUserClaim<string> { UserId = userId, ClaimType = type, ClaimValue = value });
+        await _authDbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task AddToGroupAsync(string userId, string groupName, CancellationToken cancellationToken = default)
+    {
+        string name = groupName.Trim().ToLowerInvariant();
+        AuthGroup? group = await _authDbContext.AuthGroups.SingleOrDefaultAsync(g => g.Name == name, cancellationToken);
+        if (group is null)
+        {
+            group = new AuthGroup { Id = Guid.NewGuid().ToString(), Name = name };
+            _authDbContext.AuthGroups.Add(group);
+        }
+        else if (await _authDbContext.AuthUserGroups.AnyAsync(m => m.UserId == userId && m.GroupId == group.Id, cancellationToken))
+        {
+            return;
+        }
+
+        _authDbContext.AuthUserGroups.Add(new AuthGroupMember { UserId = userId, GroupId = group.Id });
         await _authDbContext.SaveChangesAsync(cancellationToken);
     }
 }

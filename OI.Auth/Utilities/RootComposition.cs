@@ -2,6 +2,7 @@ using OI.Auth.Security;
 using OI.Business;
 using OI.Data;
 using OI.Glue.Services;
+using OI.Integration.Security;
 
 namespace OI.Auth.Utilities;
 
@@ -28,6 +29,9 @@ public static class RootComposition
         services.AddSingleton<IAccessTokenFactory>(sp => sp.GetRequiredService<AccessTokenFactory>());
         services.AddSingleton<IPasswordService, IdentityPasswordService>();
         services.AddSingleton<ServiceClientRegistry>();
+
+        // who is calling: the administration rules need to know the signed-in administrator (see Program.cs for the middleware)
+        services.AddClientContext();
     }
 
 }

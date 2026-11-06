@@ -55,6 +55,33 @@ describe('AuthService', () => {
     });
   });
 
+  describe('the user id', () => {
+    it('should be empty while signed out', () => {
+      expect(service.userId()).toBe('');
+    });
+
+    it('should be the id in the token once signed in, which is how the Admin screens recognise the user', async () => {
+      const signingIn = service.login('a', 'b');
+      http.expectOne(login).flush(authResult({ sub: 'user-42' }));
+      await signingIn;
+
+      expect(service.userId()).toBe('user-42');
+    });
+
+    it('should go back to empty on sign-out', async () => {
+      const signingIn = service.login('a', 'b');
+      http.expectOne(login).flush(authResult({ sub: 'user-42' }));
+      await signingIn;
+
+      const signingOut = service.logout();
+      await settle();
+      http.expectOne(logout).flush(null);
+      await signingOut;
+
+      expect(service.userId()).toBe('');
+    });
+  });
+
   describe('login', () => {
     it('should post the credentials to the auth api', async () => {
       const signingIn = service.login('pat@example.com', 'secret-password');

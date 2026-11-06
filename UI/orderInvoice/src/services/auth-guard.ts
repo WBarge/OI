@@ -18,3 +18,9 @@ export const guestGuard: CanActivateFn = () =>
 export const roleGuard =
   (role: string): CanActivateFn =>
   () => inject(AuthService).roles().includes(role) || inject(Router).createUrlTree(['/home']);
+
+/**
+ * The Admin screens. The server enforces the same rule on every admin endpoint, so this only saves a non-admin
+ * from landing on a page whose every call would be refused.
+ */
+export const adminGuard = roleGuard('Admin');

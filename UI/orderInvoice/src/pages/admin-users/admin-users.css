@@ -1,0 +1,25 @@
+.userSearch {
+  margin-right: 0.5rem;
+  min-width: 18rem;
+}
+
+.userActions button {
+  margin-right: 0.25rem;
+}
+
+.chip {
+  display: inline-block;
+  margin: 0 0.25rem 0.25rem 0;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.field input {
+  box-sizing: border-box;
+  width: 100%;
+}

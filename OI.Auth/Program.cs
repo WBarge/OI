@@ -3,6 +3,8 @@ using OI.Auth.Utilities;
 using OI.Common.Middleware;
 using OI.Data.DBSchemaHelper;
 using OI.Glue.Managers;
+using OI.Auth.Security;
+using OI.Integration.Security;
 
 namespace OI.Auth;
 
@@ -26,6 +28,11 @@ public static class Program
 
         builder.Services.ConfigureDi(builder.Configuration);
         builder.Services.HandleDbSchema();
+
+        // OI.Auth checks its own tokens (with the key it holds) so that the administration endpoints can require the Admin role.
+        // Every endpoint needs a signed-in user unless it says [AllowAnonymous]: sign-in and the key discovery do.
+        builder.Services.AddLocalJwtBearer();
+        builder.Services.AddOiAuthorization(AdminPolicy.Configure);
 
         // Throttle sign-in, refresh and service-token attempts per IP.
         builder.Services.AddRateLimiter(o =>
@@ -53,7 +60,7 @@ public static class Program
 
         if (app.Environment.IsDevelopment())
         {
-            app.MapOpenApi();
+            app.MapOpenApi().AllowAnonymous();
             app.UseSwaggerUI(options =>
             {
                 options.SwaggerEndpoint("/openapi/v1.json", "v1");
@@ -72,6 +79,10 @@ public static class Program
 
         app.UseHttpsRedirection();
         app.UseRateLimiter();
+
+        app.UseAuthentication();
+        app.UseAuthorization();
+        app.UseClientContext();   // the signed-in administrator, for the administration rules
 
         app.MapControllers();
 

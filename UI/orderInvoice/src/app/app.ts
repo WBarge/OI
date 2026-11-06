@@ -1,4 +1,4 @@
-import { Component, inject, signal,ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, inject, signal,ChangeDetectionStrategy } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { ButtonDirective } from 'primeng/button';
@@ -19,16 +19,28 @@ import { HubConnectionService } from '../services/hub-connection-service';
 export class App {
   protected readonly title = signal('orderInvoice');
   protected readonly auth = inject(AuthService);
-  public items: MenuItem[];
-
-  constructor() {
-    this.items = [
+  /** The menu. The Admin entry is only there for administrators; the server and the route guard enforce it as well. */
+  public readonly items = computed<MenuItem[]>(() => {
+    const items: MenuItem[] = [
       {label:'Home', routerLink:'/'},
       {label:'Customers', routerLink:'/customers'},
       {label:'About',routerLink:'/about'},
       {label:'Hub Test',routerLink:'/hubTest'}
     ];
-    // injecting it is what starts it: connected to the hub while signed in, toasts for what the back end sends
+    if (this.auth.roles().includes('Admin')) {
+      items.push({
+        label: 'Admin',
+        items: [
+          {label:'Users', routerLink:'/admin/users'},
+          {label:'Roles', routerLink:'/admin/roles'},
+          {label:'Groups', routerLink:'/admin/groups'}
+        ]
+      });
+    }
+    return items;
+  });
+
+  constructor() {    // injecting it is what starts it: connected to the hub while signed in, toasts for what the back end sends
     inject(HubConnectionService);
   }
 

@@ -47,8 +47,9 @@ export class ErrorHandlerService {
         // TODO: send the error to remote logging infrastructure
       console.error(`${systemError.message}${reference}`, error); // log to console instead
 
-      // a 400 means the request was wrong (the user can fix it); anything else is a failure on our side
-      const isInvalidRequest = error.status === 400;
+      // a 400 means the request was wrong and a 409 means a rule stopped it (a duplicate, the last administrator):
+      // the user can fix both. Anything else is a failure on our side
+      const isInvalidRequest = error.status === 400 || error.status === 409;
       this.sendMessage(
         isInvalidRequest ? 'warn' : 'error',
         isInvalidRequest ? 'Invalid request' : 'Fatal Error',

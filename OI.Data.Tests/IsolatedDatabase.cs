@@ -20,32 +20,18 @@ internal sealed class IsolatedDatabase
     /// Creates a new context on this database. Several contexts can be open on it at once, which lets a test
     /// seed with one context and run the code under test with another, so nothing is served from the change tracker.
     /// </summary>
-    public OiServiceDbContext CreateContext()
+    public OiServiceDbContext CreateContext(string dbName = "")
     {
+        if (dbName == "")
+        {
+            dbName = _name;
+        }
+    
         DbContextOptions<OiServiceDbContext> options = new DbContextOptionsBuilder<OiServiceDbContext>()
-            .UseInMemoryDatabase(_name, _root)
+            .UseInMemoryDatabase(dbName, _root)
             .Options;
         OiServiceDbContext context = new(options);
         context.Database.EnsureCreated();
         return context;
-    }
-}
-
-/// <summary>
-/// Helpers for asserting on exceptions that come out of the data layer.
-/// </summary>
-internal static class ExceptionExtensions
-{
-    /// <summary>
-    /// Returns the first non-aggregate exception inside <paramref name="exception"/>.
-    /// The filtering engine builds its query on a worker task and waits for it, so an error it hits
-    /// (for example an unknown property name) reaches the caller wrapped in an <see cref="AggregateException"/>.
-    /// Asserting on the unwrapped exception keeps the tests about the real cause rather than the wrapper.
-    /// </summary>
-    public static Exception Unwrap(this Exception exception)
-    {
-        return exception is AggregateException aggregate
-            ? aggregate.Flatten().InnerExceptions.First().Unwrap()
-            : exception;
     }
 }

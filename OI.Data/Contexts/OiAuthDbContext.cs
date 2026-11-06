@@ -33,4 +33,8 @@ internal class OiAuthDbContext(DbContextOptions<OiAuthDbContext> options) : Iden
     }
 
     public DbSet<RefreshToken> RefreshTokens { get; set; }
+
+    public DbSet<AuthGroup> AuthGroups { get; set; }
+
+    public DbSet<AuthGroupMember> AuthUserGroups { get; set; }
 }

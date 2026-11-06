@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OI.Data.Contexts;
+using OI.Data.Repos;
 using OI.Data.Repos.Auth;
 using OI.Data.Repos.Orders;
 using OI.Glue.Repos;
@@ -64,6 +65,7 @@ public static class DataDi
         // Passwords, lockout and the other sign-in rules live in OI.Business (AuthManager).
         services.AddScoped<IAuthRepo, AuthRepo>();
         services.AddScoped<IRefreshTokenRepo, RefreshTokenRepo>();
+        services.AddScoped<IAuthAdminRepo, AuthAdminRepo>();
     }
 
     /// <summary>

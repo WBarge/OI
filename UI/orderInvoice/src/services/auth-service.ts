@@ -50,6 +50,8 @@ export class AuthService {
   private sessionEnding = false;
 
   readonly isAuthenticated = computed(() => this.accessToken() !== null);
+  /** The user's id (the token's "sub"), which is how the Admin screens recognise the signed-in user's own row. */
+  readonly userId = computed(() => this.claims()?.sub ?? '');
   readonly userName = computed(() => this.claims()?.name ?? '');
   readonly roles = computed(() => toArray(this.claims()?.role));
   readonly groups = computed(() => toArray(this.claims()?.group));

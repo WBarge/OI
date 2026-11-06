@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using OI.Auth.Models.Requests;
@@ -10,6 +11,7 @@ namespace OI.Auth.Controllers;
 /// <summary>Sign-in, token refresh, sign-out and service tokens.</summary>
 [Route("api/[controller]")]
 [ApiController]
+[AllowAnonymous]   // sign-in has to work before anyone is signed in; the rest of this application requires a user token
 public class AuthController(IAuthManager authManager, ServiceClientRegistry serviceClients, AccessTokenFactory tokenFactory, ILogger<AuthController> logger) : ControllerBase
 {
     private readonly IAuthManager _authManager = authManager ?? throw new ArgumentNullException(nameof(authManager));

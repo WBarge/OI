@@ -1,0 +1,111 @@
+<p-confirmdialog />
+
+<h2>Users</h2>
+
+<p-toolbar>
+  <ng-template #start>
+    <input pInputText type="text" class="userSearch" placeholder="Search by name or email" aria-label="Search users"
+           [ngModel]="search()" (ngModelChange)="search.set($event)" (keyup.enter)="applySearch()" />
+    <button pButton type="button" id="searchUsers" (click)="applySearch()">Search</button>
+  </ng-template>
+  <ng-template #end>
+    <button pButton type="button" id="newUser" (click)="openNew()">New user</button>
+  </ng-template>
+</p-toolbar>
+
+<p-table id="userTable" [value]="rows()" dataKey="id" [lazy]="true" (onLazyLoad)="load($event)"
+         [paginator]="true" [rows]="pageSize()" [first]="first()" [totalRecords]="totalRecords()"
+         [rowsPerPageOptions]="[10, 25, 50]" [loading]="loading()">
+  <ng-template #header>
+    <tr>
+      <th>Email</th>
+      <th>Name</th>
+      <th>Roles</th>
+      <th>Groups</th>
+      <th>Status</th>
+      <th></th>
+    </tr>
+  </ng-template>
+  <ng-template #body let-user>
+    <tr class="userRow">
+      <td class="userEmail">{{ user.email }}</td>
+      <td class="userName">{{ user.displayName }}</td>
+      <td class="userRoles">
+        @for (role of user.roles; track role) {
+          <p-tag [value]="role" severity="info" class="chip" />
+        }
+      </td>
+      <td class="userGroups">
+        @for (group of user.groups; track group) {
+          <p-tag [value]="group" severity="secondary" class="chip" />
+        }
+      </td>
+      <td class="userStatus"><p-tag [value]="statusOf(user)" [severity]="severityOf(user)" /></td>
+      <td class="userActions">
+        <button pButton type="button" size="small" severity="secondary" class="editUser" (click)="openEdit(user)">Edit</button>
+        <button pButton type="button" size="small" severity="secondary" class="resetPassword" (click)="openResetPassword(user)">Password</button>
+        <button pButton type="button" size="small" severity="secondary" class="toggleDisabled"
+                [disabled]="isSelf(user) && !user.isDisabled" (click)="toggleDisabled(user)">{{ user.isDisabled ? 'Enable' : 'Disable' }}</button>
+        <button pButton type="button" size="small" severity="danger" class="deleteUser"
+                [disabled]="isSelf(user)" (click)="remove(user)">Delete</button>
+      </td>
+    </tr>
+  </ng-template>
+  <ng-template #emptymessage>
+    <tr><td colspan="6">No users found.</td></tr>
+  </ng-template>
+</p-table>
+
+<p-dialog [header]="isNew() ? 'New user' : 'Edit user'" [visible]="dialogVisible()" (visibleChange)="dialogVisible.set($event)"
+          [modal]="true" [closable]="true" [style]="{ width: '34rem' }">
+  <div class="field">
+    <label for="userEmail">Email</label>
+    <input id="userEmail" pInputText type="email" autocomplete="off" [readonly]="!isNew()"
+           [ngModel]="email()" (ngModelChange)="email.set($event)" />
+  </div>
+  <div class="field">
+    <label for="userDisplayName">Name</label>
+    <input id="userDisplayName" pInputText type="text" autocomplete="off"
+           [ngModel]="displayName()" (ngModelChange)="displayName.set($event)" />
+  </div>
+  @if (isNew()) {
+    <div class="field">
+      <label for="userPassword">Password</label>
+      <input id="userPassword" pInputText type="password" autocomplete="new-password"
+             [ngModel]="password()" (ngModelChange)="password.set($event)" />
+      <small>At least {{ minPasswordLength }} characters.</small>
+    </div>
+  }
+  <div class="field">
+    <label for="userRolesSelect">Roles</label>
+    <p-multiselect inputId="userRolesSelect" [options]="roleOptions()" [ngModel]="selectedRoles()" (ngModelChange)="selectedRoles.set($event)"
+                   placeholder="No roles" display="chip" appendTo="body" [showToggleAll]="false" />
+  </div>
+  <div class="field">
+    <label for="userGroupsSelect">Groups</label>
+    <p-multiselect inputId="userGroupsSelect" [options]="groupOptions()" [ngModel]="selectedGroups()" (ngModelChange)="selectedGroups.set($event)"
+                   placeholder="No groups" display="chip" appendTo="body" [showToggleAll]="false" />
+  </div>
+  @if (!isNew()) {
+    <small>A role or group taken away signs the user out when their current session runs out.</small>
+  }
+  <ng-template #footer>
+    <button pButton type="button" severity="secondary" id="cancelUser" (click)="dialogVisible.set(false)">Cancel</button>
+    <button pButton type="button" id="saveUser" [disabled]="!canSave()" (click)="save()">{{ saving() ? 'Saving...' : 'Save' }}</button>
+  </ng-template>
+</p-dialog>
+
+<p-dialog header="Reset password" [visible]="passwordTarget() !== null" (visibleChange)="$event || closeResetPassword()"
+          [modal]="true" [closable]="true" [style]="{ width: '26rem' }">
+  <p>Set a new password for <strong>{{ passwordTarget()?.email }}</strong>. They are signed out everywhere.</p>
+  <div class="field">
+    <label for="newPassword">New password</label>
+    <input id="newPassword" pInputText type="password" autocomplete="new-password"
+           [ngModel]="newPassword()" (ngModelChange)="newPassword.set($event)" />
+    <small>At least {{ minPasswordLength }} characters.</small>
+  </div>
+  <ng-template #footer>
+    <button pButton type="button" severity="secondary" id="cancelReset" (click)="closeResetPassword()">Cancel</button>
+    <button pButton type="button" id="saveReset" [disabled]="!canReset()" (click)="saveNewPassword()">{{ resetting() ? 'Saving...' : 'Reset password' }}</button>
+  </ng-template>
+</p-dialog>

@@ -6,7 +6,7 @@ import { AuthService } from './auth-service';
 import { ConfigService } from './config-service';
 
 /**
- * Adds the bearer token to calls to our own APIs (orders and reporting). When one comes back 401 the
+ * Adds the bearer token to calls to our own APIs (orders, reporting and the Auth admin endpoints). When one comes back 401 the
  * session is renewed once and the call is repeated, so the user never notices a token expiring.
  * If it cannot be renewed the user is sent to the sign-in page.
  *
@@ -20,7 +20,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   }
 
   const config = configService.config;
-  const secured = [config.oiApiUrl, config.reportingApiUrl].filter((url) => url.length > 0);
+  // OI.Auth's administration endpoints need the token too, but its sign-in, refresh and sign-out calls must never get one
+  const adminApi = config.authApiUrl.length > 0 ? config.authApiUrl + 'admin/' : '';
+  const secured = [config.oiApiUrl, config.reportingApiUrl, adminApi].filter((url) => url.length > 0);
   if (!secured.some((url) => req.url.startsWith(url))) {
     return next(req);
   }

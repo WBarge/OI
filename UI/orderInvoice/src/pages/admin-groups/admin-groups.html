@@ -1,0 +1,68 @@
+<p-confirmdialog />
+
+<h2>Groups</h2>
+
+<p-toolbar>
+  <ng-template #start>
+    <span>A group collects users. Put users in groups on the Users page.</span>
+  </ng-template>
+  <ng-template #end>
+    <button pButton type="button" id="newGroup" (click)="openNew()">New group</button>
+  </ng-template>
+</p-toolbar>
+
+<p-table id="groupTable" [value]="rows()" dataKey="name" [loading]="loading()">
+  <ng-template #header>
+    <tr>
+      <th>Group</th>
+      <th>Description</th>
+      <th>Members</th>
+      <th></th>
+    </tr>
+  </ng-template>
+  <ng-template #body let-group>
+    <tr class="groupRow">
+      <td class="groupName">{{ group.name }}</td>
+      <td class="groupDescription">{{ group.description }}</td>
+      <td class="groupMembers">{{ group.memberCount }}</td>
+      <td>
+        <button pButton type="button" size="small" severity="secondary" class="editGroup" (click)="openEdit(group)">Edit</button>
+        <button pButton type="button" size="small" severity="danger" class="deleteGroup" (click)="remove(group)">Delete</button>
+      </td>
+    </tr>
+  </ng-template>
+  <ng-template #emptymessage>
+    <tr><td colspan="4">No groups.</td></tr>
+  </ng-template>
+</p-table>
+
+<p-dialog [header]="isNew() ? 'New group' : 'Edit group'" [visible]="dialogVisible()" (visibleChange)="dialogVisible.set($event)"
+          [modal]="true" [closable]="true" [style]="{ width: '32rem' }">
+  <div class="field">
+    <label for="groupName">Name</label>
+    <input id="groupName" pInputText type="text" autocomplete="off" maxlength="63" [readonly]="!isNew()"
+           [ngModel]="name()" (ngModelChange)="name.set($event)" />
+    @if (isNew()) {
+      <small>Lowercase letters, digits, '-' or '_'. It cannot be changed later.</small>
+    }
+  </div>
+  <div class="field">
+    <label for="groupDescription">Description</label>
+    <input id="groupDescription" pInputText type="text" autocomplete="off" maxlength="200"
+           [ngModel]="description()" (ngModelChange)="description.set($event)" />
+  </div>
+  @if (!isNew()) {
+    <div class="field">
+      <span class="label">Members</span>
+      @for (member of members(); track member.userId) {
+        <span class="member">{{ member.displayName }} ({{ member.email }})</span>
+      } @empty {
+        <small>Nobody is in this group.</small>
+      }
+    </div>
+  }
+  <ng-template #footer>
+    <button pButton type="button" severity="secondary" id="cancelGroup" (click)="dialogVisible.set(false)">Cancel</button>
+    <button pButton type="button" id="saveGroup" [disabled]="!canSave()" (click)="save()">{{ saving() ? 'Saving...' : 'Save' }}</button>
+  </ng-template>
+</p-dialog>
