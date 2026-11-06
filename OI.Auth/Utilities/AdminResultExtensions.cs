@@ -3,6 +3,9 @@ using OI.Glue.Models;
 
 namespace OI.Auth.Utilities;
 
+/// <summary>
+/// Provides extension methods for handling administration results and converting them into HTTP responses.
+/// </summary>
 public static class AdminResultExtensions
 {
     /// <summary>

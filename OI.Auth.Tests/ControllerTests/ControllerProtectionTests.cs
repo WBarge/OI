@@ -25,7 +25,7 @@ public class ControllerProtectionTests
         AuthorizeAttribute? authorize = controller.GetCustomAttribute<AuthorizeAttribute>();
 
         authorize.Should().NotBeNull();
-        authorize!.Policy.Should().Be(AdminPolicy.Name);
+        authorize!.Policy.Should().Be(AdminPolicy.NAME);
     }
 
     [TestCaseSource(nameof(AdminControllers))]

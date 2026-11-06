@@ -3,20 +3,27 @@ using OI.Integration.Security;
 
 namespace OI.Auth.Security;
 
+/// <summary>
+/// Provides constants and methods for defining and configuring the administration policy.
+/// This policy ensures that only authenticated users with the "Admin" role can access specific endpoints.
+/// </summary>
 public static class AdminPolicy
 {
     /// <summary>
     /// Policy name for the administration endpoints: a signed-in user (not another application) who holds the Admin role.
     /// Put it on a controller with [Authorize(Policy = AdminPolicy.Name)].
     /// </summary>
-    public const string Name = "AdminOnly";
+    public const string NAME = "AdminOnly";
 
-    public const string AdminRole = "Admin";
+    /// <summary>
+    /// 
+    /// </summary>
+    public const string ADMIN_ROLE = "Admin";
 
     /// <summary>Registers the policy. Passed to AddOiAuthorization in Program.cs.</summary>
     public static void Configure(AuthorizationOptions options) =>
-        options.AddPolicy(Name, policy => policy
+        options.AddPolicy(NAME, policy => policy
             .RequireAuthenticatedUser()
             .RequireClaim(OiAuthSetup.TokenUseClaim, OiAuthSetup.UserToken)
-            .RequireRole(AdminRole));
+            .RequireRole(ADMIN_ROLE));
 }

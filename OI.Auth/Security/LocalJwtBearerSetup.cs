@@ -4,6 +4,9 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace OI.Auth.Security;
 
+/// <summary>
+/// Provides extension methods to configure local JWT Bearer authentication for the application.
+/// </summary>
 public static class LocalJwtBearerSetup
 {
     /// <summary>

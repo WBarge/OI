@@ -10,4 +10,4 @@ Make sure to use the context parameter since this solution has multiple context 
 ************************************
 Add-Migration InitialCreate -Context OiServiceDbContext
 Add-Migration InitialCreate -Context OiReportingDbContext -OutputDir Migrations/Second
-add-migration UserConfig -Context OiAuthDbContext -OutputDir Mirgrations/Auth
+add-migration UserConfig -Context OiAuthDbContext -OutputDir Migrations/Auth

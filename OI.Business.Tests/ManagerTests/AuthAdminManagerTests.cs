@@ -394,7 +394,7 @@ public class AuthAdminManagerTests
         AdminResult<AdminUser> result = await _sut.UpdateUserAsync(USER_ID, Update(roles: ["User"]), Ct);
 
         result.Status.Should().Be(AdminStatus.Conflict);
-        result.Message.Should().Be(AuthAdminManager.LastAdministratorMessage);
+        result.Message.Should().Be(AuthAdminManager.LAST_ADMINISTRATOR_MESSAGE);
     }
 
     [Test, Description("UpdateUserAsync should remove Admin from someone when another active administrator remains")]
@@ -541,7 +541,7 @@ public class AuthAdminManagerTests
         AdminResult<AdminUser> result = await _sut.SetDisabledAsync(USER_ID, true, Ct);
 
         result.Status.Should().Be(AdminStatus.Conflict);
-        result.Message.Should().Be(AuthAdminManager.LastAdministratorMessage);
+        result.Message.Should().Be(AuthAdminManager.LAST_ADMINISTRATOR_MESSAGE);
     }
 
     [Test, Description("SetDisabledAsync should disable an administrator when another active one remains, and end their sessions")]
@@ -645,7 +645,7 @@ public class AuthAdminManagerTests
         AdminResult result = await _sut.DeleteUserAsync(USER_ID, Ct);
 
         result.Status.Should().Be(AdminStatus.Conflict);
-        result.Message.Should().Be(AuthAdminManager.LastAdministratorMessage);
+        result.Message.Should().Be(AuthAdminManager.LAST_ADMINISTRATOR_MESSAGE);
     }
 
     [Test, Description("DeleteUserAsync should delete a disabled administrator, who does not count as active")]

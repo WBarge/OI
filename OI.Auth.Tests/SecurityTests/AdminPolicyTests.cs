@@ -31,13 +31,13 @@ public class AdminPolicyTests
         new(new ClaimsIdentity(claims, authenticated ? "Bearer" : null, "name", "role"));
 
     private async Task<bool> IsAllowedAsync(ClaimsPrincipal user) =>
-        (await _authorization.AuthorizeAsync(user, null, AdminPolicy.Name)).Succeeded;
+        (await _authorization.AuthorizeAsync(user, null, AdminPolicy.NAME)).Succeeded;
 
     [Test, Description("The policy should be called AdminOnly, and require the Admin role")]
     public void Constants_AreWhatTheControllersExpect()
     {
-        AdminPolicy.Name.Should().Be("AdminOnly");
-        AdminPolicy.AdminRole.Should().Be("Admin");
+        AdminPolicy.NAME.Should().Be("AdminOnly");
+        AdminPolicy.ADMIN_ROLE.Should().Be("Admin");
     }
 
     [Test, Description("An administrator signed in with a user token should be allowed")]

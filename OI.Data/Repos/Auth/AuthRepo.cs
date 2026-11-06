@@ -78,12 +78,21 @@ internal class AuthRepo(OiAuthDbContext authDbContext) : IAuthRepo
             .Where(c => c.UserId == userId)
             .Select(c => new { c.ClaimType, c.ClaimValue })
             .ToListAsync(cancellationToken);
+        List<string> groups;
+        try
+        {
+             groups = await _db.AuthUserGroups
+                .Include(ug => ug.Group) 
+                .Where(ug => ug.UserId == userId)
+                .Select(ug => ug.Group.Name)
+                .ToListAsync(cancellationToken);
 
-        // groups are memberships now, not claims rows; a legacy "group" claim row is ignored so a group is never listed twice
-        List<string> groups = await _db.Users.AsNoTracking()
-            .Where(u => u.Id == userId)
-            .SelectMany(u => u.GroupMemberships.Select(m => m.Group.Name))
-            .ToListAsync(cancellationToken);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
 
         return new AuthUser
         {

@@ -15,10 +15,10 @@ namespace OI.Business.Managers;
 /// </summary>
 internal class AuthAdminManager : IAuthAdminManager
 {
-    internal const string AdminRoleName = "Admin";
-    internal const string LastAdministratorMessage = "There must always be at least one active administrator.";
-    internal const int MaxPasswordLength = 128;
-    internal static readonly string[] BuiltInRoles = [AdminRoleName, "User"];
+    internal const string ADMIN_ROLE_NAME = "Admin";
+    internal const string LAST_ADMINISTRATOR_MESSAGE = "There must always be at least one active administrator.";
+    internal const int MAX_PASSWORD_LENGTH = 128;
+    internal static readonly string[] BuiltInRoles = [ADMIN_ROLE_NAME, "User"];
 
     private static readonly TimeSpan PatternTimeout = TimeSpan.FromMilliseconds(250);
     private static readonly Regex EmailPattern = new(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.Compiled, PatternTimeout);
@@ -130,15 +130,15 @@ internal class AuthAdminManager : IAuthAdminManager
             return AdminResult<AdminUser>.Invalid(groupError!);
         }
 
-        if (HasRole(existing.Roles, AdminRoleName) && !HasRole(roles, AdminRoleName))
+        if (HasRole(existing.Roles, ADMIN_ROLE_NAME) && !HasRole(roles, ADMIN_ROLE_NAME))
         {
             if (userId == _actor.UserId)
             {
                 return AdminResult<AdminUser>.Conflict("You cannot remove your own Admin role.");
             }
-            if (!existing.IsDisabled && await _authRepo.CountEnabledUsersInRoleAsync(AdminRoleName, cancellationToken) <= 1)
+            if (!existing.IsDisabled && await _authRepo.CountEnabledUsersInRoleAsync(ADMIN_ROLE_NAME, cancellationToken) <= 1)
             {
-                return AdminResult<AdminUser>.Conflict(LastAdministratorMessage);
+                return AdminResult<AdminUser>.Conflict(LAST_ADMINISTRATOR_MESSAGE);
             }
         }
 
@@ -196,9 +196,9 @@ internal class AuthAdminManager : IAuthAdminManager
             {
                 return AdminResult<AdminUser>.Conflict("You cannot disable your own account.");
             }
-            if (HasRole(existing.Roles, AdminRoleName) && await _authRepo.CountEnabledUsersInRoleAsync(AdminRoleName, cancellationToken) <= 1)
+            if (HasRole(existing.Roles, ADMIN_ROLE_NAME) && await _authRepo.CountEnabledUsersInRoleAsync(ADMIN_ROLE_NAME, cancellationToken) <= 1)
             {
-                return AdminResult<AdminUser>.Conflict(LastAdministratorMessage);
+                return AdminResult<AdminUser>.Conflict(LAST_ADMINISTRATOR_MESSAGE);
             }
         }
 
@@ -225,10 +225,10 @@ internal class AuthAdminManager : IAuthAdminManager
         {
             return AdminResult.Conflict("You cannot delete your own account.");
         }
-        if (HasRole(existing.Roles, AdminRoleName) && !existing.IsDisabled
-            && await _authRepo.CountEnabledUsersInRoleAsync(AdminRoleName, cancellationToken) <= 1)
+        if (HasRole(existing.Roles, ADMIN_ROLE_NAME) && !existing.IsDisabled
+            && await _authRepo.CountEnabledUsersInRoleAsync(ADMIN_ROLE_NAME, cancellationToken) <= 1)
         {
-            return AdminResult.Conflict(LastAdministratorMessage);
+            return AdminResult.Conflict(LAST_ADMINISTRATOR_MESSAGE);
         }
 
         await _authRepo.DeleteUserAsync(userId, cancellationToken);
@@ -390,9 +390,9 @@ internal class AuthAdminManager : IAuthAdminManager
 
     private string? ValidatePassword(string? password)
     {
-        if (password is null || password.Length < _policy.MinPasswordLength || password.Length > MaxPasswordLength)
+        if (password is null || password.Length < _policy.MinPasswordLength || password.Length > MAX_PASSWORD_LENGTH)
         {
-            return $"The password must be between {_policy.MinPasswordLength} and {MaxPasswordLength} characters.";
+            return $"The password must be between {_policy.MinPasswordLength} and {MAX_PASSWORD_LENGTH} characters.";
         }
         return null;
     }

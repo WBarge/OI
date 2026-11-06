@@ -1,3 +1,4 @@
+// ReSharper disable CollectionNeverUpdated.Global
 namespace OI.Auth.Security;
 
 /// <summary>
