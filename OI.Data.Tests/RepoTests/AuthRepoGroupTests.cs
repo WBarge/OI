@@ -2,6 +2,7 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using OI.Data.Contexts;
 using OI.Data.Repos;
+using OI.Data.Repos.Auth;
 using OI.Glue.Models;
 
 namespace OI.Data.Tests.RepoTests;
