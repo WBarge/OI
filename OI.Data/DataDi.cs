@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using OI.Data.Contexts;
 using OI.Data.Repos;
 using OI.Data.Repos.Auth;
+using OI.Data.Repos.Jobs;
 using OI.Data.Repos.Orders;
 using OI.Glue.Repos;
 
@@ -43,6 +44,7 @@ public static class DataDi
             builder.UseSqlServer(configuration["ConnectionString"], b =>
                 b.MigrationsHistoryTable("__EFMigrationsHistory_Reporting"));
         });
+        services.AddScoped<ICompanyRepo, CompanyRepo>();
     }
 
     /// <summary>

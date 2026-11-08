@@ -10,7 +10,7 @@ using Customer = OI.Data.Model.Orders.Customer;
 
 namespace OI.Data.Repos.Orders;
 
-internal class CustomerRepo(OiServiceDbContext serviceDbContext) : BaseEfRepo<Customer>(serviceDbContext), ICustomerRepo
+internal class CustomerRepo(OiServiceDbContext serviceDbContext) : BaseEfRepo<OiServiceDbContext,Customer>(serviceDbContext), ICustomerRepo
 {
     /// <summary>
     /// Get the customer by id

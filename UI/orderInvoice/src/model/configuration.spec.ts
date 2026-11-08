@@ -15,6 +15,19 @@ describe('Configuration', () => {
     expect(config.oiApiUrl).toBe('');
   });
 
+  it('should default every company detail to empty text', () => {
+    const config = new Configuration();
+
+    expect(config.companyName).toBe('');
+    expect(config.companyLogoUrl).toBe('');
+    expect(config.companyAddress).toBe('');
+    expect(config.companyCity).toBe('');
+    expect(config.companyState).toBe('');
+    expect(config.companyZip).toBe('');
+    expect(config.companyEmail).toBe('');
+    expect(config.companyPhone).toBe('');
+  });
+
   it('should keep addresses enabled unless they are explicitly disabled', () => {
     expect(new Configuration().disableAddresses).toBe(false);
     expect(Object.assign(new Configuration(), { disableAddresses: true }).disableAddresses).toBe(true);

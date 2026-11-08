@@ -1,6 +1,6 @@
 ﻿namespace OI.Data.Model.Jobs;
 
-internal class StoredFile
+public class StoredFile
 {
     public Guid Id { get; set; }
     public required string FileName { get; set; }

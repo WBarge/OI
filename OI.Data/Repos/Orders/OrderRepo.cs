@@ -9,7 +9,7 @@ using OI.Glue.Repos;
 
 namespace OI.Data.Repos.Orders;
 
-internal class OrderRepo(OiServiceDbContext serviceDbContext) : BaseEfRepo<Order>(serviceDbContext), IOrderRepo
+internal class OrderRepo(OiServiceDbContext serviceDbContext) : BaseEfRepo<OiServiceDbContext,Order>(serviceDbContext), IOrderRepo
 {
     /// <summary>
     /// gets an order from the persistence store

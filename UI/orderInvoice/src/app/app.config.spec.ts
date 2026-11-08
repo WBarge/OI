@@ -146,6 +146,44 @@ describe('appConfig', () => {
     });
   });
 
+  describe('the company details upload', () => {
+    const withCompany = {
+      authApiUrl: 'https://auth.test/api/',
+      reportingApiUrl: 'https://reporting.test/api/',
+      companyName: 'Acme Tools',
+      companyCity: 'Phoenix'
+    };
+
+    it('should send the company details to the Reporting API after the configuration is loaded and the session restored', async () => {
+      localStorage.setItem(REFRESH_KEY, 'kept-token');
+      const initStatus = TestBed.inject(ApplicationInitStatus);
+
+      httpTestingController.expectOne(isConfigRequest).flush(withCompany);
+      await settle();
+      httpTestingController.expectOne('https://auth.test/api/auth/refresh').flush(authResult());
+      await initStatus.donePromise;
+      TestBed.tick();
+      await settle();
+
+      const upload = httpTestingController.expectOne('https://reporting.test/api/CompanyProfile');
+      expect(upload.request.method).toBe('PUT');
+      expect(upload.request.headers.get('Authorization')).toMatch(/^Bearer /);
+      expect((upload.request.body as FormData).get('companyName')).toBe('Acme Tools');
+      upload.flush(null, { status: 204, statusText: 'No Content' });
+    });
+
+    it('should send nothing while no one is signed in, rather than be refused and sent to the sign-in page', async () => {
+      const initStatus = TestBed.inject(ApplicationInitStatus);
+
+      httpTestingController.expectOne(isConfigRequest).flush(withCompany);
+      await initStatus.donePromise;
+      TestBed.tick();
+      await settle();
+
+      httpTestingController.expectNone('https://reporting.test/api/CompanyProfile');
+    });
+  });
+
   describe('the http client', () => {
     it('should add the signed-in token to calls to the order api, and to nothing else', async () => {
       localStorage.setItem(REFRESH_KEY, 'kept-token');

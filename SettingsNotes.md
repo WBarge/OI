@@ -107,6 +107,8 @@ Served to every visitor, so **never put a secret here**. It is copied to the sit
 | `hubUrl` | The hub endpoint, ending in `/hubs/app` | `https://localhost:7400/hubs/app` |
 | `productApiUrl` | The separate product API (not in this solution). The auth token is **not** sent to it. | `https://localhost:7253/api/` |
 | `disableAddresses`, `HideShippingAddress`, `EnableCustomProducts` | Feature switches | |
+| `companyName`, `companyAddress`, `companyCity`, `companyState`, `companyZip`, `companyEmail`, `companyPhone` | The company details printed on reports. Sent to OI.Reporting (`PUT api/CompanyProfile`) once per page load, after a user is signed in. Leave a value `""` to leave it off. | |
+| `companyLogoUrl` | Where the browser can read the logo image, e.g. `/company-logo.png`. The UI downloads it and uploads the file with the details; the name after the last `/` becomes the resource name. `""` means no logo. Must be readable by the browser (same site, or CORS allowed), max 2 MB. | |
 
 ---
 

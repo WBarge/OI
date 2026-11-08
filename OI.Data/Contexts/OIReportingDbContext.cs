@@ -30,4 +30,5 @@ internal class OiReportingDbContext (DbContextOptions<OiReportingDbContext> opti
     }
 
     public DbSet<JobResult> ReportResults { get; set; }
+    public DbSet<ConfiguredCompany> CompanyConfiguration { get; set; }
 }

@@ -27,7 +27,7 @@
                 "input": "public"
               },
               {
-                "glob": "config.json",
+                "glob": "**/*",
                 "input": "deploy/config",
                 "output": "/"
               }

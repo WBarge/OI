@@ -2,6 +2,7 @@ using OI.Business;
 using OI.Data;
 using OI.Integration;
 using OI.Integration.Security;
+using OI.Reporting.Services;
 
 namespace OI.Reporting.Utilities;
 
@@ -28,6 +29,9 @@ public static class RootComposition
         // Lets controllers and managers ask who is calling: inject IClientContext (OI.Glue.Security).
         // The middleware that fills it in is added in Program.cs with app.UseClientContext().
         services.AddClientContext();
+
+        // The company details (name, address, logo...) the UI uploads when it starts; report generation reads them from here.
+        services.AddScoped<ICompanyProfileStore, PersistedCompanyProfileStore>();
     }   
 
 }

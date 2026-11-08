@@ -6,5 +6,13 @@
   "oiApiUrl": "https://localhost:7128/api/",
   "authApiUrl": "https://localhost:7300/api/",
   "reportingApiUrl": "https://localhost:7267/api/",
-  "hubUrl": "https://localhost:7400/hubs/app"
+  "hubUrl": "https://localhost:7400/hubs/app",
+  "companyName": "The Man LLC",
+  "companyLogoUrl": "/TheManLogo.png",
+  "companyAddress": "666 Mockingbird Lane",
+  "companyCity": "Anytown",
+  "companyState": "CA",
+  "companyZip": "12345",
+  "companyEmail":  "info@themanllc.com",
+  "companyPhone":  "(555) 123-4567"
 }

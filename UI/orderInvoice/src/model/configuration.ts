@@ -7,4 +7,12 @@ export class Configuration {
   public authApiUrl: string = "";
   public reportingApiUrl: string = "";
   public hubUrl: string = "";
+  public companyName: string = "";
+  public companyLogoUrl: string = "";
+  public companyAddress: string = "";
+  public companyCity: string = "";
+  public companyState: string = "";
+  public companyZip: string = "";
+  public companyEmail: string = "";
+  public companyPhone: string = "";
 }

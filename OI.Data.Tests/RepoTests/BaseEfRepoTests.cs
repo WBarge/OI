@@ -16,7 +16,7 @@ namespace OI.Data.Tests.RepoTests;
 [TestFixture, Description("Tests for BaseEfRepo")]
 public class BaseEfRepoTests
 {
-    private sealed class CustomerTestRepo(OiServiceDbContext serviceDbContext) : BaseEfRepo<Customer>(serviceDbContext)
+    private sealed class CustomerTestRepo(OiServiceDbContext serviceDbContext) : BaseEfRepo<OiServiceDbContext,Customer>(serviceDbContext)
     {
         public Task<List<Customer>> All(CancellationToken token = default) => GetAllRecordsAsync(token);
         public Task<List<Customer>> AllPaged(int page, int size) => GetAllRecordsPagedAsync(page, size);
@@ -34,7 +34,7 @@ public class BaseEfRepoTests
     /// <summary>
     /// State has neither a Created nor a Modified property, which the base class has to cope with.
     /// </summary>
-    private sealed class StateTestRepo(OiServiceDbContext serviceDbContext) : BaseEfRepo<State>(serviceDbContext)
+    private sealed class StateTestRepo(OiServiceDbContext serviceDbContext) : BaseEfRepo<OiServiceDbContext,State>(serviceDbContext)
     {
         public Task Insert(State state) => InsertAsync(state);
         public void Change(State state) => Update(state);

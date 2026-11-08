@@ -8,6 +8,6 @@ type the command  add-migration {name} in the console where the name gives meani
 ************************************
 Make sure to use the context parameter since this solution has multiple context objects
 ************************************
-Add-Migration InitialCreate -Context OiServiceDbContext
-Add-Migration InitialCreate -Context OiReportingDbContext -OutputDir Migrations/Second
-add-migration UserConfig -Context OiAuthDbContext -OutputDir Migrations/Auth
+Add-Migration <nameMigration> -Context OiServiceDbContext -OutputDir Migrations/Orders
+Add-Migration <nameMigration> -Context OiReportingDbContext -OutputDir Migrations/Reporting
+add-migration <nameMigration> -Context OiAuthDbContext -OutputDir Migrations/Auth

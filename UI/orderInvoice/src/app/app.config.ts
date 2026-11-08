@@ -6,6 +6,7 @@ import { routes } from './app.routes';
 import { ConfigService } from '../services/config-service';
 import { AuthService } from '../services/auth-service';
 import { authInterceptor } from '../services/auth-interceptor';
+import { CompanyProfileSyncService } from '../services/company-profile-sync-service';
 
 import { providePrimeNG } from 'primeng/config';
 import {definePreset} from '@primeuix/themes';
@@ -52,8 +53,12 @@ export const appConfig: ApplicationConfig = {
               provideAppInitializer(async () => {
                 const config = inject(ConfigService);
                 const auth = inject(AuthService);
+                const companyProfileSync = inject(CompanyProfileSyncService);
                 await config.load();
                 await auth.restore();   // already signed in from an earlier visit? continue without asking again
+                // send the company details to the Reporting API once: now if signed in, otherwise at the first sign-in.
+                // start() only begins watching; the upload runs in the background, so the app never waits for it.
+                companyProfileSync.start();
               }),
               MessageService]
 };

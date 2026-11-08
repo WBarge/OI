@@ -6,7 +6,7 @@ using OI.Glue.Repos;
 
 namespace OI.Data.Repos.Orders;
 
-internal class StateRepo(OiServiceDbContext serviceDbContext) : BaseEfRepo<State>(serviceDbContext), IStateRepo
+internal class StateRepo(OiServiceDbContext serviceDbContext) : BaseEfRepo<OiServiceDbContext,State>(serviceDbContext), IStateRepo
 {
     public async Task<IEnumerable<IState>> ListStatesAsync(CancellationToken cancellationToken = default)
     {

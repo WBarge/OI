@@ -17,10 +17,64 @@ namespace OI.Data.Migrations.Reporting
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.13")
+                .HasAnnotation("ProductVersion", "10.0.14")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("OI.Data.Model.Jobs.ConfiguredCompany", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("Id");
+
+                    b.Property<string>("CompanyAddress")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)")
+                        .HasColumnName("CompanyAddress");
+
+                    b.Property<string>("CompanyCity")
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)")
+                        .HasColumnName("CompanyCity");
+
+                    b.Property<string>("CompanyEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)")
+                        .HasColumnName("CompanyEmail");
+
+                    b.Property<string>("CompanyName")
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)")
+                        .HasColumnName("CompanyName");
+
+                    b.Property<string>("CompanyPhone")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)")
+                        .HasColumnName("CompanyPhone");
+
+                    b.Property<string>("CompanyState")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("CompanyState");
+
+                    b.Property<string>("CompanyZip")
+                        .HasMaxLength(11)
+                        .HasColumnType("nvarchar(11)")
+                        .HasColumnName("CompanyZip");
+
+                    b.Property<Guid?>("ResultId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ResultId")
+                        .IsUnique()
+                        .HasFilter("[ResultId] IS NOT NULL");
+
+                    b.ToTable("CompanyConfiguration", (string)null);
+                });
 
             modelBuilder.Entity("OI.Data.Model.Jobs.JobResult", b =>
                 {
@@ -79,6 +133,16 @@ namespace OI.Data.Migrations.Reporting
                     b.HasKey("Id");
 
                     b.ToTable("Files", (string)null);
+                });
+
+            modelBuilder.Entity("OI.Data.Model.Jobs.ConfiguredCompany", b =>
+                {
+                    b.HasOne("OI.Data.Model.Jobs.StoredFile", "Result")
+                        .WithOne()
+                        .HasForeignKey("OI.Data.Model.Jobs.ConfiguredCompany", "ResultId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Result");
                 });
 
             modelBuilder.Entity("OI.Data.Model.Jobs.JobResult", b =>
