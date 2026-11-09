@@ -1,4 +1,5 @@
-﻿using OI.Data.Contexts;
+﻿using Microsoft.EntityFrameworkCore;
+using OI.Data.Contexts;
 using OI.Data.Model.Jobs;
 using OI.Data.Translators;
 using OI.Data.Translators.Internal_Models;
@@ -11,11 +12,11 @@ internal class CompanyRepo(OiReportingDbContext serviceDbContext): BaseEfRepo<Oi
 {
     public ICompanyProfile? GetCompanyProfile()
     {
-        ConfiguredCompany? configuredCompany = ServiceDbContext.Set<ConfiguredCompany>().FirstOrDefault();
+        ConfiguredCompany? configuredCompany = serviceDbContext.CompanyConfiguration
+            .Include(c => c.Result)
+            .FirstOrDefault();
 
-        if (configuredCompany == null) return null;
-
-        return configuredCompany.Translate();
+        return configuredCompany?.Translate();
     }
 
     public async Task UpsertAsync(ICompanyProfile profile, CancellationToken cancellationToken = default)
