@@ -74,6 +74,9 @@ public class CompanyProfileController(ICompanyProfileStore store, ILogger<Compan
             CompanyZip = Clean(request.CompanyZip),
             CompanyEmail = Clean(request.CompanyEmail),
             CompanyPhone = Clean(request.CompanyPhone),
+            CompanyContactName = Clean(request.CompanyContactName),
+            CompanyContactEmail = Clean(request.CompanyContactEmail),
+            CompanyContactPhone = Clean(request.CompanyContactPhone),
             LogoResourceName = resourceName,
             LogoFile = logo
         }, cancellationToken);

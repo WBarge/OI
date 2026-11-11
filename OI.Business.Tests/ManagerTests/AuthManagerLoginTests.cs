@@ -2,8 +2,6 @@ using FluentAssertions;
 using Moq;
 using OI.Business.Managers;
 using OI.Glue.Models;
-using OI.Glue.Repos;
-using OI.Glue.Services;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace OI.Business.Tests.ManagerTests;

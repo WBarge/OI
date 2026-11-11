@@ -1,6 +1,5 @@
 ﻿using OI.Glue.Models;
 using OI.Glue.Repos;
-using OI.Reporting.Models;
 
 namespace OI.Reporting.Services;
 
@@ -17,12 +16,25 @@ public class PersistedCompanyProfileStore: ICompanyProfileStore
     }
 
     public ICompanyProfile? Current { get; }
-    public async Task ReplaceAsync(ICompanyProfile profile, CancellationToken cancellationToken= default)
+    public Task ReplaceAsync(ICompanyProfile profile, CancellationToken cancellationToken= default)
     {
-        lock (_lockObject)
+        try
         {
-            
+            lock (_lockObject)
+            {
+                Task result =  _companyRepo.UpsertAsync(profile, cancellationToken);
+                while (!result.IsCompleted) ;
+                if (result.IsFaulted)
+                {
+                    throw result.Exception;
+                }
+            }
+
+            return Task.CompletedTask;
         }
-        await _companyRepo.UpsertAsync(profile, cancellationToken);
+        catch (Exception exception)
+        {
+            return Task.FromException(exception);
+        }
     }
 }

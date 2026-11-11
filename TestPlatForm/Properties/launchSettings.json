@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "TestPlatForm": {
+      "commandName": "Project",
+      "hotReloadEnabled": true
+    },
+    "WSL": {
+      "commandName": "WSL2",
+      "distributionName": ""
+    }
+  }
+}

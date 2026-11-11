@@ -1,5 +1,5 @@
 
-using OI.Common.Middleware;
+using OI.Integration.Middleware;
 using OI.Data.DBSchemaHelper;
 using OI.Reporting.Utilities;
 using OI.Integration.Security;

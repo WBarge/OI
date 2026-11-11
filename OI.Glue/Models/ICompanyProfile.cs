@@ -9,6 +9,9 @@ public interface ICompanyProfile
     string CompanyZip { get; init; }
     string CompanyEmail { get; init; }
     string CompanyPhone { get; init; }
+    string CompanyContactName { get; init; }
+    string CompanyContactEmail { get; init; }
+    string CompanyContactPhone { get; init; }
 
     /// <summary>The file name of the logo: everything after the last "/" in the UI's companyLogoUrl. Empty when there is no logo.</summary>
     string LogoResourceName { get; init; }

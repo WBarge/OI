@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OI.Data.Contexts;
-using OI.Data.Repos;
 using OI.Data.Repos.Auth;
 using OI.Data.Repos.Jobs;
 using OI.Data.Repos.Orders;

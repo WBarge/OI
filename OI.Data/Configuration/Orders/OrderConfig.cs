@@ -32,6 +32,15 @@ internal class OrderConfig : IEntityTypeConfiguration<Order>,IServiceConfigurati
             .IsRequired();
         builder.Property(o => o.CompletedDate)
             .HasColumnName("CompletedDate");
+        builder.Property(o => o.PoNumber)
+            .HasColumnName("PoNumber")
+            .HasMaxLength(50);
+        builder.Property(o => o.Terms)
+            .HasColumnName("Terms")
+            .HasMaxLength(200);
+        builder.Property(o => o.Via)
+            .HasColumnName("Via")
+            .HasMaxLength(100);
         // Configure billing address properties
         builder.Property(o => o.BillingAddress1)
             .HasColumnName("BillingAddress1")

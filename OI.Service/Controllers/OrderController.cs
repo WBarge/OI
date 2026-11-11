@@ -1,5 +1,5 @@
-using CrossCutting.Extensions;
 using Microsoft.AspNetCore.Mvc;
+using OI.Common.Extensions.Comparison;
 using OI.Glue.Managers;
 using OI.Glue.Models;
 using OI.Service.Models.Requests;

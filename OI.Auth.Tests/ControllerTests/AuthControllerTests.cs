@@ -184,7 +184,7 @@ public class AuthControllerTests
         sut.ServiceToken(new ServiceTokenRequest { ClientId = "oi-reporting", ClientSecret = "super-secret-guess" });
 
         logger.Verify(l => l.Log(LogLevel.Warning, It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((state, _) => !state.ToString()!.Contains("super-secret-guess")),
+            It.Is<It.IsAnyType>((state, _) => !state!.ToString()!.Contains("super-secret-guess")),
             It.IsAny<Exception?>(), It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
 

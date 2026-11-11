@@ -4,5 +4,5 @@ public class StoredFile
 {
     public Guid Id { get; set; }
     public required string FileName { get; set; }
-    public required byte[] FileContents { get; set; }
+    public required byte[]? FileContents { get; set; }
 }

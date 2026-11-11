@@ -13,7 +13,7 @@ namespace OI.Service.Controllers
     [ApiController]
     public class OrdersController(IOrderManager orderManager,ILogger<IOrderManager> logger) : ControllerBase
     {
-
+        //private readonly IClientContext _clientContext = clientContext ?? throw new ArgumentNullException(nameof(clientContext));
         private readonly IOrderManager _orderManager = orderManager ?? throw new ArgumentNullException(nameof(orderManager));
         private readonly ILogger<IOrderManager> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 

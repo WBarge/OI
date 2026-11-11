@@ -14,5 +14,8 @@
   "companyState": "CA",
   "companyZip": "12345",
   "companyEmail":  "info@themanllc.com",
-  "companyPhone":  "(555) 123-4567"
+  "companyPhone":  "(555) 123-4567",
+  "companyContactName": "John Doe",
+  "companyContactEmail": "test@themanllc.com",
+  "companyContactPhone": "(555) 987-6543"
 }

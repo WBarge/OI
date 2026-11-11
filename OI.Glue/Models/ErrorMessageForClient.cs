@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace OI.Common.Models.Results;
+namespace OI.Glue.Models;
 
 /// <summary>
 /// Class ErrorMessageForClient.

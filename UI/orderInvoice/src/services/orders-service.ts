@@ -38,39 +38,42 @@ export class OrdersService {
           map((order:any)=>{
             const tempOrder = new Order();
             tempOrder.idValue = order.id;
-              tempOrder.orderNumber= order.orderNumber;
-              tempOrder.orderDate = new Date(order.orderDate);
-              tempOrder.completedDate = new Date(order.completedDate);
-              tempOrder.customerId = order.customerId;
-              tempOrder.customerName = order.customer  ? `${order.customer.firstName} ${order.customer.lastName}`  : '';
-              tempOrder.phoneNumber = order.customer  ? `${order.customer.phoneNumber}`  : '';
-              tempOrder.billingAddress1 = order.billingAddress1;
-              tempOrder.billingAddress2 = order.billingAddress2;
-              tempOrder.billingCity = order.billingCity;
-              tempOrder.billingStateCode = order.billingStateCode;
-              tempOrder.billingZipCode = order.billingZipCode;
-              tempOrder.shippingAddress1 = order.shippingAddress1;
-              tempOrder.shippingAddress2 = order.shippingAddress2;
-              tempOrder.shippingCity = order.shippingCity;
-              tempOrder.shippingStateCode = order.shippingStateCode;
-              tempOrder.shippingZipCode = order.shippingZipCode;
-              tempOrder.orderItems = order.orderItems.map((item:any)=>{
-                const tempItem = new ProductOrdered();
-                tempItem.idValue = item.id;
-                tempItem.name = item.name;
-                tempItem.description = item.description;
-                tempItem.sku = item.sku;
-                tempItem.price = item.price;
-                tempItem.quantity = item.quantity;
-                tempItem.total = item.total;
-                tempItem.productId = item.productId;
-                return tempItem;
-              });
-              tempOrder.subTotal = order.subTotal;
-              tempOrder.shipping = order.shipping;
-              tempOrder.tax = order.tax;
-              tempOrder.total = order.total;
-              tempOrder.isPending = order.isPending;
+            tempOrder.orderNumber= order.orderNumber;
+            tempOrder.orderDate = new Date(order.orderDate);
+            tempOrder.completedDate = new Date(order.completedDate);
+            tempOrder.poNumber = order.poNumber ?? "";
+            tempOrder.terms = order.terms ?? "";
+            tempOrder.via = order.via ?? "";
+            tempOrder.customerId = order.customerId;
+            tempOrder.customerName = order.customer  ? `${order.customer.firstName} ${order.customer.lastName}`  : '';
+            tempOrder.phoneNumber = order.customer  ? `${order.customer.phoneNumber}`  : '';
+            tempOrder.billingAddress1 = order.billingAddress1;
+            tempOrder.billingAddress2 = order.billingAddress2;
+            tempOrder.billingCity = order.billingCity;
+            tempOrder.billingStateCode = order.billingStateCode;
+            tempOrder.billingZipCode = order.billingZipCode;
+            tempOrder.shippingAddress1 = order.shippingAddress1;
+            tempOrder.shippingAddress2 = order.shippingAddress2;
+            tempOrder.shippingCity = order.shippingCity;
+            tempOrder.shippingStateCode = order.shippingStateCode;
+            tempOrder.shippingZipCode = order.shippingZipCode;
+            tempOrder.orderItems = order.orderItems.map((item:any)=>{
+              const tempItem = new ProductOrdered();
+              tempItem.idValue = item.id;
+              tempItem.name = item.name;
+              tempItem.description = item.description;
+              tempItem.sku = item.sku;
+              tempItem.price = item.price;
+              tempItem.quantity = item.quantity;
+              tempItem.total = item.total;
+              tempItem.productId = item.productId;
+              return tempItem;
+            });
+            tempOrder.subTotal = order.subTotal;
+            tempOrder.shipping = order.shipping;
+            tempOrder.tax = order.tax;
+            tempOrder.total = order.total;
+            tempOrder.isPending = order.isPending;
 
             return tempOrder;
           }),
@@ -135,6 +138,9 @@ export class OrdersService {
     order.orderNumber = String(created.orderNumber);
     order.orderDate = new Date(created.orderDate);
     order.completedDate = new Date(created.completedDate);
+    order.poNumber = created.poNumber ?? "";
+    order.terms = created.terms ?? "";
+    order.via = created.via ?? "";
     order.customerId = created.customerId ?? "";
     order.customerName = created.customer
       ? `${created.customer.firstName ?? ""} ${created.customer.lastName ?? ""}`.trim()
@@ -184,6 +190,9 @@ export class OrdersService {
 
   private toRequest(order:Order){
     return {
+      poNumber: order.poNumber,
+      terms: order.terms,
+      via: order.via,
       customerId: order.customerId || null,
       orderDate: order.orderDate,
       billingAddress1: order.billingAddress1,

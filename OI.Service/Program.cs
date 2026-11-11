@@ -1,7 +1,6 @@
-using OI.Common.Middleware;
+using OI.Integration.Middleware;
 using OI.Data.DBSchemaHelper;
 using OI.Service.Utilities;
-using Scalar.AspNetCore;
 using OI.Integration.Security;
 
 namespace OI.Service;
@@ -76,7 +75,7 @@ public static class Program
 
         app.UseAuthentication();
         app.UseAuthorization();
-
+        app.UseClientContext();   // who is calling: needs the user from the two lines above
 
         app.MapControllers();
 

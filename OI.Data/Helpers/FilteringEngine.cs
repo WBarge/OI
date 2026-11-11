@@ -2,8 +2,8 @@
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using CrossCutting.Extensions;
 using Microsoft.EntityFrameworkCore;
+using OI.Common.Extensions.Comparison;
 using OI.Glue.Models;
 
 [assembly:InternalsVisibleTo("OI.Data.Tests")]

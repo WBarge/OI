@@ -39,6 +39,21 @@ namespace OI.Data.Migrations.Reporting
                         .HasColumnType("nvarchar(120)")
                         .HasColumnName("CompanyCity");
 
+                    b.Property<string>("CompanyContactEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)")
+                        .HasColumnName("CompanyContactEmail");
+
+                    b.Property<string>("CompanyContactName")
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)")
+                        .HasColumnName("CompanyContactName");
+
+                    b.Property<string>("CompanyContactPhone")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("CompanyContactPhone");
+
                     b.Property<string>("CompanyEmail")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)")
@@ -50,8 +65,8 @@ namespace OI.Data.Migrations.Reporting
                         .HasColumnName("CompanyName");
 
                     b.Property<string>("CompanyPhone")
-                        .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
                         .HasColumnName("CompanyPhone");
 
                     b.Property<string>("CompanyState")

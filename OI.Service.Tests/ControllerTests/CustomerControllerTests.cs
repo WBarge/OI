@@ -4,10 +4,10 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
+using OI.Common.Exceptions;
 using OI.Glue.Managers;
 using OI.Glue.Models;
 using OI.Service.Controllers;
-using CrossCutting.Exceptions;
 using OI.Service.Models.Requests;
 
 namespace OI.Service.Tests.ControllerTests;

@@ -17,6 +17,9 @@ internal static class CompanyTranslator
             CompanyZip = configuredCompany.CompanyZip ?? "",
             CompanyEmail = configuredCompany.CompanyEmail ?? "",
             CompanyPhone = configuredCompany.CompanyPhone ?? "",
+            CompanyContactName = configuredCompany.CompanyContactName ?? "",
+            CompanyContactEmail = configuredCompany.CompanyContactEmail ?? "",
+            CompanyContactPhone = configuredCompany.CompanyContactPhone ?? "",
             LogoResourceName = configuredCompany.Result?.FileName ?? "",
             LogoFile = configuredCompany.Result?.FileContents ?? []
         };

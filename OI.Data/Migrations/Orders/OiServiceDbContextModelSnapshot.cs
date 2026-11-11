@@ -17,7 +17,7 @@ namespace OI.Data.Migrations.Orders
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.13")
+                .HasAnnotation("ProductVersion", "10.0.14")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -173,6 +173,11 @@ namespace OI.Data.Migrations.Orders
                         .HasColumnType("int")
                         .HasColumnName("OrderNumber");
 
+                    b.Property<string>("PoNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("PoNumber");
+
                     b.Property<decimal>("Shipping")
                         .HasColumnType("decimal(18,2)")
                         .HasColumnName("Shipping");
@@ -210,9 +215,19 @@ namespace OI.Data.Migrations.Orders
                         .HasColumnType("decimal(18,2)")
                         .HasColumnName("Tax");
 
+                    b.Property<string>("Terms")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasColumnName("Terms");
+
                     b.Property<decimal>("Total")
                         .HasColumnType("decimal(18,2)")
                         .HasColumnName("Total");
+
+                    b.Property<string>("Via")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("Via");
 
                     b.HasKey("Id");
 

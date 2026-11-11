@@ -2,6 +2,9 @@ namespace OI.Glue.Models;
 
 public interface ICreateOrder
 {
+    public string? PoNumber { get; set; }
+    public string? Terms { get; set; }
+    public string? Via { get; set; }
     Guid CustomerId { get; set; }
     DateTime? OrderDate { get; set; }
     string? BillingAddress1 { get; set; }

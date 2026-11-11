@@ -1,5 +1,5 @@
-﻿using CrossCutting.Exceptions;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using OI.Common.Exceptions;
 using OI.Data.Contexts;
 using OI.Data.Helpers;
 using OI.Data.Translators;

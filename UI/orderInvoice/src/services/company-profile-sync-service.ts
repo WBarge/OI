@@ -74,6 +74,7 @@ export class CompanyProfileSyncService {
     return [
       config.companyName, config.companyLogoUrl, config.companyAddress, config.companyCity,
       config.companyState, config.companyZip, config.companyEmail, config.companyPhone,
+      config.companyContactName, config.companyContactEmail, config.companyContactPhone
     ].some((value) => !isEmpty(value));
   }
 
@@ -87,6 +88,9 @@ export class CompanyProfileSyncService {
     body.append('companyZip', config.companyZip);
     body.append('companyEmail', config.companyEmail);
     body.append('companyPhone', config.companyPhone);
+    body.append('companyContactName', config.companyContactName);
+    body.append('companyContactEmail', config.companyContactEmail);
+    body.append('companyContactPhone', config.companyContactPhone);
 
     const logoUrl = config.companyLogoUrl.trim();
     const resourceName = logoUrl.substring(logoUrl.lastIndexOf('/') + 1);   // everything after the last "/"

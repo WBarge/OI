@@ -1,6 +1,6 @@
-using CrossCutting.Exceptions;
-using CrossCutting.Extensions;
 using Microsoft.Extensions.Logging;
+using OI.Common.Exceptions;
+using OI.Common.Extensions.Comparison;
 using OI.Glue.Managers;
 using OI.Glue.Models;
 using OI.Glue.Repos;
@@ -204,6 +204,9 @@ internal class OrderManager(IOrderRepo orderRepo, ICustomerRepo customerRepo, IL
     /// </summary>
     private sealed class DefaultCreateOrder : ICreateOrder
     {
+        public string? PoNumber { get; set; } = string.Empty;
+        public string? Terms { get; set; }= string.Empty;
+        public string? Via { get; set; }= string.Empty;
         public Guid CustomerId { get; set; }
         public DateTime? OrderDate { get; set; }
         public string? BillingAddress1 { get; set; } = string.Empty;

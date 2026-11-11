@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Http;
-
 namespace OI.Reporting.Models;
 
 /// <summary>
@@ -15,6 +13,10 @@ public class CompanyProfileUploadRequest
     public string? CompanyZip { get; set; }
     public string? CompanyEmail { get; set; }
     public string? CompanyPhone { get; set; }
+    public string? CompanyContactName { get; set; }
+    public string? CompanyContactEmail { get; set; }
+    public string? CompanyContactPhone { get; set; }
+
 
     /// <summary>
     /// The name of the logo resource. Omitted when the company has no logo. When a logo is sent, this name is required and must be non-empty.

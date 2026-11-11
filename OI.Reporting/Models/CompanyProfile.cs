@@ -16,6 +16,9 @@ public class CompanyProfile : ICompanyProfile
     public string CompanyZip { get; init; } = string.Empty;
     public string CompanyEmail { get; init; } = string.Empty;
     public string CompanyPhone { get; init; } = string.Empty;
+    public string CompanyContactName { get; init; } = string.Empty;
+    public string CompanyContactEmail { get; init; } = string.Empty;
+    public string CompanyContactPhone { get; init; } = string.Empty;
 
     /// <summary>The file name of the logo: everything after the last "/" in the UI's companyLogoUrl. Empty when there is no logo.</summary>
     public string LogoResourceName { get; init; } = string.Empty;

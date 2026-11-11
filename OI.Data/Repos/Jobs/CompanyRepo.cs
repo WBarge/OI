@@ -2,7 +2,6 @@
 using OI.Data.Contexts;
 using OI.Data.Model.Jobs;
 using OI.Data.Translators;
-using OI.Data.Translators.Internal_Models;
 using OI.Glue.Models;
 using OI.Glue.Repos;
 
@@ -12,7 +11,7 @@ internal class CompanyRepo(OiReportingDbContext serviceDbContext): BaseEfRepo<Oi
 {
     public ICompanyProfile? GetCompanyProfile()
     {
-        ConfiguredCompany? configuredCompany = serviceDbContext.CompanyConfiguration
+        ConfiguredCompany? configuredCompany = ((OiReportingDbContext)ServiceDbContext).CompanyConfiguration
             .Include(c => c.Result)
             .FirstOrDefault();
 
@@ -35,6 +34,9 @@ internal class CompanyRepo(OiReportingDbContext serviceDbContext): BaseEfRepo<Oi
                 CompanyZip = profile.CompanyZip,
                 CompanyEmail = profile.CompanyEmail,
                 CompanyPhone = profile.CompanyPhone,
+                CompanyContactName = profile.CompanyContactName,
+                CompanyContactEmail = profile.CompanyContactEmail,
+                CompanyContactPhone = profile.CompanyContactPhone,
                 Result = profile.LogoFile != null
                     ? new StoredFile { FileName = profile.LogoResourceName, FileContents = profile.LogoFile }
                     : null
@@ -51,14 +53,19 @@ internal class CompanyRepo(OiReportingDbContext serviceDbContext): BaseEfRepo<Oi
             existingCompany.CompanyZip = profile.CompanyZip;
             existingCompany.CompanyEmail = profile.CompanyEmail;
             existingCompany.CompanyPhone = profile.CompanyPhone;
+            existingCompany.CompanyContactName = profile.CompanyContactName;
+            existingCompany.CompanyContactEmail = profile.CompanyContactEmail;
+            existingCompany.CompanyContactPhone = profile.CompanyContactPhone;
 
             if (profile.LogoFile != null)
             {
-                existingCompany.Result = new StoredFile
+                existingCompany.Result ??= new StoredFile
                 {
-                    FileName = profile.LogoResourceName, 
-                    FileContents = profile.LogoFile
+                    FileName = string.Empty,
+                    FileContents = []
                 };
+                existingCompany.Result.FileName = profile.LogoResourceName;
+                existingCompany.Result.FileContents = profile.LogoFile;
             }
             Update(existingCompany);
         }

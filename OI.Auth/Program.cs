@@ -1,6 +1,6 @@
 using System.Threading.RateLimiting;
 using OI.Auth.Utilities;
-using OI.Common.Middleware;
+using OI.Integration.Middleware;
 using OI.Data.DBSchemaHelper;
 using OI.Glue.Managers;
 using OI.Auth.Security;

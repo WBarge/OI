@@ -34,7 +34,17 @@ internal class ConfiguredCompanyConfig : IEntityTypeConfiguration<ConfiguredComp
             .HasMaxLength(256);
         builder.Property(c => c.CompanyPhone)
             .HasColumnName("CompanyPhone")
-            .HasMaxLength(300);
+            .HasMaxLength(20);
+        builder.Property(c => c.CompanyContactName)
+            .HasColumnName("CompanyContactName")
+            .HasMaxLength(120);
+        builder.Property(c => c.CompanyContactEmail)
+            .HasColumnName("CompanyContactEmail")
+            .HasMaxLength(256);
+        builder.Property(c => c.CompanyContactPhone)
+            .HasColumnName("CompanyContactPhone")
+            .HasMaxLength(20);
+
         builder.HasOne(c => c.Result)
             .WithOne()
             .HasForeignKey<ConfiguredCompany>(c => c.ResultId)

@@ -1,5 +1,4 @@
 using OI.Glue.Models;
-using OI.Reporting.Models;
 
 namespace OI.Reporting.Services;
 

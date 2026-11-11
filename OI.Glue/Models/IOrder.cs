@@ -21,6 +21,23 @@ public interface IOrder
     /// Gets or sets the completed date. The date when the order was completed or fulfilled.
     /// </summary>
     DateTime CompletedDate { get; set; }
+    
+    /// <summary>
+    /// Gets or sets the purchase order number associated with the order.
+    /// This number is typically provided by the customer for tracking purposes.
+    /// </summary>
+    public string? PoNumber { get; set; }
+    
+    /// <summary>
+    /// Gets or sets the payment terms associated with the order. 
+    /// </summary>
+    public string? Terms { get; set; }
+    
+    /// <summary>
+    /// Gets or sets the method which the order was shipped.
+    /// </summary>
+    public string? Via { get; set; }
+
 
     /// <summary>
     /// Gets or sets the customer identifier. Foreign key to the customer who placed the order.

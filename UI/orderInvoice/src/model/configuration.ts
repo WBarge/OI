@@ -15,4 +15,7 @@ export class Configuration {
   public companyZip: string = "";
   public companyEmail: string = "";
   public companyPhone: string = "";
+  public companyContactName: string = "";
+  public companyContactEmail: string = "";
+  public companyContactPhone: string = "";
 }

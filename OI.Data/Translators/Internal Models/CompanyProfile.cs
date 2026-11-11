@@ -11,6 +11,9 @@ internal class CompanyProfile : ICompanyProfile
     public string CompanyZip { get; init; }
     public string CompanyEmail { get; init; }
     public string CompanyPhone { get; init; }
+    public string CompanyContactName { get; init; }
+    public string CompanyContactEmail { get; init; }
+    public string CompanyContactPhone { get; init; }
     public string LogoResourceName { get; init; }
     public byte[] LogoFile { get; init; }
 }

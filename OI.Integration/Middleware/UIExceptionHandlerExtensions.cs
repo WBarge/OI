@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Builder;
 
-namespace OI.Common.Middleware;
+namespace OI.Integration.Middleware;
 
 /// <summary>
 /// Class UiExceptionHandlerExtensions.

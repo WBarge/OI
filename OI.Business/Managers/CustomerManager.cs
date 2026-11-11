@@ -1,9 +1,9 @@
 using Microsoft.Extensions.Logging;
+using OI.Common.Exceptions;
+using OI.Common.Extensions.Comparison;
 using OI.Glue.Managers;
 using OI.Glue.Models;
 using OI.Glue.Repos;
-using CrossCutting.Exceptions;
-using CrossCutting.Extensions;
 
 namespace OI.Business.Managers;
 

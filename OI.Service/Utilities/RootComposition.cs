@@ -1,5 +1,6 @@
 ﻿using OI.Business;
 using OI.Data;
+using OI.Integration.Security;
 
 namespace OI.Service.Utilities;
 
@@ -18,6 +19,10 @@ public static class RootComposition
     {
         DataDi.ConfigureServiceDi(services, configuration);
         BusinessDi.ConfigureServiceDi(services);
+        
+        // Lets controllers and managers ask who is calling: inject IClientContext (OI.Glue.Security).
+        // The middleware that fills it in is added in Program.cs with app.UseClientContext().
+        services.AddClientContext();
     }   
 
 }

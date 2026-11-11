@@ -1,8 +1,8 @@
-using CrossCutting.Exceptions;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
+using OI.Common.Exceptions;
 using OI.Data.Contexts;
 using OI.Data.Model.Orders;
 using OI.Data.Repos.Orders;

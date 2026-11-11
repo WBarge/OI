@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.SignalR;
-using OI.Common.Middleware;
+using OI.Integration.Middleware;
 using OI.Hub.Hubs;
 using OI.Integration.Security;
 

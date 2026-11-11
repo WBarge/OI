@@ -14,9 +14,11 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.14" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\OI.Common\OI.Common.csproj" />
     <ProjectReference Include="..\OI.Glue\OI.Glue.csproj" />
   </ItemGroup>
 

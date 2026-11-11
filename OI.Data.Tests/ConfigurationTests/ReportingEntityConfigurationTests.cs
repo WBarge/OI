@@ -70,7 +70,7 @@ public class ReportingEntityConfigurationTests
     [TestCase(typeof(ConfiguredCompany), "CompanyState", 20)]
     [TestCase(typeof(ConfiguredCompany), "CompanyZip", 11)]
     [TestCase(typeof(ConfiguredCompany), "CompanyEmail", 256)]
-    [TestCase(typeof(ConfiguredCompany), "CompanyPhone", 300)]
+    [TestCase(typeof(ConfiguredCompany), "CompanyPhone", 20)]
     [TestCase(typeof(JobResult), "Name", 300)]
     [TestCase(typeof(StoredFile), "FileName", 260)]
     [Description("Each text column should have its expected maximum length")]

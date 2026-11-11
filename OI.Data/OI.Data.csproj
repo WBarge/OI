@@ -10,12 +10,12 @@
     <!-- Only addition: Identity's EF Core stores (users, roles, claims). No ASP.NET Core framework reference needed. -->
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.14" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.14" />
-    <PackageReference Include="My.CrossCutting.Libraries" Version="1.0.0.2" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.14" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\OI.Common\OI.Common.csproj" />
     <ProjectReference Include="..\OI.Glue\OI.Glue.csproj" />
   </ItemGroup>
 

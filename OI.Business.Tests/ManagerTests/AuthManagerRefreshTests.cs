@@ -1,7 +1,6 @@
 using FluentAssertions;
 using Moq;
 using OI.Glue.Models;
-using OI.Glue.Repos;
 
 namespace OI.Business.Tests.ManagerTests;
 

@@ -32,6 +32,9 @@ public class CompanyRepoTests
         profile.SetupGet(p => p.CompanyZip).Returns("85001");
         profile.SetupGet(p => p.CompanyEmail).Returns("orders@acme.test");
         profile.SetupGet(p => p.CompanyPhone).Returns("602-555-0100");
+        profile.SetupGet(p => p.CompanyContactName).Returns("Tester");
+        profile.SetupGet(p => p.CompanyContactPhone).Returns("602-555-0100");
+        profile.SetupGet(p => p.CompanyContactEmail).Returns("contact@acme.test");
         profile.SetupGet(p => p.LogoResourceName).Returns(logo is null ? string.Empty : logoName);
         profile.SetupGet(p => p.LogoFile).Returns(logo!);
         return profile.Object;

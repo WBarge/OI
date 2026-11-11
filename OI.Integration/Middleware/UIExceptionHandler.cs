@@ -1,11 +1,12 @@
-﻿using CrossCutting.Exceptions;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using OI.Common.Models.Results;
+using OI.Common.Exceptions;
+using OI.Common.Models;
+using OI.Glue.Models;
 
-namespace OI.Common.Middleware;
+namespace OI.Integration.Middleware;
 
 /// <summary>
 /// Class UiExceptionHandler.

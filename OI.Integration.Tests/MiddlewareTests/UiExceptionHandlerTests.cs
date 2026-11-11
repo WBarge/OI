@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using CrossCutting.Exceptions;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
@@ -7,10 +6,12 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Newtonsoft.Json;
-using OI.Common.Middleware;
-using OI.Common.Models.Results;
+using OI.Common.Exceptions;
+using OI.Common.Models;
+using OI.Glue.Models;
+using OI.Integration.Middleware;
 
-namespace OI.Common.Tests.MiddlewareTests;
+namespace OI.Integration.Tests.MiddlewareTests;
 
 [TestFixture, Description("Tests for UiExceptionHandler")]
 public class UiExceptionHandlerTests

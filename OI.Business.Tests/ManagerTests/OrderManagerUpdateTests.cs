@@ -1,8 +1,8 @@
-﻿using CrossCutting.Exceptions;
-using FluentAssertions;
+﻿using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using OI.Business.Managers;
+using OI.Common.Exceptions;
 using OI.Glue.Models;
 using OI.Glue.Repos;
 

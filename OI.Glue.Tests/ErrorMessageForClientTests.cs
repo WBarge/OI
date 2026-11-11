@@ -1,8 +1,8 @@
 ﻿using FluentAssertions;
 using Newtonsoft.Json;
-using OI.Common.Models.Results;
+using OI.Glue.Models;
 
-namespace OI.Common.Tests.ModelTests;
+namespace OI.Glue.Tests;
 
 [TestFixture, Description("Tests for ErrorMessageForClient")]
 public class ErrorMessageForClientTests

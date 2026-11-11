@@ -1,5 +1,5 @@
-using CrossCutting.Exceptions;
 using Microsoft.EntityFrameworkCore;
+using OI.Common.Exceptions;
 using OI.Data.Contexts;
 using OI.Data.Helpers;
 using OI.Data.Model.Orders;
@@ -53,6 +53,9 @@ internal class OrderRepo(OiServiceDbContext serviceDbContext) : BaseEfRepo<OiSer
             OrderDate = request.OrderDate ?? DateTime.UtcNow,
             CompletedDate = null,
             IsPending = isPending,
+            PoNumber = request.PoNumber,
+            Terms = request.Terms,
+            Via = request.Via,
             CustomerId = request.CustomerId,
             BillingAddress1 = request.BillingAddress1,
             BillingAddress2 = request.BillingAddress2,
@@ -154,6 +157,9 @@ internal class OrderRepo(OiServiceDbContext serviceDbContext) : BaseEfRepo<OiSer
         }
 
         order.OrderDate = request.OrderDate ?? DateTime.UtcNow;
+        order.PoNumber = request.PoNumber;
+        order.Terms = request.Terms;
+        order.Via = request.Via;
         order.CustomerId = request.CustomerId;
         order.BillingAddress1 = request.BillingAddress1;
         order.BillingAddress2 = request.BillingAddress2;
