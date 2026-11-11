@@ -2,7 +2,7 @@ import { Component, inject, Input, input, signal,ChangeDetectionStrategy } from 
 import { FormsModule } from '@angular/forms';
 
 import { Address } from '../../model/address';
-import { State } from '../../model/results/state';
+import { DropDownValues } from '../../model/results/state';
 
 import { StateService } from '../../services/state-service';
 
@@ -35,10 +35,10 @@ export class AddressPanel  {
   readonly isReadOnly = input(false);
   private stateService:StateService = inject(StateService);
 
-  public states = signal<State[]>([]);
+  public states = signal<DropDownValues[]>([]);
 
   constructor() {
-    this.stateService.getStates().subscribe((results: State[]) => this.states.set(results));
+    this.stateService.getStates().subscribe((results: DropDownValues[]) => this.states.set(results));
   }
 
 }

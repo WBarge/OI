@@ -25,6 +25,7 @@ import { Product } from '../../model/results/product';
 import { CustomerService } from '../../services/customer-service';
 
 import { FieldsetModule } from 'primeng/fieldset';
+import { SelectModule } from 'primeng/select';
 import { DatePickerModule } from 'primeng/datepicker';
 import { PanelModule } from 'primeng/panel';
 import { InputTextModule } from 'primeng/inputtext';
@@ -40,6 +41,8 @@ import { ProductSelection } from '../../components/product-selection/product-sel
 import { OrdersService } from '../../services/orders-service';
 import { Order } from '../../model/results/order';
 import { NotificationService } from '../../utils/notification-service';
+import { TermsService } from '../../services/terms-service';
+import { DropDownValues } from '../../model/results/state';
 
 
 @Component({
@@ -47,6 +50,7 @@ import { NotificationService } from '../../utils/notification-service';
     CustomerSelection,
     PhoneFormatPipe,
     FieldsetModule,
+    SelectModule,
     DatePickerModule,
     CurrencyPipe,
     PanelModule,
@@ -69,6 +73,7 @@ export class OrderInvoice implements OnInit {
 
   private configService = inject(ConfigService);
   private customerService = inject(CustomerService);
+  private termsService = inject(TermsService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private orderService = inject(OrdersService);
@@ -80,6 +85,10 @@ export class OrderInvoice implements OnInit {
   public oiMode: string = "Order";
   public showCustomerDialog:boolean = false;
   public showProductDialog:boolean = false;
+
+  public termsSelected: string = "";
+  public poNumber: string = "";
+  public via: string = "";
 
   public orderId:string|null = null;
   public orderNumber: string = "";
@@ -97,8 +106,10 @@ export class OrderInvoice implements OnInit {
   public total: number = 0;
 
   public mode = signal<OrderMode>(OrderMode.New);
-
+  public terms = signal<DropDownValues[]>([]);
+  readonly isReadOnlySig = signal(false);
   constructor() {
+    this.termsService.getTerms().subscribe((results: string[]) => this.processTermsReusults(results));
   }
 
   ngOnInit() {
@@ -110,10 +121,13 @@ export class OrderInvoice implements OnInit {
       // Determine mode based on the presence of the ID
       if (isReadOnlyRoute) {
         this.mode.set(OrderMode.View);
+        this.isReadOnlySig.set(true);
       }else  if (this.orderId) {
         this.mode.set(OrderMode.Edit);
+        this.isReadOnlySig.set(false);
       } else {
         this.mode.set(OrderMode.New);
+        this.isReadOnlySig.set(false);
       }
       if (this.orderId != null) {
         this.loadOrder(null);
@@ -122,6 +136,7 @@ export class OrderInvoice implements OnInit {
 
   }
 
+  //TODO: Consider refactoring the consumers of this to use the readonly signal
   public get isReadOnly(): boolean {
     return this.mode() === OrderMode.View;
   }
@@ -132,6 +147,14 @@ export class OrderInvoice implements OnInit {
 
   public get canSubmit():boolean{
     return (!this.customerId) === false && this.items.length > 0
+  }
+
+  public processTermsReusults(terms:string[]){
+    if (terms.length > 0){
+      const termObjects:DropDownValues[] = terms.map(term => ({ name: term, code: term }));
+      this.terms.set(termObjects);
+      this.termsSelected = termObjects[0].code; // Set the first term as selected by default
+    }
   }
 
   onQuantityChange(event:any,item:any){
@@ -251,6 +274,9 @@ export class OrderInvoice implements OnInit {
       order.orderNumber = this.orderNumber;
     }
     order.orderDate = this.orderDate;
+    order.poNumber = this.poNumber;
+    order.terms = this.termsSelected;
+    order.via = this.via;
     order.customerId = this.customerId;
     order.orderItems = this.items;
     order.billingAddress1 = this.billingAddress.address1;

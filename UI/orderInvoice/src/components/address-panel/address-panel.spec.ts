@@ -5,7 +5,7 @@ import { MessageService } from 'primeng/api';
 import { vi } from 'vitest';
 import { AddressPanel } from './address-panel';
 import { Address } from '../../model/address';
-import { State } from '../../model/results/state';
+import { DropDownValues } from '../../model/results/state';
 import { ConfigService } from '../../services/config-service';
 import { Configuration } from '../../model/configuration';
 
@@ -18,7 +18,7 @@ describe('AddressPanel', () => {
   const apiUrl = 'https://oi.test/api/';
   const statesUrl = `${apiUrl}States`;
   // deliberately out of order: the StateService is responsible for sorting them
-  const serverStates: State[] = [
+  const serverStates: DropDownValues[] = [
     { name: 'Texas', code: 'TX' },
     { name: 'Arizona', code: 'AZ' },
     { name: 'Oregon', code: 'OR' },

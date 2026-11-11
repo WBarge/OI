@@ -6,7 +6,7 @@ import { vi } from 'vitest';
 import { StateService } from './state-service';
 import { ConfigService } from './config-service';
 import { Configuration } from '../model/configuration';
-import { State } from '../model/results/state';
+import { DropDownValues } from '../model/results/state';
 
 describe('StateService', () => {
   let service: StateService;
@@ -68,7 +68,7 @@ describe('StateService', () => {
 
     it('should return the states sorted by name', () => {
       const result = vi.fn();
-      const unsorted: State[] = [
+      const unsorted: DropDownValues[] = [
         { name: 'Texas', code: 'TX' },
         { name: 'Arizona', code: 'AZ' },
         { name: 'Oregon', code: 'OR' }
@@ -87,7 +87,7 @@ describe('StateService', () => {
 
     it('should leave an already sorted list in the same order', () => {
       const result = vi.fn();
-      const sorted: State[] = [
+      const sorted: DropDownValues[] = [
         { name: 'Alabama', code: 'AL' },
         { name: 'Alaska', code: 'AK' },
         { name: 'Arizona', code: 'AZ' }
@@ -109,7 +109,7 @@ describe('StateService', () => {
         { name: 'Alaska', code: 'AK' }
       ]);
 
-      expect((result.mock.calls[0][0] as State[]).map(s => s.code)).toEqual(['AK', 'UT', 'WY']);
+      expect((result.mock.calls[0][0] as DropDownValues[]).map(s => s.code)).toEqual(['AK', 'UT', 'WY']);
     });
 
     it('should keep the code with its name when sorting', () => {
@@ -121,7 +121,7 @@ describe('StateService', () => {
         { name: 'Maine', code: 'ME' }
       ]);
 
-      const states = result.mock.calls[0][0] as State[];
+      const states = result.mock.calls[0][0] as DropDownValues[];
       expect(states[0]).toEqual({ name: 'Maine', code: 'ME' });
       expect(states[1]).toEqual({ name: 'Nevada', code: 'NV' });
     });
@@ -136,7 +136,7 @@ describe('StateService', () => {
         { name: 'Berlin', code: 'BE' }
       ]);
 
-      expect((result.mock.calls[0][0] as State[]).map(s => s.name)).toEqual(['Álvaro', 'Berlin', 'Zacatecas']);
+      expect((result.mock.calls[0][0] as DropDownValues[]).map(s => s.name)).toEqual(['Álvaro', 'Berlin', 'Zacatecas']);
     });
 
     it('should keep entries with the same name', () => {
@@ -163,7 +163,7 @@ describe('StateService', () => {
 
     it('should not mutate the array that came back from the server', () => {
       const result = vi.fn();
-      const fromServer: State[] = [
+      const fromServer: DropDownValues[] = [
         { name: 'Texas', code: 'TX' },
         { name: 'Arizona', code: 'AZ' }
       ];

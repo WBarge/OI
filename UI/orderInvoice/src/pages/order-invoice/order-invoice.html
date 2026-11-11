@@ -39,7 +39,32 @@
     </div>
   }
 }
-
+<p-divider />
+  <div class="detailsRow">
+    <span >
+      Details:
+    </span>
+    <span class="fieldOnTop">
+      <label for="poNumber">PO Number</label>
+      <input id="poNumber" type="text" pInputText  [(ngModel)]="poNumber" (readOnly)="isReadOnlySig()" />
+    </span>
+    <span class="fieldOnTop">
+      <label for="terms">Terms</label>
+      <p-select
+          id="terms"
+          [options]="terms()"
+          optionLabel="name"
+          optionValue="code"
+          placeholder="Select Terms"
+          [(ngModel)]="termsSelected"
+          (readOnly)="isReadOnlySig()"
+      />
+    </span>
+    <span class="fieldOnTop">
+      <label for="shippingVia">Shipping Via</label>
+      <input id="shippingVia" type="text" pInputText  [(ngModel)]="via" (readOnly)="isReadOnlySig()"/>
+    </span>
+  </div>
 <p-divider />
 <p-table id="itemsTable" [value]="items" (dblclick)="onOrderItemsDoubleClick($event)">
   <ng-template #header>

@@ -23,6 +23,18 @@
   justify-self: center;
 }
 
+.detailsRow {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;      /* wraps on narrow screens */
+  gap: 1.5rem;
+}
+
+.fieldOnTop{
+  display:flex;
+  flex-direction: column;
+}
+
 .fieldOnSide{
   display:flex;
   flex-direction: row;
