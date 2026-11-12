@@ -19,7 +19,7 @@ internal class OrderRepo(OiServiceDbContext serviceDbContext) : BaseEfRepo<OiSer
     /// <returns></returns>
     public async Task<IOrder?> GetOrderAsync(Guid orderId, CancellationToken token = default)
     {
-        Order? result = await ServiceDbContext.Orders
+        Order? result = await DbContext.Orders
             .Where(o => o.Id == orderId)
             .Include(o => o.Customer)
             .Include(o => o.OrderItems)
@@ -35,11 +35,11 @@ internal class OrderRepo(OiServiceDbContext serviceDbContext) : BaseEfRepo<OiSer
     /// <returns></returns>
     public async Task<int> GetNextOrderNumberAsync(CancellationToken cancellationToken = default)
     {
-        OrderCounter counter = await ServiceDbContext.OrderCounters.FirstAsync(cancellationToken);
+        OrderCounter counter = await DbContext.OrderCounters.FirstAsync(cancellationToken);
         int orderNumber = counter.NextOrderNumber;
         counter.NextOrderNumber++;
         counter.Modified = DateTime.UtcNow;
-        ServiceDbContext.OrderCounters.Update(counter);
+        DbContext.OrderCounters.Update(counter);
         await SaveAsync(cancellationToken);
         return orderNumber;
     }
@@ -89,7 +89,7 @@ internal class OrderRepo(OiServiceDbContext serviceDbContext) : BaseEfRepo<OiSer
         // The customer is not part of the insert, so load it for the returned order.
         if (order.CustomerId.HasValue && order.Customer == null)
         {
-            await ServiceDbContext.Entry(order).Reference(o => o.Customer).LoadAsync(cancellationToken);
+            await DbContext.Entry(order).Reference(o => o.Customer).LoadAsync(cancellationToken);
         }
 
         return order.Translate()!;
@@ -109,7 +109,7 @@ internal class OrderRepo(OiServiceDbContext serviceDbContext) : BaseEfRepo<OiSer
         pageSize = Math.Max(pageSize, 1);
         int skip = (int)Math.Min((long)pageSize * (pageNumber - 1), int.MaxValue);
 
-        IQueryable<Order> filtered = await ServiceDbContext.Orders.BuildFilterQueryAsync(filterCriteria!, cancellationToken);
+        IQueryable<Order> filtered = await DbContext.Orders.BuildFilterQueryAsync(filterCriteria!, cancellationToken);
         List<IOrderSearch> orders = await filtered
             .Include(o=>o.Customer)
             .Include(o=>o.OrderItems)
@@ -132,7 +132,7 @@ internal class OrderRepo(OiServiceDbContext serviceDbContext) : BaseEfRepo<OiSer
     /// <returns></returns>
     public async Task<long> GetOrdersCountAsync(Dictionary<string, IFilterMetaData[]>? filterCriteria = null,CancellationToken cancellationToken = default)
     {
-        IQueryable<Order> filtered = await ServiceDbContext.Orders.BuildFilterQueryAsync(filterCriteria!, cancellationToken);
+        IQueryable<Order> filtered = await DbContext.Orders.BuildFilterQueryAsync(filterCriteria!, cancellationToken);
         return await filtered.LongCountAsync(cancellationToken);
     }
 
@@ -145,7 +145,7 @@ internal class OrderRepo(OiServiceDbContext serviceDbContext) : BaseEfRepo<OiSer
     /// <exception cref="RequiredObjectException"></exception>
     public async Task UpdateOrder(IUpdateOrder request, CancellationToken cancellationToken = default)
     {
-        Order? order = await ServiceDbContext.Orders
+        Order? order = await DbContext.Orders
             .Where(o => o.Id == request.Id)
             .Include(o => o.Customer)
             .Include(o => o.OrderItems)
@@ -179,7 +179,7 @@ internal class OrderRepo(OiServiceDbContext serviceDbContext) : BaseEfRepo<OiSer
 
         if (request.OrderItems != null && request.OrderItems.Any())
         {
-            //List<OrderItem> orderItems = await this.ServiceDbContext.OrderItems
+            //List<OrderItem> orderItems = await this.DbContext.OrderItems
             //    .Where(oi => oi.OrderId == order.Id)
             //    .ToListAsync<OrderItem>(cancellationToken);
             order.OrderItems ??= [];
@@ -195,7 +195,7 @@ internal class OrderRepo(OiServiceDbContext serviceDbContext) : BaseEfRepo<OiSer
                 }
                 else
                 {
-                    await ServiceDbContext.OrderItems.AddAsync(convertedItem, cancellationToken);
+                    await DbContext.OrderItems.AddAsync(convertedItem, cancellationToken);
                 }
             }
         }
@@ -203,7 +203,7 @@ internal class OrderRepo(OiServiceDbContext serviceDbContext) : BaseEfRepo<OiSer
         await SaveAsync(cancellationToken);
         if (request.OrderItems!.Count() != order.OrderItems!.Count())
         {
-            order = await ServiceDbContext.Orders
+            order = await DbContext.Orders
                 .Where(o => o.Id == request.Id)
                 .Include(o => o.Customer)
                 .Include(o => o.OrderItems)

@@ -37,7 +37,7 @@ internal class CustomerRepo(OiServiceDbContext serviceDbContext) : BaseEfRepo<Oi
         pageSize = Math.Max(pageSize, 1);
         int skip = (int)Math.Min((long)pageSize * (pageNumber - 1), int.MaxValue);
 
-        IQueryable<Customer> filtered = await ServiceDbContext.Customers.BuildFilterQueryAsync(filterCriteria!, cancellationToken);
+        IQueryable<Customer> filtered = await DbContext.Customers.BuildFilterQueryAsync(filterCriteria!, cancellationToken);
         List<CustomerSearch> customers = await filtered
             .OrderBy(c => c.LastName)
             .ThenBy(c => c.FirstName)
@@ -54,7 +54,7 @@ internal class CustomerRepo(OiServiceDbContext serviceDbContext) : BaseEfRepo<Oi
     /// </summary>
     public async Task<long> GetCustomerCountAsync(Dictionary<string, IFilterMetaData[]>? filterCriteria = null,CancellationToken cancellationToken = default)
     {
-        IQueryable<Customer> filtered = await ServiceDbContext.Customers.BuildFilterQueryAsync(filterCriteria!, cancellationToken);
+        IQueryable<Customer> filtered = await DbContext.Customers.BuildFilterQueryAsync(filterCriteria!, cancellationToken);
         return await filtered.LongCountAsync(cancellationToken);
     }
 

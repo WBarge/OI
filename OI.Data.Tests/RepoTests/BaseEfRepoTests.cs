@@ -46,7 +46,7 @@ public class BaseEfRepoTests
     [SetUp]
     public void SetUp() => _db = new IsolatedDatabase();
 
-    [Test, Description("The constructor should throw when the ServiceDbContext is null")]
+    [Test, Description("The constructor should throw when the DbContext is null")]
     public void Constructor_Throws_WhenDbContextIsNull()
     {
         Action act = () => _ = new CustomerTestRepo(null!);

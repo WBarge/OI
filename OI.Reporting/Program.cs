@@ -1,4 +1,5 @@
 
+using Hangfire;
 using OI.Integration.Middleware;
 using OI.Data.DBSchemaHelper;
 using OI.Reporting.Utilities;
@@ -25,6 +26,18 @@ namespace OI.Reporting
             builder.Services.HandleDbSchema();
             builder.Services.AddOiJwtBearer(builder.Configuration);
             builder.Services.AddOiAuthorization();
+
+            builder.Services.AddHangfire(config =>
+            {
+                string hangFireConnectionString = builder.Configuration["HangFireConnectionstring"] ?? throw new InvalidOperationException("Connection to hangfire not found.");
+
+                config.SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+                    .UseSimpleAssemblyNameTypeSerializer()
+                    .UseRecommendedSerializerSettings()
+                    .UseSqlServerStorage(hangFireConnectionString);
+            });
+            
+            builder.Services.AddHangfireServer();
 
 
             WebApplication app = builder.Build();
@@ -70,6 +83,8 @@ namespace OI.Reporting
 
 
             app.UseHttpsRedirection();
+
+            app.UseHangfireDashboard();
 
             app.UseAuthentication();
             app.UseAuthorization();

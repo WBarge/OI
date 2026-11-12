@@ -11,7 +11,7 @@ internal class CompanyRepo(OiReportingDbContext serviceDbContext): BaseEfRepo<Oi
 {
     public ICompanyProfile? GetCompanyProfile()
     {
-        ConfiguredCompany? configuredCompany = ((OiReportingDbContext)ServiceDbContext).CompanyConfiguration
+        ConfiguredCompany? configuredCompany = ((OiReportingDbContext)DbContext).CompanyConfiguration
             .Include(c => c.Result)
             .FirstOrDefault();
 

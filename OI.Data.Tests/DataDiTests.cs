@@ -29,7 +29,7 @@ public class DataDiTests
                 d.ImplementationType == implementationType && d.Lifetime == ServiceLifetime.Scoped);
     }
 
-    [Test, Description("ConfigureServiceDi should register the ServiceDbContext")]
+    [Test, Description("ConfigureServiceDi should register the DbContext")]
     public void ConfigureDi_RegistersDbContext()
     {
         ServiceCollection services = new();
@@ -43,7 +43,7 @@ public class DataDiTests
     [TestCase(typeof(IStateRepo), typeof(StateRepo))]
     [TestCase(typeof(IOrderRepo), typeof(OrderRepo))]
     [TestCase(typeof(ICustomerRepo), typeof(CustomerRepo))]
-    [Description("Each repository should be resolvable from a scope, with its ServiceDbContext")]
+    [Description("Each repository should be resolvable from a scope, with its DbContext")]
     public void ConfigureDi_RepositoriesCanBeResolved(Type serviceType, Type implementationType)
     {
         ServiceCollection services = new();
@@ -56,7 +56,7 @@ public class DataDiTests
         resolved.Should().BeOfType(implementationType);
     }
 
-    [Test, Description("The repositories resolved in one scope should share one ServiceDbContext, so a manager's repos see each other's changes")]
+    [Test, Description("The repositories resolved in one scope should share one DbContext, so a manager's repos see each other's changes")]
     public void ConfigureDi_RepositoriesInOneScopeShareTheDbContext()
     {
         ServiceCollection services = new();

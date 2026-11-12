@@ -7,7 +7,6 @@ using Microsoft.Extensions.Hosting;
 using Moq;
 using Newtonsoft.Json;
 using OI.Common.Exceptions;
-using OI.Common.Models;
 using OI.Glue.Models;
 using OI.Integration.Middleware;
 

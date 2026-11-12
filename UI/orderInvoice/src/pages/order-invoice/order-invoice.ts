@@ -107,7 +107,7 @@ export class OrderInvoice implements OnInit {
 
   public mode = signal<OrderMode>(OrderMode.New);
   public terms = signal<DropDownValues[]>([]);
-  readonly isReadOnlySig = signal(false);
+
   constructor() {
     this.termsService.getTerms().subscribe((results: string[]) => this.processTermsReusults(results));
   }
@@ -121,13 +121,10 @@ export class OrderInvoice implements OnInit {
       // Determine mode based on the presence of the ID
       if (isReadOnlyRoute) {
         this.mode.set(OrderMode.View);
-        this.isReadOnlySig.set(true);
       }else  if (this.orderId) {
         this.mode.set(OrderMode.Edit);
-        this.isReadOnlySig.set(false);
       } else {
         this.mode.set(OrderMode.New);
-        this.isReadOnlySig.set(false);
       }
       if (this.orderId != null) {
         this.loadOrder(null);

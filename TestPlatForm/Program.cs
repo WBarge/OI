@@ -7,7 +7,6 @@ using OI.Data;
 using OI.Glue.Managers;
 using OI.Glue.Models;
 using OI.Reporting.Services;
-using QuestPDF.Companion;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -16,9 +15,8 @@ namespace TestPlatForm
 {
     internal class Program
     {
-        private static Provider _provider;
-        private static Customer _customer;
-        private static InvoiceViewModel _invoice;
+        private static ICompanyProfile? _companyProfile = null;
+        private static IOrder? _order = null;
 
         static async Task Main(string[] args)
         {
@@ -59,10 +57,10 @@ namespace TestPlatForm
         private static async Task BuildDataModel(IServiceScope scope)
         {
             ICompanyProfileStore companyProfileStore = scope.ServiceProvider.GetRequiredService<ICompanyProfileStore>();
-            ICompanyProfile? profile = companyProfileStore.Current;
-            if (profile != null)
+            _companyProfile = companyProfileStore.Current;
+            if (_companyProfile != null)
             {
-                Console.WriteLine($"Company Profile Loaded: {profile.CompanyName}");
+                Console.WriteLine($"Company Profile Loaded: {_companyProfile.CompanyName}");
             }
             else
             {
@@ -70,24 +68,12 @@ namespace TestPlatForm
                 return;
             }
 
-            _provider = new Provider
-            {
-                Id = Guid.NewGuid(), 
-                Name = profile.CompanyName, 
-                Address = profile.CompanyAddress, 
-                Phone = profile.CompanyPhone, 
-                Email = profile.CompanyEmail,
-                ContactName = profile.CompanyContactName,
-                ContactPhone = profile.CompanyContactPhone,
-                ContactEmail = profile.CompanyContactEmail,
-                Logo = profile.LogoFile
-            };
-
+            
             IOrderManager orderManager = scope.ServiceProvider.GetRequiredService<IOrderManager>();
-            IOrder? order = await orderManager.GetOrderByIdAsync(Guid.Parse("354AA2D8-0DB1-4731-B9A9-0BFEBE503CD7"));
-            if (order != null)
+            _order = await orderManager.GetOrderByIdAsync(Guid.Parse("354AA2D8-0DB1-4731-B9A9-0BFEBE503CD7"));
+            if (_order != null)
             {
-                Console.WriteLine($"Order Loaded: {order.OrderNumber}");
+                Console.WriteLine($"Order Loaded: {_order.OrderNumber}");
             }
             else
             {
@@ -95,57 +81,13 @@ namespace TestPlatForm
                 return;
             }
 
-            ICustomer? dbCustomer = order.Customer;
-            if (dbCustomer == null)
-            {
-                Console.WriteLine("No Customer found for the order.");
-                return;
-            }
-
-
-            _customer = new Customer
-            {
-                Id = dbCustomer.Id, 
-                Name = dbCustomer.FirstName + " " + dbCustomer.LastName, 
-                Address = order.BillingAddress1 + " " + order.BillingAddress2 ?? "" + ", " + order.BillingCity + ", " + order.BillingStateCode + " " + order.BillingZipCode,
-                Phone = dbCustomer.PhoneNumber
-            };
-            _invoice = new InvoiceViewModel
-            {
-                Provider = _provider, 
-                Customer = _customer, 
-                InvoiceNumber = order.OrderNumber.ToString(), 
-                InvoiceDate = order.OrderDate,
-                Items = []
-            };
-            const int MULTIPLE = 30;
-            for (int i = 0; i < MULTIPLE; i++)
-            {
-                
-                foreach (IOrderItem orderItem in order.OrderItems)
-                {
-                    _invoice.Items.Add(new InvoiceItemViewModel
-                        {
-                            Id = orderItem.Id, 
-                            Service = new ProviderService
-                            {
-                                Id = orderItem.ProductId, 
-                                Description = orderItem.Description
-                            }, 
-                            Quantity = orderItem.Quantity, 
-                            UnitPrice = orderItem.Price
-                        });
-                }
-            }
-
-
         }
 
         private static void GenerateEstimateDocument(string reportName)
         {
             QuestPDF.Settings.License = LicenseType.Community;
 
-            Document.Create(document =>
+            var doc =Document.Create(document =>
             {
                 document.Page(page =>
                 {
@@ -156,8 +98,7 @@ namespace TestPlatForm
                         .ExtendHorizontal()
                         .Layers(layers =>
                         {
-                            layers.Layer().Image(_provider.Logo);
-                            // Middle: white wash (alpha 0xD8 ≈ 85% opaque)
+                            layers.Layer().Image(_companyProfile!.LogoFile);
                             layers.Layer().Background(Color.FromHex("#D8FFFFFF"));
                             layers.PrimaryLayer().Padding(20).Column(column =>
                             {
@@ -165,19 +106,23 @@ namespace TestPlatForm
                                 {
                                     row.RelativeItem(4).PaddingTop(0).ScaleToFit().Text(text =>
                                     {
-                                        text.Line(_invoice.Provider.Name).FontColor(Colors.Blue.Darken4).FontSize(18).Bold();
-                                        text.Line(_invoice.Provider.Address).FontColor(Colors.Blue.Darken4).FontSize(14);
-                                        text.Line($"Phone: {_invoice.Provider.Phone}").FontColor(Colors.Blue.Darken4).FontSize(14);
+                                        text.Line(_companyProfile!.CompanyName).FontColor(Colors.Blue.Darken4)
+                                            .FontSize(18).Bold();
+                                        text.Line(_companyProfile!.CompanyAddress).FontColor(Colors.Blue.Darken4)
+                                            .FontSize(14);
+                                        text.Line($"Phone: {_companyProfile!.CompanyPhone}")
+                                            .FontColor(Colors.Blue.Darken4).FontSize(14);
                                     });
-                                    row.RelativeItem(4).Text(reportName).FontColor(Colors.Blue.Darken4).FontSize(30).AlignRight();
+                                    row.RelativeItem(4).Text(reportName).FontColor(Colors.Blue.Darken4).FontSize(30)
+                                        .AlignRight();
                                 });
                             });
-                            
+
                         });
                     page.Content().Container()
                         .Column(column =>
                         {
-                        
+
                             //Top part of Estimate
                             column.Item().Row(row =>
                             {
@@ -185,17 +130,18 @@ namespace TestPlatForm
                                 //BILL TO
                                 row.RelativeItem(3).Table(table =>
                                 {
-                                    table.ColumnsDefinition(columns =>
-                                    {
-                                        columns.RelativeColumn(1);
-                                    });
+                                    table.ColumnsDefinition(columns => { columns.RelativeColumn(1); });
 
                                     //BILL TO
-                                    table.Cell().Background(Colors.Blue.Darken4).Border(1, Colors.Black).Padding(5).Text("BILL TO").FontColor(Colors.White);
-                                    table.Cell().PaddingLeft(5).PaddingTop(3).Text(_invoice.Customer.ContactName);
-                                    table.Cell().PaddingLeft(5).PaddingTop(3).Text(_invoice.Customer.Name);
-                                    table.Cell().PaddingLeft(5).PaddingTop(3).Text(_invoice.Customer.Address);                                
-                                    table.Cell().PaddingLeft(5).PaddingTop(3).Text(_invoice.Customer.Phone);
+                                    table.Cell().Background(Colors.Blue.Darken4).Border(1, Colors.Black).Padding(5)
+                                        .Text("BILL TO").FontColor(Colors.White);
+                                    table.Cell().PaddingLeft(5).PaddingTop(3)
+                                        .Text(_order!.Customer!.FirstName + " " + _order.Customer.LastName);
+                                    table.Cell().PaddingLeft(5).PaddingTop(3).Text(
+                                        _order.BillingAddress1 + " " + _order.BillingAddress2 ?? "" + ", " +
+                                        _order.BillingCity + ", " + _order.BillingStateCode + " " +
+                                        _order.BillingZipCode);
+                                    table.Cell().PaddingLeft(5).PaddingTop(3).Text(_order.Customer.PhoneNumber);
                                 });
                                 //order number and date
                                 row.RelativeItem(5).Column(column =>
@@ -209,11 +155,14 @@ namespace TestPlatForm
                                             columns.RelativeColumn(3);
                                             columns.RelativeColumn(6);
                                         });
-                                        table.Cell().Background(Colors.Blue.Darken4).Border(1, Colors.Black).Padding(5).Text("INVOICE #").FontColor(Colors.White);
-                                        table.Cell().Background(Colors.Blue.Darken4).Border(1, Colors.Black).Padding(5).Text("DATE").FontColor(Colors.White);
-                                        table.Cell().Background(Colors.Blue.Darken4).Border(1, Colors.Black).Padding(5).Text("TERMS").FontColor(Colors.White);
-                                        table.Cell().Padding(5).Text(_invoice.InvoiceNumber);
-                                        table.Cell().Padding(5).Text(_invoice.InvoiceDate.ToShortDateString());
+                                        table.Cell().Background(Colors.Blue.Darken4).Border(1, Colors.Black).Padding(5)
+                                            .Text("INVOICE #").FontColor(Colors.White);
+                                        table.Cell().Background(Colors.Blue.Darken4).Border(1, Colors.Black).Padding(5)
+                                            .Text("DATE").FontColor(Colors.White);
+                                        table.Cell().Background(Colors.Blue.Darken4).Border(1, Colors.Black).Padding(5)
+                                            .Text("TERMS").FontColor(Colors.White);
+                                        table.Cell().Padding(5).Text(_order!.OrderNumber.ToString());
+                                        table.Cell().Padding(5).Text(_order.OrderDate.ToShortDateString());
                                         table.Cell().Padding(5).Text("Upon Completion");
                                     });
                                 });
@@ -232,28 +181,52 @@ namespace TestPlatForm
 
                                 table.Header(header =>
                                 {
-                                    header.Cell().Background(Colors.Blue.Darken4).Border(1, Colors.Black).Padding(5).Text("DESCRIPTION").FontColor(Colors.White);
-                                    header.Cell().Background(Colors.Blue.Darken4).Border(1, Colors.Black).Padding(5).Text("QTY").FontColor(Colors.White).AlignCenter();
-                                    header.Cell().Background(Colors.Blue.Darken4).Border(1, Colors.Black).Padding(5).Text("PRICE").FontColor(Colors.White).AlignCenter();
-                                    header.Cell().Background(Colors.Blue.Darken4).Border(1, Colors.Black).Padding(5).Text("AMOUNT").FontColor(Colors.White).AlignCenter();
+                                    header.Cell().Background(Colors.Blue.Darken4).Border(1, Colors.Black).Padding(5)
+                                        .Text("DESCRIPTION").FontColor(Colors.White);
+                                    header.Cell().Background(Colors.Blue.Darken4).Border(1, Colors.Black).Padding(5)
+                                        .Text("QTY").FontColor(Colors.White).AlignCenter();
+                                    header.Cell().Background(Colors.Blue.Darken4).Border(1, Colors.Black).Padding(5)
+                                        .Text("PRICE").FontColor(Colors.White).AlignCenter();
+                                    header.Cell().Background(Colors.Blue.Darken4).Border(1, Colors.Black).Padding(5)
+                                        .Text("AMOUNT").FontColor(Colors.White).AlignCenter();
                                 });
 
-                                foreach (InvoiceItemViewModel item in _invoice.Items)
+                                foreach (IOrderItem item in _order!.OrderItems)
                                 {
-                                    table.Cell().Border(1, Colors.Black).Padding(5).Text(item.Service.Description);
-                                    table.Cell().Border(1, Colors.Black).Padding(5).Text(item.Quantity.ToString()).AlignRight();
-                                    table.Cell().Border(1, Colors.Black).Padding(5).Text(item.UnitPrice.ToCurrency()).AlignRight();
-                                    table.Cell().Border(1, Colors.Black).Padding(5).Text(item.Total.ToCurrency()).AlignRight();
-                                }                            
+                                    table.Cell().Border(1, Colors.Black).Padding(5).Text(item.Description);
+                                    table.Cell().Border(1, Colors.Black).Padding(5).Text(item.Quantity.ToString())
+                                        .AlignRight();
+                                    table.Cell().Border(1, Colors.Black).Padding(5).Text(item.Price.ToCurrency())
+                                        .AlignRight();
+                                    table.Cell().Border(1, Colors.Black).Padding(5).Text(item.Total.ToCurrency())
+                                        .AlignRight();
+                                }
 
-                                table.Cell().Border(1, Colors.Black).Padding(5).Text("Thank you for your business!").FontColor(Colors.Blue.Darken4).AlignCenter().Italic();
+                                table.Cell().Border(1, Colors.Black).Padding(5).Text("Thank you for your business!")
+                                    .FontColor(Colors.Blue.Darken4).AlignCenter().Italic();
+                                table.Cell().Border(1, Colors.Black).Padding(5).Text("").AlignRight();
+                                table.Cell().Border(1, Colors.Black).Padding(5).Text("Sub-Total").AlignRight();
+                                table.Cell().Border(1, Colors.Black).Padding(5).Text(_order.SubTotal.ToCurrency());
+
+                                table.Cell().Border(1, Colors.Black).Padding(5).Text("").AlignRight();
+                                table.Cell().Border(1, Colors.Black).Padding(5).Text("").AlignRight();
+                                table.Cell().Border(1, Colors.Black).Padding(5).Text("Shipping").AlignRight();
+                                table.Cell().Border(1, Colors.Black).Padding(5).Text(_order.Shipping.ToCurrency());
+
+                                table.Cell().Border(1, Colors.Black).Padding(5).Text("").AlignRight();
+                                table.Cell().Border(1, Colors.Black).Padding(5).Text("").AlignRight();
+                                table.Cell().Border(1, Colors.Black).Padding(5).Text("Tax").AlignRight();
+                                table.Cell().Border(1, Colors.Black).Padding(5).Text(_order.Tax.ToCurrency());
+
+                                table.Cell().Border(1, Colors.Black).Padding(5).Text("").AlignRight();
                                 table.Cell().Border(1, Colors.Black).Padding(5).Text("").AlignRight();
                                 table.Cell().Border(1, Colors.Black).Padding(5).Text("TOTAL").AlignRight();
-                                table.Cell().Border(1, Colors.Black).Padding(5).Text(_invoice.Items.Sum(x => x.Total).ToCurrency()).AlignRight();
+                                table.Cell().Border(1, Colors.Black).Padding(5).Text(_order.Total.ToCurrency())
+                                    .AlignRight();
                             });
 
-                            column.Item().Text(txt=>txt.EmptyLine());
-                            
+                            column.Item().Text(txt => txt.EmptyLine());
+
                             //signature line
                             column.Item().Row(row =>
                             {
@@ -263,7 +236,7 @@ namespace TestPlatForm
                                     col.Item().PaddingTop(4).Text("Signature").FontSize(9);
                                 });
 
-                                row.ConstantItem(30);   // gap
+                                row.ConstantItem(30); // gap
 
                                 row.ConstantItem(120).Column(col =>
                                 {
@@ -271,61 +244,21 @@ namespace TestPlatForm
                                     col.Item().PaddingTop(4).Text("Date").FontSize(9);
                                 });
                             });
-                            
-                            column.Item().PaddingTop(20).Text("If you have any questions about this {reportName}, please contact").FontSize(10).Italic().AlignCenter();
-                            column.Item().Text($"{_invoice.Provider.ContactName} at {_invoice.Provider.ContactPhone} or {_invoice.Provider.ContactEmail}").FontSize(10).Bold().AlignCenter();
-                        });     
+
+                            column.Item().PaddingTop(20)
+                                .Text("If you have any questions about this {reportName}, please contact").FontSize(10)
+                                .Italic().AlignCenter();
+                            column.Item()
+                                .Text(
+                                    $"{_companyProfile!.CompanyContactName} at {_companyProfile.CompanyContactPhone} or {_companyProfile.CompanyContactEmail}")
+                                .FontSize(10).Bold().AlignCenter();
+                        });
                 });
-            }).ShowInCompanion();
+            });
+            
+            doc.GeneratePdf(@"d:\temp\Estimate.pdf");
+
         }
     }
 
-    internal class ProviderService
-    {
-        public Guid Id { get; set; }
-        public string Description { get; set; }
-    }
-
-    internal class InvoiceItemViewModel 
-    {
-        public Guid Id { get; set; }
-        public ProviderService Service { get; set; }
-        public int Quantity { get; set; }
-        public decimal UnitPrice { get; set; }
-        public decimal Total { get => Quantity * UnitPrice; }
-    }
-
-    internal class InvoiceViewModel
-    {
-        public Provider Provider { get; set; }
-        public Customer Customer { get; set; }
-        public string InvoiceNumber { get; set; }
-        public DateTime InvoiceDate { get; set; }
-        public string Terms { get; set; }
-        public List<InvoiceItemViewModel> Items { get; set; }
-    }
-
-    internal class Customer
-    {
-        public Guid Id { get; set; }
-        public string Name { get; internal set; }
-        public string Address { get; set; }
-        public string Phone { get; set; }
-        public string ContactName { get; set; }
-        public string Email { get; set; }
-    }
-
-    internal class Provider
-    {
-        public Guid Id { get; set; }
-        public string Name { get; set; }
-        public string Address { get; set; }
-        public string Phone { get; set; }
-        public string Email { get; set; }
-        public string ContactName { get; set; }
-        public string ContactEmail { get; set; }
-        public string ContactPhone { get; set; }
-        
-        public byte[] Logo { get; set; }
-    }
 }

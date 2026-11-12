@@ -5,3 +5,6 @@
 			will break on start-up.
 			To Do this will require data transfer if the system has already been running
 			on a single database to preserve the data.
+
+11.11.26 - Make sure create the hangfile database that is pointed to be the HangFireConnectionString in the 
+		   Reporting application.

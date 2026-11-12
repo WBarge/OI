@@ -2,6 +2,8 @@ using OI.Business;
 using OI.Data;
 using OI.Integration;
 using OI.Integration.Security;
+using OI.Reporting.Managers;
+using OI.Reporting.Reports;
 using OI.Reporting.Services;
 
 namespace OI.Reporting.Utilities;
@@ -30,8 +32,12 @@ public static class RootComposition
         // The middleware that fills it in is added in Program.cs with app.UseClientContext().
         services.AddClientContext();
 
+        
         // The company details (name, address, logo...) the UI uploads when it starts; report generation reads them from here.
         services.AddScoped<ICompanyProfileStore, PersistedCompanyProfileStore>();
+        services.AddScoped<IReportFactory, ReportFactory>();
+        services.AddScoped<IReportManager, ReportManager>();
+        services.AddScoped<IReportResultManager, ReportResultManager>();
     }   
 
 }

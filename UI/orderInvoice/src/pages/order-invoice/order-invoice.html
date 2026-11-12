@@ -46,7 +46,7 @@
     </span>
     <span class="fieldOnTop">
       <label for="poNumber">PO Number</label>
-      <input id="poNumber" type="text" pInputText  [(ngModel)]="poNumber" (readOnly)="isReadOnlySig()" />
+      <input id="poNumber" type="text" pInputText  [(ngModel)]="poNumber" (readOnly)="isReadOnly"/>
     </span>
     <span class="fieldOnTop">
       <label for="terms">Terms</label>
@@ -57,12 +57,12 @@
           optionValue="code"
           placeholder="Select Terms"
           [(ngModel)]="termsSelected"
-          (readOnly)="isReadOnlySig()"
+          (readOnly)="isReadOnly"
       />
     </span>
     <span class="fieldOnTop">
       <label for="shippingVia">Shipping Via</label>
-      <input id="shippingVia" type="text" pInputText  [(ngModel)]="via" (readOnly)="isReadOnlySig()"/>
+      <input id="shippingVia" type="text" pInputText  [(ngModel)]="via" (readOnly)="isReadOnly"/>
     </span>
   </div>
 <p-divider />

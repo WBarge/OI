@@ -3,7 +3,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using OI.Common.Exceptions;
-using OI.Common.Models;
 using OI.Glue.Models;
 
 namespace OI.Integration.Middleware;

@@ -40,10 +40,15 @@ public static class DataDi
         AddCommonDependencies(services, configuration);
         services.AddDbContextPool<OiReportingDbContext>(builder =>
         {
+            //TODO : consider moving the connection string to a named connection string in appsettings.json and using GetConnectionString("Reporting") here instead of configuration["ConnectionString"]
+            //TODO : consider moving the migrations history table name to a constant in OiReportingDbContext and using that here instead of hardcoding "__EFMigrationsHistory_Reporting"
+            //TODO : at a minimum, use a different connection string for reporting than for service,
+            //       so that the reporting database can be scaled independently of the service database
             builder.UseSqlServer(configuration["ConnectionString"], b =>
                 b.MigrationsHistoryTable("__EFMigrationsHistory_Reporting"));
         });
         services.AddScoped<ICompanyRepo, CompanyRepo>();
+        services.AddScoped<IJobResultRepo, JobResultRepo>();
     }
 
     /// <summary>

@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework>net11.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -9,12 +9,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.14" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="11.0.0" />
     <!-- Brings in Microsoft.IdentityModel.JsonWebTokens, which AccessTokenFactory uses to sign tokens,
          and the JWT bearer handler OI.Auth uses to check its own tokens on the administration endpoints. -->
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.14" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="11.0.0" />
     <!-- PasswordHasher used by IdentityPasswordService -->
-    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.3.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="11.0.1" />
   </ItemGroup>
 
   <ItemGroup>

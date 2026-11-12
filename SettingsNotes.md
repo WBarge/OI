@@ -67,6 +67,7 @@ Where local-only values go in development:
 | Key | Secret | Required | Meaning | Dev value | If missing or wrong |
 |---|---|---|---|---|---|
 | `ConnectionString` | **yes** | yes | SQL Server connection. One key serves **both** the reporting context and the order (Service) context that Reporting also registers, and both are migrated on start. | | Startup fails. |
+| `HangFireConnectionstring` | **yes** | yes | SQL Server connection to where the HangFire DB lives.  It is important that the data is created.  The system will take care of the schema. | | Startup fails. |
 | `Auth:Authority` | no | yes | Address of OI.Auth. Used to fetch the signing keys that validate tokens **and** to request this application's service token. | `https://localhost:7300` | Startup throws `Auth:Authority is not configured`. |
 | `Auth:Audience` | no | no | Default `oi`. Must equal `Jwt:Audience` in Auth. | `oi` | Every request is rejected (401). |
 | `Hub:BaseUrl` | no | yes | Address of OI.Hub, where notifications are published. | `https://localhost:7400` | Startup throws `Hub:BaseUrl is not configured`. |
@@ -152,6 +153,7 @@ Auth's `ConnectionString` may point at a different database (see `DBNotes.txt`).
 
 **OI.Reporting**
 - [ ] `ConnectionString` (same order database as Service)
+- [ ] `HangFireConnectionstring` the database jobs will be stored in.  Can be the same as other applications but recommend a different db name if the db server is the same.
 - [ ] `Auth__Authority`, `Auth__Audience`, `Hub__BaseUrl`
 - [ ] `Integration__ClientId`, `Integration__ClientSecret` (same values as the Auth service client)
 

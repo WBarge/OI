@@ -1,4 +1,3 @@
-using System.Net.Http.Json;
 using Microsoft.Extensions.Options;
 
 namespace OI.Integration.Notifications;
