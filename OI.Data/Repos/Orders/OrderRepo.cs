@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using OI.Common.Exceptions;
+using OI.Common.Extensions.Comparison;
 using OI.Data.Contexts;
 using OI.Data.Helpers;
 using OI.Data.Model.Orders;
@@ -176,6 +177,9 @@ internal class OrderRepo(OiServiceDbContext serviceDbContext) : BaseEfRepo<OiSer
         order.Tax = request.Tax ?? 0m;
         order.Total = request.Total ?? 0m;
         order.Modified = DateTime.UtcNow;
+        order.EstimateId = request.EstimateId.IsNotEmpty() ? request.EstimateId : null; //tech debt - if this overwrites a previous estimate id, we should delete the old estimate record from the system - should be handled in the service/manager layer.
+        order.OrderId ??= request.OrderId;
+        order.InvoiceId ??= request.InvoiceId;
 
         if (request.OrderItems != null && request.OrderItems.Any())
         {

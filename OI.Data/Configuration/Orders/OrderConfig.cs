@@ -97,6 +97,12 @@ internal class OrderConfig : IEntityTypeConfiguration<Order>,IServiceConfigurati
         builder.Property(o => o.Modified)
             .HasColumnName("Modified")
             .ValueGeneratedOnUpdate();
+        builder.Property(o => o.EstimateId)
+            .HasColumnName("EstimateId");
+        builder.Property(o => o.OrderId)
+            .HasColumnName("OrderId");
+        builder.Property(o => o.InvoiceId)
+            .HasColumnName("InvoiceId");
     }
 
 }

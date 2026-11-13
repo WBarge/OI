@@ -1,4 +1,5 @@
-﻿using OI.Glue.Models;
+﻿using Microsoft.AspNetCore.SignalR;
+using OI.Glue.Models;
 
 namespace OI.Service.Models.Requests;
 
@@ -16,4 +17,19 @@ public class UpdateOrder : CreateOrder, IUpdateOrder
     /// The order number of the order
     /// </summary>
     public int OrderNumber { get; set; }
+
+    /// <summary>
+    /// The report ID of the estimate
+    /// </summary>
+    public Guid EstimateId { get; set; }
+
+    /// <summary>
+    /// The report ID of the order
+    /// </summary>
+    public Guid OrderId { get; set; }
+
+    /// <summary>
+    ///  The report ID of the invoice
+    /// </summary>
+    public Guid InvoiceId { get; set; }
 }

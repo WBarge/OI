@@ -144,4 +144,19 @@ internal class Order
     /// </summary>
     /// <value>The modified.</value>
     public DateTime? Modified { get; set; }
+
+    /// <summary>
+    /// The report ID of the estimate associated with the order. 
+    /// </summary>
+    public Guid? EstimateId { get; set; }
+    
+    /// <summary>
+    /// The report ID of the order. 
+    /// </summary>
+    public Guid? OrderId { get; set; }
+    
+    /// <summary>
+    /// The report ID of the invoice associated with the order.
+    /// </summary>
+    public Guid? InvoiceId { get; set; }
 }

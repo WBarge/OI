@@ -37,7 +37,10 @@ internal static class OrderTranslator
             Shipping = order.Shipping,
             Tax = order.Tax,
             Total = order.Total,
-            IsPending = order.IsPending
+            IsPending = order.IsPending,
+            EstimateId = order.EstimateId,
+            OrderId = order.OrderId,
+            InvoiceId = order.InvoiceId
         };
     }
 

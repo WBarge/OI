@@ -49,8 +49,7 @@ public class ReportManager(ILogger<ReportManager> logger, IReportFactory reportF
     /// <exception cref="NotImplementedException">
     /// Thrown when the method is not implemented.
     /// </exception>
-    public async Task CreateEstimateAsync(Guid reportId, Guid orderId, string userName, string userId,
-        CancellationToken token = default)
+    public async Task CreateEstimateAsync(Guid reportId, Guid orderId, string userName, string userId, CancellationToken token = default)
     {
         userName.Required(nameof(userName));
 

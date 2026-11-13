@@ -6,5 +6,15 @@
 			To Do this will require data transfer if the system has already been running
 			on a single database to preserve the data.
 
-11.11.26 - Make sure create the hangfile database that is pointed to be the HangFireConnectionString in the 
-		   Reporting application.
+11.11.26 - Make sure the hangfile database that is pointed to be the HangFireConnectionString in the 
+		   Reporting application has been created. The HangFire database is used to store the jobs that are scheduled to run in the background. 
+		   It is important to ensure that this database is properly configured and maintained to avoid 
+		   any issues with job execution.
+
+11.12.26 - Tech Debt - The reporting Ids in the order entity need to address a replacement use-case.  Currently the estimate reporting Ids are 
+		   just updated when the order is updated in the repo.  This will cause ophan reporting records to be left in the system. 
+		   The reporting Ids should be updated in the service layer and the old reporting records should be deleted from the system.
+		   Another solution would be a history solution that would allow the old reporting records to be kept in the system but not used as the current records.  
+		   This would require a new table to be created to store the history of the reporting records.  The history table would have a 
+		   foreign key to the order table and would store the old reporting records.  We would then more than likely expose this history of the records in the UI. 
+		   

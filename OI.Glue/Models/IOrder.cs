@@ -128,4 +128,19 @@ public interface IOrder
     /// Gets or sets a value indicating whether the order is pending. True when the order has been created but not yet processed.
     /// </summary>
     bool IsPending { get; set; }
+
+    /// <summary>
+    /// The report ID of the estimate associated with this order. These IDs link the order to its corresponding documents in the system.
+    /// </summary>
+    Guid? EstimateId { get; set; }
+
+    /// <summary>
+    /// The report ID of the order. This ID links the order to its corresponding document in the system.
+    /// </summary>
+    Guid? OrderId { get; set; }
+
+    /// <summary>
+    /// The report ID of the invoice associated with the order. This ID links the order to its corresponding invoice document in the system.
+    /// </summary>
+    Guid? InvoiceId { get; set; }
 }

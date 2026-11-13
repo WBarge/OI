@@ -41,4 +41,7 @@ internal class Order : IOrder
     public decimal Tax { get; set; }
     public decimal Total { get; set; }
     public bool IsPending { get; set; }
+    public Guid? EstimateId { get; set; }
+    public Guid? OrderId { get; set; }
+    public Guid? InvoiceId { get; set; }
 }
