@@ -2,7 +2,6 @@ import { Service,inject } from '@angular/core';
 import { ErrorHandlerService, HandleError } from '../utils/error-handler.service';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { ConfigService } from './config-service';
-import { Configuration } from '../model/configuration';
 import { catchError, map, Observable } from 'rxjs';
 import { ProductsListResult } from '../model/results/productsListResult';
 import { FilterDetail, FilterDictionary } from '../model/requests/filter-detail';

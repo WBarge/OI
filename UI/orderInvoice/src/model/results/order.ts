@@ -27,5 +27,7 @@ export class Order {
   public tax:number=0;
   public total:number=0;
   public isPending:boolean=true;
+  public estimateReportId:string|null = null;
+  public orderReportId:string|null = null;
 
 }

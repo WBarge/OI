@@ -3,16 +3,16 @@ import { Router,ActivatedRoute } from '@angular/router';
 import {CurrencyPipe} from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
-
-
-
 import { ConfigService } from '../../services/config-service';
-
-
-
+import { OrdersService } from '../../services/orders-service';
+import { CustomerService } from '../../services/customer-service';
+import { NotificationService } from '../../utils/notification-service';
+import { TermsService } from '../../services/terms-service';
+import { ReportGenerationService } from '../../services/report-generation-service';
 
 import { AddressPanel } from '../../components/address-panel/address-panel';
 import { CustomerSelection } from '../../components/customer-selection/customer-selection';
+import { ProductSelection } from '../../components/product-selection/product-selection';
 
 import { Configuration } from '../../model/configuration';
 import { Address } from '../../model/address';
@@ -21,8 +21,9 @@ import { Customer } from '../../model/results/customer';
 import { ProductOrdered } from '../../model/results/product-ordered';
 import { PhoneFormatPipe } from '../../pipes/phone-format-pipe';
 import { Product } from '../../model/results/product';
+import { Order } from '../../model/results/order';
+import { DropDownValues } from '../../model/results/state';
 
-import { CustomerService } from '../../services/customer-service';
 
 import { FieldsetModule } from 'primeng/fieldset';
 import { SelectModule } from 'primeng/select';
@@ -37,12 +38,6 @@ import { TableModule } from 'primeng/table';
 import { Trash } from '@primeicons/angular/trash';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
-import { ProductSelection } from '../../components/product-selection/product-selection';
-import { OrdersService } from '../../services/orders-service';
-import { Order } from '../../model/results/order';
-import { NotificationService } from '../../utils/notification-service';
-import { TermsService } from '../../services/terms-service';
-import { DropDownValues } from '../../model/results/state';
 
 
 @Component({
@@ -78,8 +73,7 @@ export class OrderInvoice implements OnInit {
   private router = inject(Router);
   private orderService = inject(OrdersService);
   private notify=inject(NotificationService);
-
-
+  private reportService = inject(ReportGenerationService);
 
   public configuration = signal<Configuration | null>(null);
   public oiMode: string = "Order";
@@ -105,11 +99,16 @@ export class OrderInvoice implements OnInit {
   public tax: number = 0;
   public total: number = 0;
 
+  public estimateReportId:string|null = null;
+  public orderReportId:string|null = null;
+
+
   public mode = signal<OrderMode>(OrderMode.New);
   public terms = signal<DropDownValues[]>([]);
 
   constructor() {
     this.termsService.getTerms().subscribe((results: string[]) => this.processTermsReusults(results));
+
   }
 
   ngOnInit() {
@@ -126,11 +125,16 @@ export class OrderInvoice implements OnInit {
       } else {
         this.mode.set(OrderMode.New);
       }
+      this.setDefaultValues()
       if (this.orderId != null) {
         this.loadOrder(null);
       }
     });
 
+  }
+
+  setDefaultValues() {
+    this.shipping = this.configuration()?.defaultShippingAmount || 0; // Use default shipping amount from configuration
   }
 
   //TODO: Consider refactoring the consumers of this to use the readonly signal
@@ -145,6 +149,20 @@ export class OrderInvoice implements OnInit {
   public get canSubmit():boolean{
     return (!this.customerId) === false && this.items.length > 0
   }
+
+  public get canCreateEstimateDocument():boolean{
+    return this.mode() === OrderMode.Edit && this.canSubmit;
+  }
+
+  public get canCreateOrderDocument():boolean{
+    if (this.configuration()?.forceEstimateCreation) {
+      return this.estimateReportId !== null && this.canCreateEstimateDocument;
+    }else{
+      return this.canCreateEstimateDocument;
+    }
+  }
+
+
 
   public processTermsReusults(terms:string[]){
     if (terms.length > 0){
@@ -227,7 +245,6 @@ export class OrderInvoice implements OnInit {
 
   calculateTotals() {
     this.subtotal = this.items.reduce((acc, item) => acc + item.total, 0);
-    this.shipping = 5.00; // Assuming a flat s hipping rate
     this.tax = this.subtotal * 0.07; // Assuming a 7% tax rate
     this.total = this.subtotal + this.shipping + this.tax;
   }
@@ -290,6 +307,8 @@ export class OrderInvoice implements OnInit {
     order.shipping = this.shipping;
     order.tax = this.tax;
     order.total = this.total;
+    order.estimateReportId = this.estimateReportId;
+    order.orderReportId = this.orderReportId;
 
     return order;
   }
@@ -343,10 +362,29 @@ export class OrderInvoice implements OnInit {
   done(event:any){
     this.router.navigate(["/home"]);
   }
+
+  createEstimateDocument(event:any){
+    if (!this.orderId){
+      this.notify.error("ERROR","An order must be created before an estimate can be generated");
+      return;
+    }
+    this.reportService.generateEstimateReport(this.orderId).subscribe((reportId:string)=>{
+      this.estimateReportId = reportId;
+      this.notify.success("Estimate Creation","The estimate creation has been started successfully. You will be notified when the estimate is ready to download");
+      this.updateOrder(event);
+    });
+  }
+  createOrderDocument(event:any){
+    if (!this.orderId){
+      this.notify.error("ERROR","An order must be created before an order document can be generated");
+      return;
+    }
+
+  }
 }
 
 enum OrderMode {
   New = 'NEW',
   Edit = 'EDIT',
-  View = 'VIEW' // Example of why enums are better than booleans
+  View = 'VIEW'
 }

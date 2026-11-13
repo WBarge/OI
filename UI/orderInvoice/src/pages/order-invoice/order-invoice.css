@@ -70,6 +70,14 @@
   display: flex;
   justify-content: space-between;
   width: 15rem;
+   margin-bottom: 0.5rem;
+}
+
+.totalValue {
+  width: 9rem;                       /* same as the inputs */
+  text-align: right;
+  padding-right: calc(0.75rem + 1px); /* input's horizontal padding + border */
+  box-sizing: border-box;
 }
 
 .buttonRow{

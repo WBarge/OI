@@ -218,7 +218,9 @@ export class OrdersService {
         price: item.price,
         quantity: item.quantity,
         total: item.total
-      }))
+      })),
+      estimateId: order.estimateReportId,
+      orderId: order.orderReportId
     };
   }
 }

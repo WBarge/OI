@@ -17,5 +17,7 @@
   "companyPhone":  "(555) 123-4567",
   "companyContactName": "John Doe",
   "companyContactEmail": "test@themanllc.com",
-  "companyContactPhone": "(555) 987-6543"
+  "companyContactPhone": "(555) 987-6543",
+  "defaultShippingAmount": 0.00,
+  "forceEstimateCreation": false
 }

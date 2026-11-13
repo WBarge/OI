@@ -18,4 +18,6 @@ export class Configuration {
   public companyContactName: string = "";
   public companyContactEmail: string = "";
   public companyContactPhone: string = "";
+  public defaultShippingAmount: number = 0.00;
+  public forceEstimateCreation: boolean = false;
 }

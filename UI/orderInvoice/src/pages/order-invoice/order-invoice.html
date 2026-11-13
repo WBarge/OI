@@ -102,19 +102,19 @@
 <p-fieldset class="totals" legend="Totals">
   <div class="totalRow">
     <span>Subtotal:</span>
-    <span>{{subtotal | currency}}</span>
+    <span class="totalValue">{{subtotal | currency}}</span>
   </div>
   <div class="totalRow">
     <span>Shipping:</span>
-    <span>{{shipping | currency}}</span>
+    <p-inputnumber id="shipping"  [(ngModel)]="shipping" (ngModelChange)="calculateTotals()"  [readonly]="isReadOnly" [inputStyle]="{ 'text-align': 'right', 'width': '6rem' }" mode="currency" currency="USD" locale="en-US"/>
   </div>
   <div class="totalRow">
     <span>Tax:</span>
-    <span>{{tax | currency}}</span>
+    <p-inputnumber id="tax"  [(ngModel)]="tax" (ngModelChange)="calculateTotals()"  [readonly]="isReadOnly" [inputStyle]="{ 'text-align': 'right', 'width': '6rem' }" mode="currency" currency="USD" locale="en-US"/>
   </div>
   <div class="totalRow">
     <span>Total:</span>
-    <span>{{total | currency}}</span>
+    <span class="totalValue">{{total | currency}}</span>
   </div>
 </p-fieldset>
 
@@ -127,6 +127,13 @@
       <button type="button" pButton (click)="createOrder($event)" label="Create">Create</button>
     }
 
+    @if(canCreateEstimateDocument) {
+      <button type="button" pButton (click)="createEstimateDocument($event)" label="Create Estimate Document">Create Estimate Document</button>
+    }
+
+    @if(canCreateOrderDocument) {
+      <button type="button" pButton (click)="createOrderDocument($event)" label="Create Order Document">Create Order Document</button>
+    }
   }
   <button type="button" pButton (click)="done($event)" label="Done">Done</button>
 </div>
