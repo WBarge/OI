@@ -2,7 +2,7 @@
 
 namespace OI.Reporting.Reports.OrderReport;
 
-public class OrderReport(ILogger<OrderReport> logger,Guid reportId) : BaseReport(reportId)
+public class OrderReport(ILogger<OrderReport> logger,Guid reportId) : BaseReport(reportId, logger)
 {
     private readonly ILogger<OrderReport> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 

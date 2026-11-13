@@ -1,6 +1,4 @@
-﻿using System.Net;
-using System.Net.Http.Headers;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using OI.Reporting.Managers;
 
 namespace OI.Reporting.Controllers
@@ -13,23 +11,13 @@ namespace OI.Reporting.Controllers
         private readonly IReportResultManager _reportResultManager = reportResultManager ?? throw new ArgumentNullException(nameof(reportResultManager));
 
         [HttpGet("{reportId}")]
-        public async Task<HttpResponseMessage> GetEstimate(Guid reportId)
+        public async Task<IActionResult> GetReport(Guid reportId)
         {
             _logger.LogInformation("Retrieving report with ID: {ReportId}", reportId);
             byte[]? fileResult = await _reportResultManager.GetReportAsync(reportId);
-            HttpResponseMessage returnValue;
-            if (fileResult != null)
-            {
-                MemoryStream stream = new MemoryStream(fileResult);
-                returnValue = new HttpResponseMessage(HttpStatusCode.OK);
-                returnValue.Content = new StreamContent(stream);
-                returnValue.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-            }
-            else
-            {
-                returnValue = new HttpResponseMessage(HttpStatusCode.NotFound);
-            }
-            return returnValue;        }
-
+            return fileResult is null
+                ? NotFound()
+                : File(fileResult, "application/octet-stream");
+        }
     }
 }

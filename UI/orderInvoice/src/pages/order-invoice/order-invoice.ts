@@ -9,6 +9,7 @@ import { CustomerService } from '../../services/customer-service';
 import { NotificationService } from '../../utils/notification-service';
 import { TermsService } from '../../services/terms-service';
 import { ReportGenerationService } from '../../services/report-generation-service';
+import { ReportDownloadService } from '../../services/report-download-service';
 
 import { AddressPanel } from '../../components/address-panel/address-panel';
 import { CustomerSelection } from '../../components/customer-selection/customer-selection';
@@ -74,6 +75,7 @@ export class OrderInvoice implements OnInit {
   private orderService = inject(OrdersService);
   private notify=inject(NotificationService);
   private reportService = inject(ReportGenerationService);
+  private reportDownloadService = inject(ReportDownloadService);
 
   public configuration = signal<Configuration | null>(null);
   public oiMode: string = "Order";
@@ -96,6 +98,7 @@ export class OrderInvoice implements OnInit {
   public items:ProductOrdered[]= [];
   public subtotal: number = 0;
   public shipping: number = 0;
+  public taxRate: number = 0.07; // Default tax rate, can be overridden by configuration
   public tax: number = 0;
   public total: number = 0;
 
@@ -135,6 +138,8 @@ export class OrderInvoice implements OnInit {
 
   setDefaultValues() {
     this.shipping = this.configuration()?.defaultShippingAmount || 0; // Use default shipping amount from configuration
+    this.taxRate = this.configuration()?.taxRate || 0.07; // Use tax rate from configuration, default to 7%
+
   }
 
   //TODO: Consider refactoring the consumers of this to use the readonly signal
@@ -245,7 +250,7 @@ export class OrderInvoice implements OnInit {
 
   calculateTotals() {
     this.subtotal = this.items.reduce((acc, item) => acc + item.total, 0);
-    this.tax = this.subtotal * 0.07; // Assuming a 7% tax rate
+    this.tax = this.subtotal * this.taxRate;
     this.total = this.subtotal + this.shipping + this.tax;
   }
 
@@ -357,6 +362,8 @@ export class OrderInvoice implements OnInit {
     this.shipping = order.shipping;
     this.tax = order.tax;
     this.total = order.total;
+    this.estimateReportId = order.estimateReportId;
+    this.orderReportId = order.orderReportId;
   }
 
   done(event:any){
@@ -380,6 +387,18 @@ export class OrderInvoice implements OnInit {
       return;
     }
 
+  }
+
+  downloadEstimateDocument(event:any){
+    if (!this.estimateReportId){
+      this.notify.error("ERROR","An estimate must be created before it can be downloaded");
+      return;
+    }
+    this.reportDownloadService.downloadReport(this.estimateReportId,"Estimate.pdf").subscribe((result:boolean)=>{
+      if (result){
+        this.notify.success("Estimate Download","The estimate has been downloaded successfully");
+      }
+    });
   }
 }
 

@@ -74,6 +74,8 @@ export class OrdersService {
             tempOrder.tax = order.tax;
             tempOrder.total = order.total;
             tempOrder.isPending = order.isPending;
+            tempOrder.estimateReportId = order.estimateId;
+            tempOrder.orderReportId = order.orderId;
 
             return tempOrder;
           }),
@@ -182,7 +184,7 @@ export class OrdersService {
       ...this.toRequest(orderToUpdate)
     };
 
-    return this.http.put<any>(this.orderServiceLocation,request)
+    return this.http.put<any>(this.orderServiceLocation,JSON.stringify(request),{ headers: { 'Content-Type': 'application/json' } })
       .pipe(
         catchError(this.handleError<any>('updateOrder'))
       );
@@ -219,8 +221,8 @@ export class OrdersService {
         quantity: item.quantity,
         total: item.total
       })),
-      estimateId: order.estimateReportId,
-      orderId: order.orderReportId
+      estimateReportId: order.estimateReportId,
+      orderReportId: order.orderReportId
     };
   }
 }

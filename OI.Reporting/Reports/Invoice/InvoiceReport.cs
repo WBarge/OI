@@ -2,7 +2,7 @@
 
 namespace OI.Reporting.Reports.Invoice;
 
-public class InvoiceReport(ILogger<InvoiceReport> logger,Guid reportId) : BaseReport(reportId)
+public class InvoiceReport(ILogger<InvoiceReport> logger,Guid reportId) : BaseReport(reportId, logger)
 {
     private readonly ILogger<InvoiceReport> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     public override string ReportName { get { return "Invoice Report"; } }

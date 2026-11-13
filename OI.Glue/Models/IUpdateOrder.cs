@@ -5,7 +5,7 @@ public interface IUpdateOrder :  ICreateOrder
     Guid Id { get; set; }
 
     int OrderNumber { get; set; }
-    public Guid EstimateId { get; set; }
-    public Guid OrderId { get; set; }
-    public Guid InvoiceId { get; set; }
+    public Guid? EstimateReportId { get; set; }
+    public Guid? OrderReportId { get; set; }
+    public Guid? InvoiceReportId { get; set; }
 }

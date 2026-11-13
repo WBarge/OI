@@ -7,11 +7,12 @@ namespace OI.Reporting.Reports;
 public abstract class BaseReport()
 {
     public Guid GenerationId { get; }
-
-    protected BaseReport(Guid id) : this()
+    private readonly ILogger _logger;
+    protected BaseReport(Guid id, ILogger logger) : this()
     {
         id.Required(nameof(id));//enforce the id used to identify the report
         GenerationId = id;
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     // The name of the report, used for logging and identification purposes
@@ -23,12 +24,23 @@ public abstract class BaseReport()
 
     public async Task<byte[]> GenerateReportAsync(CancellationToken cancellationToken = default)
     {
+        QuestPDF.Settings.License = LicenseType.Community;
+
         CancellationToken = cancellationToken;
         
         await BuildDataModelAsync();
         IDocument generatedReport = await BuildReportDocumentAsync();
+        byte[] reportBytes;
 
-        byte[] reportBytes = generatedReport.GeneratePdf();
+        try
+        {
+            reportBytes = generatedReport.GeneratePdf();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error generating report document for {ReportName} with GenerationId: {GenerationId}", ReportName, GenerationId);
+            throw;
+        }
 
         return reportBytes;
     }

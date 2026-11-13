@@ -12,7 +12,7 @@ namespace OI.Reporting.Reports.EstimateReport;
 public class EstimateReport(ILogger<EstimateReport> logger,
     Guid reportId,
     ICompanyProfileStore companyProfileStore,
-    IOrderManager orderManager) : BaseReport(reportId)
+    IOrderManager orderManager) : BaseReport(reportId, logger)
 {
     private readonly ILogger<EstimateReport> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     private readonly ICompanyProfileStore _companyProfileStore = companyProfileStore ?? throw new ArgumentNullException(nameof(companyProfileStore));

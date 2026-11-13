@@ -28,7 +28,7 @@ internal class JobResultRepo(OiReportingDbContext reportingDbContext): BaseEfRep
         JobResult? preExisting = await FindByIdAsync(jobId, token);
         if (preExisting.IsNotEmpty())
         {
-            throw new InvalidOperationException($"JobResult with Id {jobId} already exists.");
+            return;
         }
         JobResult result = new JobResult()
         {
@@ -54,19 +54,35 @@ internal class JobResultRepo(OiReportingDbContext reportingDbContext): BaseEfRep
     /// </exception>
     public async Task SaveJobResultAsync(Guid reportId, string reportName, byte[] reportResult, CancellationToken token)
     {
-        JobResult? jobResult = await JobResult(reportId, token);
+        JobResult? jobResult = await ((OiReportingDbContext)DbContext).ReportResults
+            .Include(jobResult => jobResult.Result)
+            .FirstOrDefaultAsync(r => r.Id == reportId, token);
         if (jobResult == null)
         {
             throw new InvalidOperationException($"JobResult with Id {reportId} not found.");
         }
-        jobResult.Result = new StoredFile()
+        try
         {
-            Id = Guid.NewGuid(),
-            FileName = $"{reportName}_Report_{reportId}.pdf",
-            FileContents = reportResult
-        };
-        Update(jobResult);
-        await SaveAsync(token);
+
+            StoredFile file = new StoredFile
+            {
+                Id = Guid.NewGuid(),
+                FileName = $"{reportName}_Report_{reportId}.pdf",
+                FileContents = reportResult
+            };
+
+            jobResult.Result = file;
+            jobResult.ResultId = file.Id;
+
+            ((OiReportingDbContext)DbContext).Entry(file).State = EntityState.Added;
+            await ((OiReportingDbContext)DbContext).SaveChangesAsync(token);
+
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
     }
 
     public async Task<Glue.Models.JobResult> GetResultFileAsync(Guid reportId, CancellationToken token)

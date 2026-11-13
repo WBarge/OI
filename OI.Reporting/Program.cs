@@ -84,7 +84,7 @@ namespace OI.Reporting
 
             app.UseHttpsRedirection();
 
-            app.UseHangfireDashboard();
+            app.UseHangfireDashboard(@"/jobs");
 
             app.UseAuthentication();
             app.UseAuthorization();

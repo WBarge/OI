@@ -20,4 +20,5 @@ export class Configuration {
   public companyContactPhone: string = "";
   public defaultShippingAmount: number = 0.00;
   public forceEstimateCreation: boolean = false;
+  public taxRate: number = 0.00;
 }

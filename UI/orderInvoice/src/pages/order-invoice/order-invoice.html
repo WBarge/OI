@@ -109,7 +109,7 @@
     <p-inputnumber id="shipping"  [(ngModel)]="shipping" (ngModelChange)="calculateTotals()"  [readonly]="isReadOnly" [inputStyle]="{ 'text-align': 'right', 'width': '6rem' }" mode="currency" currency="USD" locale="en-US"/>
   </div>
   <div class="totalRow">
-    <span>Tax:</span>
+    <span>Tax @ {{taxRate * 100 }}%:</span>
     <p-inputnumber id="tax"  [(ngModel)]="tax" (ngModelChange)="calculateTotals()"  [readonly]="isReadOnly" [inputStyle]="{ 'text-align': 'right', 'width': '6rem' }" mode="currency" currency="USD" locale="en-US"/>
   </div>
   <div class="totalRow">
@@ -133,6 +133,7 @@
 
     @if(canCreateOrderDocument) {
       <button type="button" pButton (click)="createOrderDocument($event)" label="Create Order Document">Create Order Document</button>
+      <button type="button" pButton (click)="downloadEstimateDocument($event)" label="Get Estimate">Get Estimate</button>
     }
   }
   <button type="button" pButton (click)="done($event)" label="Done">Done</button>

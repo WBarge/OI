@@ -21,15 +21,15 @@ public class UpdateOrder : CreateOrder, IUpdateOrder
     /// <summary>
     /// The report ID of the estimate
     /// </summary>
-    public Guid EstimateId { get; set; }
+    public Guid? EstimateReportId { get; set; }
 
     /// <summary>
     /// The report ID of the order
     /// </summary>
-    public Guid OrderId { get; set; }
+    public Guid? OrderReportId { get; set; }
 
     /// <summary>
     ///  The report ID of the invoice
     /// </summary>
-    public Guid InvoiceId { get; set; }
+    public Guid? InvoiceReportId { get; set; }
 }

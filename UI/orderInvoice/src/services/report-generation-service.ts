@@ -22,11 +22,7 @@ export class ReportGenerationService {
   public generateEstimateReport(orderId:string):Observable<string>{
     var reportUrl = this.configService.config.reportingApiUrl + 'Estimate';
 
-    var request = {
-      orderId: orderId
-    };
-
-    return this.http.post(reportUrl,request)
+    return this.http.post(reportUrl,JSON.stringify(orderId),{ headers: { 'Content-Type': 'application/json' } })
       .pipe(
         map((results:any) => {
           return results as string;
