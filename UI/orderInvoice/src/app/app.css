@@ -1,3 +1,7 @@
 .signedInAs {
   margin-right: 0.75rem;
 }
+
+.p-toast .p-toast-message {
+  margin-bottom: 0.75rem;
+}

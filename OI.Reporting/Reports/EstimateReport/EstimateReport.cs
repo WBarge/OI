@@ -67,7 +67,7 @@ public class EstimateReport(ILogger<EstimateReport> logger,
                         .Layers(layers =>
                         {
                             layers.Layer().Image(_companyProfile!.LogoFile);
-                            layers.Layer().Background(Color.FromHex("#D8FFFFFF"));
+                            layers.Layer().Background(Color.FromHex("#D8FFFFFF"));//white at about 85% opacity.
                             layers.PrimaryLayer().Padding(20).Column(column =>
                             {
                                 column.Item().Row(row =>
@@ -78,6 +78,8 @@ public class EstimateReport(ILogger<EstimateReport> logger,
                                             .FontSize(18).Bold();
                                         text.Line(_companyProfile!.CompanyAddress).FontColor(Colors.Blue.Darken4)
                                             .FontSize(14);
+                                        text.Line(_companyProfile!.CompanyCity + ", " + _companyProfile!.CompanyState + " " + _companyProfile!.CompanyZip)
+                                            .FontColor(Colors.Blue.Darken4).FontSize(14);
                                         text.Line($"Phone: {_companyProfile!.CompanyPhone}")
                                             .FontColor(Colors.Blue.Darken4).FontSize(14);
                                     });
@@ -106,9 +108,8 @@ public class EstimateReport(ILogger<EstimateReport> logger,
                                     table.Cell().PaddingLeft(5).PaddingTop(3)
                                         .Text(_order!.Customer!.FirstName + " " + _order.Customer.LastName);
                                     table.Cell().PaddingLeft(5).PaddingTop(3).Text(
-                                        _order.BillingAddress1 + " " + _order.BillingAddress2 ?? "" + ", " +
-                                        _order.BillingCity + ", " + _order.BillingStateCode + " " +
-                                        _order.BillingZipCode);
+                                        _order.BillingAddress1 + " " + _order.BillingAddress2 ?? "");
+                                    table.Cell().PaddingLeft(5).PaddingTop(3).Text(    _order.BillingCity + ", " + _order.BillingStateCode + " " + _order.BillingZipCode);
                                     table.Cell().PaddingLeft(5).PaddingTop(3).Text(_order.Customer.PhoneNumber);
                                 });
                                 //order number and date

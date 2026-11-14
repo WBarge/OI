@@ -56,7 +56,7 @@ export class ProductSelection {
 
 
   loadProducts(){
-    this.notify.info('System Message','Loading Products');
+    this.notify.info('System Message','Loading Products', 100);
     var transFormedFilters = this.filterTransformer?.transformGridFilters(this.filters);
     this.dataService.getProducts(this.currentPage,this.pageSize,transFormedFilters)
       .subscribe((results:ProductsListResult)=>{

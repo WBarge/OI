@@ -183,8 +183,6 @@ export class OrderInvoice implements OnInit {
     }
   }
 
-
-
   public processTermsReusults(terms:string[]){
     if (terms.length > 0){
       const termObjects:DropDownValues[] = terms.map(term => ({ name: term, code: term }));
@@ -357,6 +355,9 @@ export class OrderInvoice implements OnInit {
     this.orderId = order.idValue;
     this.orderNumber = order.orderNumber;
     this.orderDate = order.orderDate;
+    this.poNumber = order.poNumber;
+    this.termsSelected = order.terms;
+    this.via = order.via;
     this.orderCompleted = order.completedDate;
     this.customerId = order.customerId;
     this.customerName = order.customerName;
@@ -399,10 +400,12 @@ export class OrderInvoice implements OnInit {
       this.estimateReportId = reportId;
       this.reportStatus.markPending(reportId);
       this.changeDetector.markForCheck();   // the id is a plain field, so tell the view it changed
-      this.notify.success("Estimate Creation","The estimate creation has been started successfully. You will be notified when the estimate is ready to download");
+      const TOAST_LIFE_MS:number = 2000;
+      this.notify.success("Estimate Creation","The estimate creation has been started successfully. You will be notified when the estimate is ready to download",TOAST_LIFE_MS);
       this.updateOrder(event);
     });
   }
+
   createOrderDocument(event:any){
     if (!this.orderId){
       this.notify.error("ERROR","An order must be created before an order document can be generated");

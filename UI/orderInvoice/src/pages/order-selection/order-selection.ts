@@ -60,7 +60,7 @@ export class OrderSelection {
 
 
   loadOrders(){
-    this.notify.info('System Message','Loading Orders');
+    this.notify.info('System Message','Loading Orders',100);
       var transFormedFilters = this.filterTransformer?.transformGridFilters(this.filters);
     this.dataService.getOrders(this.currentPage,this.pageSize,transFormedFilters)
       .subscribe((results:OrderListResult)=>{
