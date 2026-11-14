@@ -110,6 +110,7 @@ namespace OI.Common.Models
 
         /// <summary>
         /// Does the range overlap the as of date inclusive of the start and end
+        /// NOTE this does not check if the range is within the range use the WithIn method for that check
         /// </summary>
         /// <param name="asOfDate">The date to check.</param>
         /// <param name="includeEndPoints">if set to <c>true</c> [include end points].</param>
@@ -131,6 +132,7 @@ namespace OI.Common.Models
 
         /// <summary>
         /// Overlapses the specified range inclusive.
+        /// NOTE this does not check if the range is within the range use the WithIn method for that check
         /// </summary>
         /// <param name="range">The range.</param>
         /// <returns>true - the ranges overlap
@@ -175,6 +177,7 @@ namespace OI.Common.Models
 
         /// <summary>
         /// Does the range overlap the as of date exclusive of the start and end
+        /// NOTE this does not check if the range is within the range use the WithIn method for that check
         /// </summary>
         /// <param name="asOfDate">The date to check.</param>
         /// <returns>true - the date is within the daterange
@@ -187,6 +190,7 @@ namespace OI.Common.Models
 
         /// <summary>
         /// Does the range overlap the as of date inclusive of the start and end
+        /// NOTE this does not check if the range is within the range use the WithIn method for that check
         /// </summary>
         /// <param name="asOfDate">The date to check.</param>
         /// <returns>true - the date is within the daterange

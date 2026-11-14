@@ -9,8 +9,22 @@ namespace OI.Common.Tests.Extensions
         [Test, Description("Test Guid returns true")]
         public void IsEmpty_DefaultValue_Success()
         {
-            Guid test = Guid.Empty;
+            // ReSharper disable once PreferConcreteValueOverDefault
+            Guid test = default;
             bool result = test.IsEmpty();
+            result.Should().BeTrue();
+
+            // ReSharper disable once PreferConcreteValueOverDefault
+            Guid? testNullable = default;
+            result = testNullable.IsEmpty();
+            result.Should().BeTrue();
+        }
+
+        [Test, Description("Test Guid returns true")]
+        public void IsEmpty_NULL_Success()
+        {
+            Guid? testNullable = null;
+            bool result = testNullable.IsEmpty();
             result.Should().BeTrue();
         }
 
@@ -20,6 +34,11 @@ namespace OI.Common.Tests.Extensions
             Guid test = Guid.Empty;
             bool result = test.IsEmpty();
             result.Should().BeTrue();
+
+            Guid? testNullable = Guid.Empty;
+            result = testNullable.IsEmpty();
+            result.Should().BeTrue();
+
         }
 
         [Test, Description("Test Guid returns false")]
@@ -27,6 +46,10 @@ namespace OI.Common.Tests.Extensions
         {
             Guid test = Guid.NewGuid();
             bool result = test.IsEmpty();
+            result.Should().BeFalse();
+
+            Guid? testNullable = Guid.NewGuid();
+            result = testNullable.IsEmpty();
             result.Should().BeFalse();
         }
 

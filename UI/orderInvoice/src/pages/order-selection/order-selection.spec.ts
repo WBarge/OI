@@ -72,7 +72,7 @@ describe('OrderSelection', () => {
 
       component.loadOrders();
 
-      expect(addSpy).toHaveBeenCalledWith({ severity: 'info', summary: 'System Message', detail: 'Loading Orders' });
+      expect(addSpy).toHaveBeenCalledWith({ severity: 'info', summary: 'System Message', detail: 'Loading Orders', life: 100 });
     });
 
     it('should ask the order service for the current page and page size', () => {

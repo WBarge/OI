@@ -86,7 +86,7 @@ describe('ProductSelection', () => {
 
       component.loadProducts();
 
-      expect(addSpy).toHaveBeenCalledWith({ severity: 'info', summary: 'System Message', detail: 'Loading Products' });
+      expect(addSpy).toHaveBeenCalledWith({ severity: 'info', summary: 'System Message', detail: 'Loading Products', life: 100 });
     });
 
     it('should pass the grid filters on in the format the service expects', () => {

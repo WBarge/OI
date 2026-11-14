@@ -22,6 +22,7 @@ import { FilterTransformerService } from '../../services/transformers/filter-tra
 import { OrderInvoice } from './order-invoice';
 import { AddressPanel } from '../../components/address-panel/address-panel';
 import { StateService } from '../../services/state-service';
+import { TermsService } from '../../services/terms-service';
 
 describe('OrderInvoice', () => {
   let component: OrderInvoice;
@@ -47,6 +48,8 @@ describe('OrderInvoice', () => {
       providers: [
         MessageService,
         { provide: ConfigService, useValue: { config: Object.assign(new Configuration(), config) } },
+        // the page asks for the payment terms when it starts, keep that away from the network
+        { provide: TermsService, useValue: { getTerms: () => of([]) } },
         // the page reads the order id and the read-only flag from its route, so the tests say which route they are on
         {
           provide: ActivatedRoute,
@@ -96,6 +99,18 @@ describe('OrderInvoice', () => {
     fixture.detectChanges();
   };
 
+  /**
+   * Shipping is no longer a flat charge: the page takes it, and the tax rate, from the configuration when it starts
+   * (ngOnInit). The totals tests therefore build a page configured with a 5.00 shipping charge and 7% tax.
+   */
+  const SHIPPING = 5;
+  const TAX_RATE = 0.07;
+  async function setupWithShippingAndTax() {
+    TestBed.resetTestingModule();
+    await setup({ defaultShippingAmount: SHIPPING, taxRate: TAX_RATE });
+    fixture.detectChanges();
+  }
+
   beforeEach(async () => {
     await setup();
   });
@@ -114,22 +129,24 @@ describe('OrderInvoice', () => {
 
     it('should be an order being edited when the route has an order id', async () => {
       TestBed.resetTestingModule();
-      await setup({}, { id: 'order-123' });
+      await setup({}, { id: '7f3c2a91' });
+      vi.spyOn(TestBed.inject(OrdersService), 'getOrderById').mockReturnValue(NEVER);
 
       fixture.detectChanges();
 
       expect(component.mode()).toBe('EDIT');
-      expect(component.orderId).toBe('order-123');
+      expect(component.orderId).toBe('7f3c2a91');
     });
 
     it('should only be viewed on the read-only route', async () => {
       TestBed.resetTestingModule();
-      await setup({}, { id: 'order-123', readOnly: true });
+      await setup({}, { id: '7f3c2a91-6e84-4b0d-a5c7-1d9e8f42b630', readOnly: true });
+      vi.spyOn(TestBed.inject(OrdersService), 'getOrderById').mockReturnValue(NEVER);
 
       fixture.detectChanges();
 
       expect(component.mode()).toBe('VIEW');
-      expect(component.orderId).toBe('order-123');
+      expect(component.orderId).toBe('7f3c2a91-6e84-4b0d-a5c7-1d9e8f42b630');
     });
 
     it('should be viewed rather than edited when the read-only flag is set, even without an order id', async () => {
@@ -283,7 +300,11 @@ describe('OrderInvoice', () => {
   });
 
   describe('calculateTotals', () => {
-    it('should add up the items, a flat 5.00 shipping charge and 7% tax', () => {
+    beforeEach(async () => {
+      await setupWithShippingAndTax();
+    });
+
+    it('should add up the items, the configured shipping charge and the configured tax rate', () => {
       component.items = [line('a', 10, 2), line('b', 5, 1)];
 
       component.calculateTotals();
@@ -324,17 +345,24 @@ describe('OrderInvoice', () => {
     it('should show the totals on the page', async () => {
       seedOrder();
       await fixture.whenStable();
+      // the number fields take the new values from their models one change detection later
+      fixture.detectChanges();
+      await fixture.whenStable();
 
       const totals = (fixture.nativeElement as HTMLElement).querySelector('.totals')?.textContent ?? '';
+      // shipping and tax are editable number fields, so their values are in the inputs and not in the text
+      const inputValue = (id: string) =>
+        (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>(`#${id} input`)?.value;
       expect(totals).toContain('$74.72');
-      expect(totals).toContain('$5.00');
-      expect(totals).toContain('$5.23');
+      expect(inputValue('shipping')).toBe('$5.00');
+      expect(inputValue('tax')).toBe('$5.23');
       expect(totals).toContain('$84.95');
     });
   });
 
   describe('delete', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
+      await setupWithShippingAndTax();
       seedOrder();
     });
 
@@ -512,7 +540,8 @@ describe('OrderInvoice', () => {
       idValue: '9', sku: 'G-200', name: 'Gadget', shortDescription: 'A large gadget', price: 20
     });
 
-    beforeEach(() => {
+    beforeEach(async () => {
+      await setupWithShippingAndTax();
       seedOrder();
     });
 
@@ -636,7 +665,8 @@ describe('OrderInvoice', () => {
   });
 
   describe('onQuantityChange', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
+      await setupWithShippingAndTax();
       seedOrder();
     });
 
@@ -763,7 +793,23 @@ describe('OrderInvoice', () => {
       component.createOrder(new Event('click'));
       fixture.detectChanges();
 
-      expect(buttonLabels()).toEqual(['Update', 'Done']);
+      // an order that exists can also have its estimate and order documents created, and the estimate fetched
+      expect(buttonLabels()).toEqual(['Update', 'Create Estimate', 'Create Order', 'Get Estimate', 'Done']);
+    });
+
+    it('should hold back Create Order and Get Estimate until an estimate exists when estimates are required', async () => {
+      TestBed.resetTestingModule();
+      await setup({ forceEstimateCreation: true }, { id: 'order-9' });
+      vi.spyOn(TestBed.inject(OrdersService), 'getOrderById').mockReturnValue(NEVER);
+      fixture.detectChanges();
+      component.customerId = 'c-7';
+      component.items = [line('1', 10, 2)];
+
+      expect(component.canCreateOrderDocument).toBe(false);
+
+      component.estimateReportId = '3f2504e0-4f89-11d3-9a0c-0305e82c3301';
+
+      expect(component.canCreateOrderDocument).toBe(true);
     });
 
     it('should send the id and the order number when an order that is being edited is updated', async () => {

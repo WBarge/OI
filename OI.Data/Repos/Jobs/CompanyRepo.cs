@@ -67,6 +67,8 @@ internal class CompanyRepo(OiReportingDbContext serviceDbContext): BaseEfRepo<Oi
                 existingCompany.Result.FileName = profile.LogoResourceName;
                 existingCompany.Result.FileContents = profile.LogoFile;
             }
+            //TODO - look into this orphaning the old stored file - at the DB level currently if you delete the stored file it will
+            //     cascade and delete the company record.  The issue was reported by AI and maybe BS!
             Update(existingCompany);
         }
 

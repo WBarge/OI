@@ -56,10 +56,12 @@ describe('OrdersService', () => {
       customerName: 'Jane Smith', phoneNumber: '5125550100',
       customerId: '11111111-1111-1111-1111-111111111111',
       orderDate: new Date('2026-03-15T10:30:00Z'),
+      poNumber: 'PO-1234', terms: 'Net 30', via: 'UPS',
       billingAddress1: '1 Bill St', billingAddress2: 'Apt 2', billingCity: 'Austin', billingStateCode: 'TX', billingZipCode: '78701',
       shippingAddress1: '9 Ship Rd', shippingAddress2: '', shippingCity: 'Dallas', shippingStateCode: 'TX', shippingZipCode: '75201',
       orderItems: [item('p1', 10, 2), item('p2', 5.5, 1)],
-      subTotal: 25.5, shipping: 5, tax: 1.79, total: 32.29
+      subTotal: 25.5, shipping: 5, tax: 1.79, total: 32.29,
+      estimateReportId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', orderReportId: null
     });
 
   describe('createOrder', () => {
@@ -96,6 +98,7 @@ describe('OrdersService', () => {
 
       const request = httpTestingController.expectOne(orderUrl);
       expect(request.request.body).toEqual({
+        poNumber: 'PO-1234', terms: 'Net 30', via: 'UPS',
         customerId: '11111111-1111-1111-1111-111111111111',
         orderDate: order.orderDate,
         billingAddress1: '1 Bill St', billingAddress2: 'Apt 2', billingCity: 'Austin', billingStateCode: 'TX', billingZipCode: '78701',
@@ -104,7 +107,8 @@ describe('OrdersService', () => {
         orderItems: [
           { id: 'line-p1', productId: 'p1', name: 'Product p1', description: 'Description p1', sku: 'SKU-p1', price: 10, quantity: 2, total: 20 },
           { id: 'line-p2', productId: 'p2', name: 'Product p2', description: 'Description p2', sku: 'SKU-p2', price: 5.5, quantity: 1, total: 5.5 }
-        ]
+        ],
+        estimateReportId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', orderReportId: null
       });
       request.flush(savedOrder());
     });
@@ -288,6 +292,12 @@ describe('OrdersService', () => {
   });
 
   describe('updateOrder', () => {
+    // updateOrder sends the body as a JSON string, so read it back as the server would
+    const bodyOf = (request: { request: { body: unknown } }) => {
+      const body = request.request.body;
+      return typeof body === 'string' ? JSON.parse(body) : (body as Record<string, any>);
+    };
+
     const savedOrder = () => Object.assign(newOrder(), {
       idValue: '22222222-2222-2222-2222-222222222222', orderNumber: '1001'
     });
@@ -306,20 +316,22 @@ describe('OrdersService', () => {
       service.updateOrder(order).subscribe();
 
       const request = httpTestingController.expectOne(orderUrl);
-      expect(request.request.body).toEqual({
+      expect(bodyOf(request)).toEqual({
         id: '22222222-2222-2222-2222-222222222222',
         orderNumber: 1001,
+        poNumber: 'PO-1234', terms: 'Net 30', via: 'UPS',
         customerId: '11111111-1111-1111-1111-111111111111',
-        orderDate: order.orderDate,
+        orderDate: order.orderDate.toISOString(),
         billingAddress1: '1 Bill St', billingAddress2: 'Apt 2', billingCity: 'Austin', billingStateCode: 'TX', billingZipCode: '78701',
         shippingAddress1: '9 Ship Rd', shippingAddress2: '', shippingCity: 'Dallas', shippingStateCode: 'TX', shippingZipCode: '75201',
         subTotal: 25.5, shipping: 5, tax: 1.79, total: 32.29,
         orderItems: [
           { id: 'line-p1', productId: 'p1', name: 'Product p1', description: 'Description p1', sku: 'SKU-p1', price: 10, quantity: 2, total: 20 },
           { id: 'line-p2', productId: 'p2', name: 'Product p2', description: 'Description p2', sku: 'SKU-p2', price: 5.5, quantity: 1, total: 5.5 }
-        ]
+        ],
+        estimateReportId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', orderReportId: null
       });
-      expect(typeof request.request.body.orderNumber).toBe('number');
+      expect(typeof bodyOf(request).orderNumber).toBe('number');
       request.flush(null);
     });
 
@@ -328,9 +340,9 @@ describe('OrdersService', () => {
 
       const request = httpTestingController.expectOne(orderUrl);
       for (const key of ['idValue', 'completedDate', 'isPending', 'customerName', 'phoneNumber']) {
-        expect(request.request.body).not.toHaveProperty(key);
+        expect(bodyOf(request)).not.toHaveProperty(key);
       }
-      for (const orderItem of request.request.body.orderItems) {
+      for (const orderItem of bodyOf(request).orderItems) {
         expect(orderItem).not.toHaveProperty('idValue');
       }
       request.flush(null);
@@ -340,7 +352,7 @@ describe('OrdersService', () => {
       service.updateOrder(Object.assign(savedOrder(), { customerId: '' })).subscribe();
 
       const request = httpTestingController.expectOne(orderUrl);
-      expect(request.request.body.customerId).toBeNull();
+      expect(bodyOf(request).customerId).toBeNull();
       request.flush(null);
     });
 
@@ -356,13 +368,13 @@ describe('OrdersService', () => {
 
       service.updateOrder(order).subscribe();
       const update = httpTestingController.expectOne(request => request.method === 'PUT');
-      updateBody = update.request.body;
+      updateBody = bodyOf(update);
       update.flush(null);
 
       const { id, orderNumber, ...rest } = updateBody;
       expect(id).toBe(order.idValue);
       expect(orderNumber).toBe(1001);
-      expect(rest).toEqual(createBody);
+      expect(rest).toEqual(JSON.parse(JSON.stringify(createBody)));
     });
 
     it('should emit once and complete when the API accepts the update', () => {

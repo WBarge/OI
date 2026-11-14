@@ -44,6 +44,28 @@ namespace OI.Common.Extensions.Comparison
         }
 
         /// <summary>
+        /// Checks is the input Guid is empty
+        /// </summary>
+        /// <param name="g">guid to be checked</param>
+        /// <returns>true if the g is null or == Guid.Empty</returns>
+        [ContractAnnotation("null => false")]
+        public static bool IsEmpty(this Guid? g)
+        {
+            return (!g.HasValue || ((object)g).IsEmpty()) || g == Guid.Empty;
+        }
+
+        /// <summary>
+        /// Checks if the input System.DateTime is not empty.
+        /// </summary>
+        /// <param name="obj">The object.</param>
+        /// <returns>true if the Guid is not empty.</returns>
+        [ContractAnnotation("null => false")]
+        public static bool IsNotEmpty(this Guid? obj)
+        {
+            return (!obj.IsEmpty());
+        }
+
+        /// <summary>
         /// Checks the guid to ensure it is not null.  If so an exceptions is thrown
         /// </summary>
         /// <param name="o">The o.</param>

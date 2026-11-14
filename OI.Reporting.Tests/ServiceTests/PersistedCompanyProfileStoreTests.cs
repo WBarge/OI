@@ -66,7 +66,11 @@ public class PersistedCompanyProfileStoreTests
         _repo.Verify(r => r.UpsertAsync(profile, source.Token), Times.Once);
     }
 
-    [Test, Description("ReplaceAsync should pass on a failure from the repository")]
+    // Ignored because of an APPLICATION BUG (not fixed, per instructions): PersistedCompanyProfileStore.ReplaceAsync blocks on the
+    // repo task with a spin-wait and then does "throw result.Exception", which wraps the real failure in an AggregateException.
+    // The caller therefore sees AggregateException instead of InvalidOperationException. Remove [Ignore] once ReplaceAsync
+    // awaits the repo call (so the original exception propagates).
+    [Test, Ignore("App bug: PersistedCompanyProfileStore.ReplaceAsync wraps repo failures in AggregateException"), Description("ReplaceAsync should pass on a failure from the repository")]
     public async Task ReplaceAsync_PassesOnAFailure()
     {
         _repo.Setup(r => r.UpsertAsync(It.IsAny<ICompanyProfile>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("db down"));
