@@ -68,12 +68,12 @@ public class ReportManager(ILogger<ReportManager> logger, IReportFactory reportF
             await _jobResultRepo.SaveJobResultAsync(reportId, report.ReportName, reportResult, token);
 
             _logger.LogInformation("Successfully generated and saved estimate report for ReportId: {ReportId}", reportId);
-            await NotifyUserOfReportGeneration(userName, userId, reportName, token);
+            await NotifyUserOfReportGeneration(userName, userId, reportName, reportId, token);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to generate estimate report for ReportId: {ReportId}", reportId);
-            await NotifyUserOfReportingError(userName, userId, reportName, token);
+            await NotifyUserOfReportingError(userName, userId, reportName, reportId, token);
             throw;
         }
     }
@@ -84,14 +84,16 @@ public class ReportManager(ILogger<ReportManager> logger, IReportFactory reportF
     /// <param name="userName">The name of the user who initiated the report generation.</param>
     /// <param name="userId">The unique identifier of the user who initiated the report generation.</param>
     /// <param name="reportName">The name of the report that failed to generate.</param>
+    /// <param name="reportId">The id of the report, so the browser knows which report failed.</param>
     /// <param name="token">A cancellation token to observe while waiting for the task to complete.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
-    private async Task NotifyUserOfReportingError(string userName, string userId, string reportName,CancellationToken token)
+    private async Task NotifyUserOfReportingError(string userName, string userId, string reportName, Guid reportId, CancellationToken token)
     {
         string title = $"{reportName} {ERROR_MESSAGE_TYPE}";
         string message = $"{reportName} failed to generate by User: {userName}. Contact support or your administrator for assistance.";
 
-        await _notificationPublisher.PublishAsync(NotificationTarget.User(userId), ERROR_MESSAGE_TYPE, title, message, token);
+        await _notificationPublisher.PublishEventAsync(NotificationTarget.User(userId), ERROR_MESSAGE_TYPE, title, message,
+            NotificationEvents.ReportFailed, reportId.ToString(), token);
     }
 
     /// <summary>
@@ -100,14 +102,16 @@ public class ReportManager(ILogger<ReportManager> logger, IReportFactory reportF
     /// <param name="userName">The name of the user who generated the report.</param>
     /// <param name="userId">The unique identifier of the user to be notified.</param>
     /// <param name="reportName">The name of the generated report.</param>
+    /// <param name="reportId">The id of the report, so the browser knows which report is ready to download.</param>
     /// <param name="token">A cancellation token to observe while waiting for the task to complete.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
-    private async Task NotifyUserOfReportGeneration(string userName, string userId, string reportName,CancellationToken token)
+    private async Task NotifyUserOfReportGeneration(string userName, string userId, string reportName, Guid reportId, CancellationToken token)
     {
         string title = $"{reportName} {MESSAGE_TITLE}";
         string message = $"{reportName} was generated successfully by User: {userName}";
             
-        bool accepted = await _notificationPublisher.PublishAsync(NotificationTarget.User(userId), SUCCESS_MESSAGE_TYPE, title, message, token);
+        bool accepted = await _notificationPublisher.PublishEventAsync(NotificationTarget.User(userId), SUCCESS_MESSAGE_TYPE, title, message,
+            NotificationEvents.ReportReady, reportId.ToString(), token);
 
         if (!accepted)
         {

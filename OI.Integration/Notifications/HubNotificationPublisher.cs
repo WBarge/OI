@@ -12,8 +12,16 @@ public sealed class HubNotificationPublisher(
     ServiceTokenProvider tokens,
     ILogger<HubNotificationPublisher> logger) : INotificationPublisher
 {
-    public async Task<bool> PublishAsync(NotificationTarget target, string type, string title, string? body = null,
+    public Task<bool> PublishAsync(NotificationTarget target, string type, string title, string? body = null,
         CancellationToken cancellationToken = default)
+        => SendAsync(target, type, title, body, null, null, cancellationToken);
+
+    public Task<bool> PublishEventAsync(NotificationTarget target, string type, string title, string? body,
+        string eventName, string correlationId, CancellationToken cancellationToken = default)
+        => SendAsync(target, type, title, body, eventName, correlationId, cancellationToken);
+
+    private async Task<bool> SendAsync(NotificationTarget target, string type, string title, string? body,
+        string? eventName, string? correlationId, CancellationToken cancellationToken)
     {
         try
         {
@@ -22,7 +30,7 @@ public sealed class HubNotificationPublisher(
 
             using HttpRequestMessage request = new(HttpMethod.Post, "api/publish")
             {
-                Content = JsonContent.Create(new PublishRequest(target.Kind, target.Id, target.Topic, type, title, body)),
+                Content = JsonContent.Create(new PublishRequest(target.Kind, target.Id, target.Topic, type, title, body, eventName, correlationId)),
             };
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 

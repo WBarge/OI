@@ -9,6 +9,10 @@ export interface AppNotification {
   title: string;
   body?: string;
   at: string;
+  /** Set when the notification is more than a message, for example 'report.ready'. See report-status-service.ts. */
+  event?: string;
+  /** What the event is about; for the report events, the report id. */
+  correlationId?: string;
 }
 
 /** Typed facade over SignalRService for the central hub (OI.Hub: AppHub / IAppClient). */

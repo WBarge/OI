@@ -4,6 +4,7 @@ import { Subscription } from 'rxjs';
 import { NotificationService, Severity } from '../utils/notification-service';
 import { AppHubService, AppNotification } from './app-hub-service';
 import { AuthService } from './auth-service';
+import { ReportStatusService } from './report-status-service';
 
 const TOAST_LIFE_MS = 10000;
 const RETRY_AFTER_MS = 30_000;
@@ -32,6 +33,7 @@ export class HubConnectionService {
   private auth = inject(AuthService);
   private appHub = inject(AppHubService);
   private notifications = inject(NotificationService);
+  private reportStatus = inject(ReportStatusService);
 
   private subscription?: Subscription;
   private retryTimer?: ReturnType<typeof setTimeout>;
@@ -58,7 +60,10 @@ export class HubConnectionService {
     }
     // listen before connecting so a message sent the moment the connection opens is not missed
     this.appHub.configure();
-    this.subscription = this.appHub.notifications$.subscribe((notification) => this.show(notification));
+    this.subscription = this.appHub.notifications$.subscribe((notification) => {
+      this.reportStatus.handle(notification);   // lets pages know a report is ready or failed
+      this.show(notification);
+    });
     await this.connect();
   }
 
@@ -85,6 +90,7 @@ export class HubConnectionService {
     this.cancelRetry();
     this.subscription.unsubscribe();
     this.subscription = undefined;
+    this.reportStatus.clear();
     await this.appHub.disconnect();
   }
 

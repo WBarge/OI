@@ -16,5 +16,10 @@ public sealed record NotificationTarget(NotificationTargetKind Kind, string Id, 
     public static NotificationTarget GroupTopic(string groupId, string topic) => new(NotificationTargetKind.Topic, groupId, topic);
 }
 
-/// <summary>The body of POST api/publish on OI.Hub. Shared so the sender and the hub cannot drift apart.</summary>
-public sealed record PublishRequest(NotificationTargetKind Kind, string Id, string? Topic, string Type, string Title, string? Body);
+/// <summary>
+/// The body of POST api/publish on OI.Hub. Shared so the sender and the hub cannot drift apart.
+/// Event and CorrelationId are optional: a plain message (the toast) leaves them empty; a notification that
+/// also tells the browser something happened (for example "report.ready" for report 1234) fills them in.
+/// </summary>
+public sealed record PublishRequest(NotificationTargetKind Kind, string Id, string? Topic, string Type, string Title, string? Body,
+    string? Event = null, string? CorrelationId = null);

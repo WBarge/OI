@@ -5,6 +5,7 @@ import { vi } from 'vitest';
 import { AppHubService, AppNotification } from './app-hub-service';
 import { AuthService } from './auth-service';
 import { HubConnectionService } from './hub-connection-service';
+import { ReportStatusService } from './report-status-service';
 import { NotificationService } from '../utils/notification-service';
 
 describe('HubConnectionService', () => {
@@ -200,6 +201,57 @@ describe('HubConnectionService', () => {
 
       expect(toast.success).toHaveBeenCalledTimes(1);
       expect(toast.error).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('report events from the back end', () => {
+    const reportId = 'b821270a-26b1-45d2-adfc-07e2c2225587';
+    // the notification exactly as it arrived over the wire from the hub
+    const reportReady = (overrides: Partial<AppNotification> = {}) => notification({
+      type: 'Success', title: 'Estimate Generated', event: 'report.ready', correlationId: reportId, ...overrides
+    });
+    let reports: ReportStatusService;
+
+    beforeEach(async () => {
+      signedIn.set(true);
+      await start();
+      reports = TestBed.inject(ReportStatusService);
+    });
+
+    it('should mark a pending report as ready, and still show the toast', () => {
+      reports.markPending(reportId);
+
+      incoming.next(reportReady());
+
+      expect(reports.status(reportId)).toBe('ready');
+      expect(reports.isDownloadable(reportId)).toBe(true);
+      expect(toast.success).toHaveBeenCalledTimes(1);
+    });
+
+    it('should mark a pending report as failed', () => {
+      reports.markPending(reportId);
+
+      incoming.next(reportReady({ type: 'Error', event: 'report.failed' }));
+
+      expect(reports.status(reportId)).toBe('failed');
+      expect(toast.error).toHaveBeenCalledTimes(1);
+    });
+
+    it('should leave reports alone when the notification is a plain message', () => {
+      reports.markPending(reportId);
+
+      incoming.next(notification());
+
+      expect(reports.status(reportId)).toBe('pending');
+    });
+
+    it('should forget the reports when the person signs out', async () => {
+      reports.markPending(reportId);
+
+      signedIn.set(false);
+      await settle();
+
+      expect(reports.status(reportId)).toBeUndefined();
     });
   });
 

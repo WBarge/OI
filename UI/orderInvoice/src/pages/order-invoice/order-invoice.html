@@ -133,7 +133,7 @@
 
     @if(canCreateOrderDocument) {
       <button type="button" pButton (click)="createOrderDocument($event)" label="Create Order Document">Create Order Document</button>
-      <button type="button" pButton (click)="downloadEstimateDocument($event)" label="Get Estimate">Get Estimate</button>
+      <button type="button" pButton (click)="downloadEstimateDocument($event)" [disabled]="!canDownloadEstimate">{{estimateButtonLabel}}</button>
     }
   }
   <button type="button" pButton (click)="done($event)" label="Done">Done</button>

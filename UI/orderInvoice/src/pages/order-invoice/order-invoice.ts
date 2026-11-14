@@ -1,4 +1,4 @@
-import { Component, inject,OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, ChangeDetectorRef } from '@angular/core';
 import { Router,ActivatedRoute } from '@angular/router';
 import {CurrencyPipe} from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -10,6 +10,7 @@ import { NotificationService } from '../../utils/notification-service';
 import { TermsService } from '../../services/terms-service';
 import { ReportGenerationService } from '../../services/report-generation-service';
 import { ReportDownloadService } from '../../services/report-download-service';
+import { ReportStatusService } from '../../services/report-status-service';
 
 import { AddressPanel } from '../../components/address-panel/address-panel';
 import { CustomerSelection } from '../../components/customer-selection/customer-selection';
@@ -76,6 +77,8 @@ export class OrderInvoice implements OnInit {
   private notify=inject(NotificationService);
   private reportService = inject(ReportGenerationService);
   private reportDownloadService = inject(ReportDownloadService);
+  private reportStatus = inject(ReportStatusService);
+  private changeDetector = inject(ChangeDetectorRef);
 
   public configuration = signal<Configuration | null>(null);
   public oiMode: string = "Order";
@@ -157,6 +160,19 @@ export class OrderInvoice implements OnInit {
 
   public get canCreateEstimateDocument():boolean{
     return this.mode() === OrderMode.Edit && this.canSubmit;
+  }
+
+  /** The estimate can be downloaded unless this session knows it is still being generated, or that it failed. */
+  public get canDownloadEstimate():boolean{
+    return this.reportStatus.isDownloadable(this.estimateReportId);
+  }
+
+  public get estimateButtonLabel():string{
+    switch (this.reportStatus.status(this.estimateReportId)) {
+      case 'pending': return 'Estimate Generating...';
+      case 'failed': return 'Estimate Failed';
+      default: return 'Get Estimate';
+    }
   }
 
   public get canCreateOrderDocument():boolean{
@@ -364,6 +380,7 @@ export class OrderInvoice implements OnInit {
     this.total = order.total;
     this.estimateReportId = order.estimateReportId;
     this.orderReportId = order.orderReportId;
+    this.changeDetector.markForCheck();   // plain fields, so tell the view the report ids arrived
   }
 
   done(event:any){
@@ -376,7 +393,12 @@ export class OrderInvoice implements OnInit {
       return;
     }
     this.reportService.generateEstimateReport(this.orderId).subscribe((reportId:string)=>{
+      if (typeof reportId !== 'string' || !reportId) {
+        return;   // the request failed and the error handler has already told the user
+      }
       this.estimateReportId = reportId;
+      this.reportStatus.markPending(reportId);
+      this.changeDetector.markForCheck();   // the id is a plain field, so tell the view it changed
       this.notify.success("Estimate Creation","The estimate creation has been started successfully. You will be notified when the estimate is ready to download");
       this.updateOrder(event);
     });

@@ -29,7 +29,7 @@ public class PublishController(IHubContext<AppHub, IAppClient> hub, ILogger<Publ
             return BadRequest("Id, Type and Title are required.");
         }
 
-        Notification notification = new(request.Type, request.Title, request.Body, DateTimeOffset.UtcNow);
+        Notification notification = new(request.Type, request.Title, request.Body, DateTimeOffset.UtcNow, request.Event, request.CorrelationId);
 
         IAppClient? target = request.Kind switch
         {

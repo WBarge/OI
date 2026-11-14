@@ -17,4 +17,6 @@
 		   Another solution would be a history solution that would allow the old reporting records to be kept in the system but not used as the current records.  
 		   This would require a new table to be created to store the history of the reporting records.  The history table would have a 
 		   foreign key to the order table and would store the old reporting records.  We would then more than likely expose this history of the records in the UI. 
+
+11.13.26 - Event names: report.ready and report.failed are defined in two places that must stay in sync, NotificationEvents.cs and report-status-service.ts.
 		   
