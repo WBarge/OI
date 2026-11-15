@@ -5,6 +5,8 @@ export class Order {
   public orderNumber:string="";
   public orderDate:Date = new Date();
   public completedDate:Date = new Date();
+  public canceledDate:Date|null = null;
+  public canceledBy:string|null = null;
   public poNumber:string = "";
   public terms:string = "";
   public via:string = "";

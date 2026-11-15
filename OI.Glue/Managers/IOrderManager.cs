@@ -10,4 +10,8 @@ public interface IOrderManager
 
     Task UpdateOrderAsync(IUpdateOrder request, CancellationToken cancellationToken= default);
     Task<IOrder?> GetOrderByIdAsync(Guid id, CancellationToken token = default);
+    Task CancelOrderAsync(Guid id, CancellationToken token);
+
+    Task<PagedResult<IOrderSearch>> GetCanceledOrdersPagedAsync(Dictionary<string, IFilterMetaData[]> filters, int? page, 
+        int? pageSize, CancellationToken cancellationToken);
 }

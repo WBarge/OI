@@ -5,6 +5,7 @@ using OI.Business.Managers;
 using OI.Common.Exceptions;
 using OI.Glue.Models;
 using OI.Glue.Repos;
+using OI.Glue.Security;
 
 namespace OI.Business.Tests.ManagerTests;
 
@@ -12,7 +13,7 @@ namespace OI.Business.Tests.ManagerTests;
 public class OrderManagerUpdateTests
 {
     private static OrderManager CreateSut(Mock<IOrderRepo> orderRepoMock)
-        => new(orderRepoMock.Object, new Mock<ICustomerRepo>().Object, NullLogger<OrderManager>.Instance);
+        => new(orderRepoMock.Object, new Mock<ICustomerRepo>().Object, NullLogger<OrderManager>.Instance,new Mock<IClientContext>().Object);
 
     /// <summary>a request for an existing order with no date and no order number, so the manager has to fill them in</summary>
     private static Mock<IUpdateOrder> CreateRequest(Guid orderId, DateTime? orderDate = null, int orderNumber = 0)

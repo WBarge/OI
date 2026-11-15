@@ -24,7 +24,7 @@
       <label >Phone Number: </label>
       <input pInputText id="phone" readonly [value]="customerPhone|phoneFormat" readonly="isReadOnly"/>
     </span>
-  </p-fieldset>
+</p-fieldset>
 @if (configuration(); as config) {
   @if (!config.disableAddresses) {
     <div class="address-panels">
@@ -46,7 +46,7 @@
     </span>
     <span class="fieldOnTop">
       <label for="poNumber">PO Number</label>
-      <input id="poNumber" type="text" pInputText  [(ngModel)]="poNumber" (readOnly)="isReadOnly"/>
+      <input id="poNumber" type="text" pInputText  [(ngModel)]="poNumber" [readOnly]="isReadOnly"/>
     </span>
     <span class="fieldOnTop">
       <label for="terms">Terms</label>
@@ -57,12 +57,12 @@
           optionValue="code"
           placeholder="Select Terms"
           [(ngModel)]="termsSelected"
-          (readOnly)="isReadOnly"
+          [disabled]="isReadOnly"
       />
     </span>
     <span class="fieldOnTop">
       <label for="shippingVia">Shipping Via</label>
-      <input id="shippingVia" type="text" pInputText  [(ngModel)]="via" (readOnly)="isReadOnly"/>
+      <input id="shippingVia" type="text" pInputText  [(ngModel)]="via" [readOnly]="isReadOnly"/>
     </span>
   </div>
 <p-divider />
@@ -122,9 +122,14 @@
   @if (canSubmit) {
 
     @if (editable) {
-      <button type="button" pButton (click)="updateOrder($event)" label="Update">Update</button>
+      <button type="button" pButton (click)="cancelOrder($event)" label="Cancel">Cancel Order</button>
+      @if (!isReadOnly){
+        <button type="button" pButton (click)="updateOrder($event)" label="Update">Update</button>
+      }
     }@else{
-      <button type="button" pButton (click)="createOrder($event)" label="Create">Create</button>
+      @if(!wasCanceled){
+        <button type="button" pButton (click)="createOrder($event)" label="Create">Create</button>
+      }
     }
 
     @if(canCreateEstimateDocument) {
@@ -133,7 +138,14 @@
 
     @if(canCreateOrderDocument) {
       <button type="button" pButton (click)="createOrderDocument($event)" label="Create Order Document">Create Order</button>
-      <button type="button" pButton (click)="downloadEstimateDocument($event)" [disabled]="!canDownloadEstimate">{{estimateButtonLabel}}</button>
+    }
+
+    @if(canDownloadEstimate) {
+      <button type="button" pButton (click)="downloadEstimateDocument($event)">Download Estimate</button>
+    }
+
+    @if(canDownloadOrderDocument) {
+      <button type="button" pButton (click)="downloadOrderDocument($event)" >Download Order</button>
     }
   }
   <button type="button" pButton (click)="done($event)" label="Done">Done</button>

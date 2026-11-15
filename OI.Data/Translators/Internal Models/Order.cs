@@ -8,6 +8,9 @@ internal class Order : IOrder
     public int OrderNumber { get; set; }
     public DateTime OrderDate { get; set; }
     public DateTime CompletedDate { get; set; }
+    public DateTime? CanceledDate { get; set; }
+    public string? CanceledBy { get; set; }
+
     /// <summary>
     /// Gets or sets the purchase order number associated with the order.
     /// This number is typically provided by the customer for tracking purposes.

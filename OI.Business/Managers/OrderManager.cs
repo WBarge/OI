@@ -4,18 +4,19 @@ using OI.Common.Extensions.Comparison;
 using OI.Glue.Managers;
 using OI.Glue.Models;
 using OI.Glue.Repos;
+using OI.Glue.Security;
 
 namespace OI.Business.Managers;
 
 /// <summary>
 /// Manages order-related business logic.
 /// </summary>
-internal class OrderManager(IOrderRepo orderRepo, ICustomerRepo customerRepo, ILogger<OrderManager> logger) : IOrderManager
+internal class OrderManager(IOrderRepo orderRepo, ICustomerRepo customerRepo, ILogger<OrderManager> logger,IClientContext clientContext) : IOrderManager
 {
     private readonly IOrderRepo _orderRepo = orderRepo ?? throw new ArgumentNullException(nameof(orderRepo));
     private readonly ICustomerRepo _customerRepo = customerRepo ?? throw new ArgumentNullException(nameof(customerRepo));
     private readonly ILogger<OrderManager> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-
+    private readonly IClientContext _clientContext = clientContext ?? throw new ArgumentNullException(nameof(clientContext));
 
     internal const int DEFAULT_PAGE_SIZE = 100000;
 
@@ -102,6 +103,28 @@ internal class OrderManager(IOrderRepo orderRepo, ICustomerRepo customerRepo, IL
     }
 
     /// <summary>
+    /// get a limited view of orders in the system based on the criteria passed in of canceled orders
+    /// </summary>
+    /// <param name="filters"></param>
+    /// <param name="page"></param>
+    /// <param name="pageSize"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    public async Task<PagedResult<IOrderSearch>> GetCanceledOrdersPagedAsync(Dictionary<string, IFilterMetaData[]> filters, int? page, int? pageSize, CancellationToken cancellationToken)
+    {
+        int pageNumber = page is null or < 1 ? 1 : page.Value;
+        int size = pageSize is null or < 1 ? DEFAULT_PAGE_SIZE : pageSize.Value;
+        _logger.LogInformation("Listing orders, page {Page} with page size {PageSize}", pageNumber, size);
+
+        // Run one after the other: both queries use the same DbContext, which cannot run two queries at once.
+        IEnumerable<IOrderSearch> data =
+            await _orderRepo.FindPagedCanceledOrderRecordsAsync(filters, pageNumber, size, cancellationToken);
+        long totalRecordSize = await _orderRepo.GetCanceledOrdersCountAsync(filters, cancellationToken);
+        return new PagedResult<IOrderSearch>(data, totalRecordSize);
+
+    }
+
+    /// <summary>
     /// Updates the order in the system
     /// </summary>
     /// <param name="request"></param>
@@ -147,6 +170,17 @@ internal class OrderManager(IOrderRepo orderRepo, ICustomerRepo customerRepo, IL
     public async Task<IOrder?> GetOrderByIdAsync(Guid id, CancellationToken token = default)
     {
         return await _orderRepo.GetOrderAsync(id, token);
+    }
+
+    /// <summary>
+    /// This will mark the order as canceled
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="token"></param>
+    /// <returns></returns>
+    public async Task CancelOrderAsync(Guid id, CancellationToken token)
+    {
+        await _orderRepo.SetCancelationDataForOrderAsync(id, _clientContext.DisplayName, token);
     }
 
     /// <summary>

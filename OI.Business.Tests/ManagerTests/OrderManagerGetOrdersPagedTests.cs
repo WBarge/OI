@@ -4,6 +4,7 @@ using Moq;
 using OI.Business.Managers;
 using OI.Glue.Models;
 using OI.Glue.Repos;
+using OI.Glue.Security;
 
 namespace OI.Business.Tests.ManagerTests;
 
@@ -226,7 +227,9 @@ public class OrderManagerGetOrdersPagedTests
     {
         Mock<IOrderRepo> orderRepoMock = CreateRepoMock();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance,clientContextMock.Object);
 
         await sut.GetOrdersPagedAsync(null!, 1, 10, CancellationToken.None);
 
@@ -249,7 +252,9 @@ public class OrderManagerGetOrdersPagedTests
     private static OrderManager CreateSut(Mock<IOrderRepo> orderRepoMock)
     {
         Mock<ICustomerRepo> customerRepoMock = new();
-        return new OrderManager(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+
+        return new OrderManager(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance,clientContextMock.Object);
     }
 
     private static Mock<IOrderRepo> CreateRepoMock(IEnumerable<IOrderSearch>? data = null, long total = 0L)

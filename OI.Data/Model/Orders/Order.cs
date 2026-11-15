@@ -24,6 +24,16 @@ internal class Order
     /// Gets or sets the completed date. The date when the order was completed or fulfilled.
     /// </summary>
     public DateTime? CompletedDate { get; set; }
+
+    /// <summary>
+    /// The date and time the order was canceled
+    /// </summary>
+    public DateTime? CanceledDate { get; set; }
+
+    /// <summary>
+    /// Who was the user that submitted the cancelation of the order.
+    /// </summary>
+    public string? CanceledBy { get; set; }
     
     /// <summary>
     /// Gets or sets the purchase order number associated with the order.

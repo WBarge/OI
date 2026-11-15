@@ -23,6 +23,16 @@ public interface IOrder
     DateTime CompletedDate { get; set; }
     
     /// <summary>
+    /// The date the order was canceled
+    /// </summary>
+    public DateTime? CanceledDate { get; set; }
+
+    /// <summary>
+    /// Who was the user that submitted the cancelation of the order.
+    /// </summary>
+    public string? CanceledBy { get; set; }
+
+    /// <summary>
     /// Gets or sets the purchase order number associated with the order.
     /// This number is typically provided by the customer for tracking purposes.
     /// </summary>

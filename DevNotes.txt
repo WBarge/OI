@@ -19,4 +19,8 @@
 		   foreign key to the order table and would store the old reporting records.  We would then more than likely expose this history of the records in the UI. 
 
 11.13.26 - Event names: report.ready and report.failed are defined in two places that must stay in sync, NotificationEvents.cs and report-status-service.ts.
+
+11.14.25 - Tech Debt - The ablity to cancel an order and get a list of canceled orders was added to the service.  We need to add the ablity to UN-CANCEL an order
+           This will just be setting the canceldate and  cancelBy fields to null but we may want historical tracking in place so we can audit if needed. Maybe a temporal table??
+
 		   

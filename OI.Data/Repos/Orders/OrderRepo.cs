@@ -7,6 +7,7 @@ using OI.Data.Model.Orders;
 using OI.Data.Translators;
 using OI.Glue.Models;
 using OI.Glue.Repos;
+using CollectionExtensions = OI.Common.Extensions.Comparison.CollectionExtensions;
 
 namespace OI.Data.Repos.Orders;
 
@@ -111,6 +112,7 @@ internal class OrderRepo(OiServiceDbContext serviceDbContext) : BaseEfRepo<OiSer
         int skip = (int)Math.Min((long)pageSize * (pageNumber - 1), int.MaxValue);
 
         IQueryable<Order> filtered = await DbContext.Orders.BuildFilterQueryAsync(filterCriteria!, cancellationToken);
+        filtered = filtered.Where(o => o.CanceledDate == null);
         List<IOrderSearch> orders = await filtered
             .Include(o=>o.Customer)
             .Include(o=>o.OrderItems)
@@ -134,6 +136,7 @@ internal class OrderRepo(OiServiceDbContext serviceDbContext) : BaseEfRepo<OiSer
     public async Task<long> GetOrdersCountAsync(Dictionary<string, IFilterMetaData[]>? filterCriteria = null,CancellationToken cancellationToken = default)
     {
         IQueryable<Order> filtered = await DbContext.Orders.BuildFilterQueryAsync(filterCriteria!, cancellationToken);
+        filtered = filtered.Where(o => o.CanceledDate == null);
         return await filtered.LongCountAsync(cancellationToken);
     }
 
@@ -229,6 +232,77 @@ internal class OrderRepo(OiServiceDbContext serviceDbContext) : BaseEfRepo<OiSer
             await SaveAsync(cancellationToken);
         }
     }
+
+    /// <summary>
+    /// This sets the order into a canceled state.
+    /// It is basically a soft delete
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="clientContextDisplayName"></param>
+    /// <param name="token"></param>
+    /// <returns></returns>
+    /// <exception cref="RequiredObjectException"></exception>
+    public async Task SetCancelationDataForOrderAsync(Guid id, string clientContextDisplayName, CancellationToken token)
+    {
+        Order? order = await DbContext.Orders
+            .Where(o => o.Id == id)
+            .FirstOrDefaultAsync(token);
+
+        if (order == null)
+        {
+            throw new RequiredObjectException("invalid order id");
+        }
+
+        order.CanceledDate = DateTime.UtcNow;
+        order.CanceledBy = clientContextDisplayName;
+
+        await SaveAsync(token);
+    }
+
+    /// <summary>
+    /// gets a limited order view based on the criteria passed in of canceled orders
+    /// </summary>
+    /// <param name="filterCriteria"></param>
+    /// <param name="pageNumber"></param>
+    /// <param name="pageSize"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    public async Task<IEnumerable<IOrderSearch>> FindPagedCanceledOrderRecordsAsync(Dictionary<string, IFilterMetaData[]>? filterCriteria = null, int pageNumber = 1, int pageSize = 10, CancellationToken cancellationToken = default)
+    {
+        pageNumber = Math.Max(pageNumber, 1);
+        pageSize = Math.Max(pageSize, 1);
+        int skip = (int)Math.Min((long)pageSize * (pageNumber - 1), int.MaxValue);
+
+        IQueryable<Order> filtered = await DbContext.Orders.BuildFilterQueryAsync(filterCriteria!, cancellationToken);
+        filtered = filtered.Where(o => o.CanceledDate != null);
+        List<IOrderSearch> orders = await filtered
+            .Include(o=>o.Customer)
+            .Include(o=>o.OrderItems)
+            .OrderBy(c => c.Customer!.LastName)
+            .ThenBy(c => c.Customer!.FirstName)
+            .ThenBy(c => c.Id)
+            .Skip(skip)
+            .Take(pageSize)
+            .ToSearchResult()//rework this to not be the whole order object - just search result object
+            .Cast<IOrderSearch>()
+            .ToListAsync(cancellationToken);
+        return orders;
+
+    }
+
+    /// <summary>
+    /// gets the number of records in the system that meet the criteria passed in of canceled orders
+    /// </summary>
+    /// <param name="filterCriteria"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    public async Task<long> GetCanceledOrdersCountAsync(Dictionary<string, IFilterMetaData[]>? filterCriteria = null,CancellationToken cancellationToken = default)
+    {
+        IQueryable<Order> filtered = await DbContext.Orders.BuildFilterQueryAsync(filterCriteria!, cancellationToken);
+        filtered = filtered.Where(o => o.CanceledDate != null);
+        return await filtered.LongCountAsync(cancellationToken);
+    }
+
 
     /// <summary>
     /// creates an order

@@ -41,5 +41,30 @@ namespace OI.Service.Controllers
                 await _orderManager.GetOrdersPagedAsync(filters, request.Page, request.PageSize, cancellationToken);
             return Ok(new { data = result.Data, totalRecordSize = result.TotalRecordSize });
         }
+
+        /// <summary>
+        /// Retrieves a paginated list of canceled orders using the requested filters and pagination settings.
+        /// </summary>
+        /// <param name="cancellationToken">
+        /// A token used to cancel the asynchronous request.
+        /// </param>
+        /// <param name="request">
+        /// The filtering, page number, and page size settings. Defaults to an empty request when
+        /// <see langword="null"/>.
+        /// </param>
+        /// <returns>
+        /// An HTTP 200 response containing the matching orders and the total number of records.
+        /// </returns>
+        [HttpPost("Canceled")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetCanceledOrders(CancellationToken cancellationToken, [FromBody] ListRequest? request)
+        {
+            _logger.LogInformation("POST api/orders called");
+            request ??= new ListRequest();
+            Dictionary<string, IFilterMetaData[]>? filters = FilterTransformers.TransformFilters(request);
+            PagedResult<IOrderSearch> result =
+                await _orderManager.GetCanceledOrdersPagedAsync(filters, request.Page, request.PageSize, cancellationToken);
+            return Ok(new { data = result.Data, totalRecordSize = result.TotalRecordSize });
+        }
     }
 }

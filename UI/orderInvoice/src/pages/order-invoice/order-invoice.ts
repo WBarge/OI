@@ -104,6 +104,8 @@ export class OrderInvoice implements OnInit {
   public taxRate: number = 0.07; // Default tax rate, can be overridden by configuration
   public tax: number = 0;
   public total: number = 0;
+  public canceledDate: Date | null = null;
+  public canceledBy: string | null = null;
 
   public estimateReportId:string|null = null;
   public orderReportId:string|null = null;
@@ -114,7 +116,6 @@ export class OrderInvoice implements OnInit {
 
   constructor() {
     this.termsService.getTerms().subscribe((results: string[]) => this.processTermsReusults(results));
-
   }
 
   ngOnInit() {
@@ -124,7 +125,7 @@ export class OrderInvoice implements OnInit {
       this.orderId = params.get('id');
       const isReadOnlyRoute = this.route.snapshot.data['readOnly'];
       // Determine mode based on the presence of the ID
-      if (isReadOnlyRoute) {
+      if (isReadOnlyRoute ) {
         this.mode.set(OrderMode.View);
       }else  if (this.orderId) {
         this.mode.set(OrderMode.Edit);
@@ -147,7 +148,11 @@ export class OrderInvoice implements OnInit {
 
   //TODO: Consider refactoring the consumers of this to use the readonly signal
   public get isReadOnly(): boolean {
-    return this.mode() === OrderMode.View;
+    return this.mode() === OrderMode.View ||  this.orderReportId !== null;
+  }
+
+  public get wasCanceled():boolean{
+    return this.mode() === OrderMode.View && this.canceledDate !== null;
   }
 
   public get editable():boolean{
@@ -159,20 +164,24 @@ export class OrderInvoice implements OnInit {
   }
 
   public get canCreateEstimateDocument():boolean{
+    if (this.orderReportId !== null) {
+      return false; // If the order document has been created, the estimate can no longer be created, even if the order is still editable
+    }
     return this.mode() === OrderMode.Edit && this.canSubmit;
   }
 
-  /** The estimate can be downloaded unless this session knows it is still being generated, or that it failed. */
   public get canDownloadEstimate():boolean{
-    return this.reportStatus.isDownloadable(this.estimateReportId);
-  }
-
-  public get estimateButtonLabel():string{
-    switch (this.reportStatus.status(this.estimateReportId)) {
-      case 'pending': return 'Estimate Generating...';
-      case 'failed': return 'Estimate Failed';
-      default: return 'Get Estimate';
+    const status = this.reportStatus.status(this.estimateReportId);
+    if (this.estimateReportId === null) {
+      return false;
     }
+    if (status === 'pending' || status === 'failed') {
+      return false;
+    }
+    if (status === undefined && this.estimateReportId !== null) {
+      return true;
+    }
+    return status === 'ready';
   }
 
   public get canCreateOrderDocument():boolean{
@@ -181,6 +190,20 @@ export class OrderInvoice implements OnInit {
     }else{
       return this.canCreateEstimateDocument;
     }
+  }
+
+  public get canDownloadOrderDocument():boolean{
+    const status = this.reportStatus.status(this.orderReportId);
+    if (this.orderReportId === null) {
+      return false;
+    }
+    if (status === 'pending' || status === 'failed') {
+      return false;
+    }
+    if (status === undefined && this.orderReportId !== null) {
+      return true;
+    }
+    return status === 'ready';
   }
 
   public processTermsReusults(terms:string[]){
@@ -347,6 +370,7 @@ export class OrderInvoice implements OnInit {
       this.orderService.createOrder(orderToCreate).subscribe((result:Order)=>{
           this.loadOrder(result);
           this.mode.set(OrderMode.Edit);
+          this.changeDetector.markForCheck();   // the id is a plain field, so tell the view it changed
       });
     }
   }
@@ -359,6 +383,8 @@ export class OrderInvoice implements OnInit {
     this.termsSelected = order.terms;
     this.via = order.via;
     this.orderCompleted = order.completedDate;
+    this.canceledDate = order.canceledDate;
+    this.canceledBy = order.canceledBy;
     this.customerId = order.customerId;
     this.customerName = order.customerName;
     this.customerPhone = order.phoneNumber;
@@ -411,7 +437,17 @@ export class OrderInvoice implements OnInit {
       this.notify.error("ERROR","An order must be created before an order document can be generated");
       return;
     }
-
+      this.reportService.generateOrderReport(this.orderId).subscribe((reportId:string)=>{
+      if (typeof reportId !== 'string' || !reportId) {
+        return;   // the request failed and the error handler has already told the user
+      }
+      this.orderReportId = reportId;
+      this.reportStatus.markPending(reportId);
+      this.changeDetector.markForCheck();   // the id is a plain field, so tell the view it changed
+      const TOAST_LIFE_MS:number = 2000;
+      this.notify.success("Order Document Creation","The order document creation has been started successfully. You will be notified when the document is ready to download",TOAST_LIFE_MS);
+      this.updateOrder(event);
+    });
   }
 
   downloadEstimateDocument(event:any){
@@ -423,6 +459,24 @@ export class OrderInvoice implements OnInit {
       if (result){
         this.notify.success("Estimate Download","The estimate has been downloaded successfully");
       }
+    });
+  }
+
+   downloadOrderDocument(event:any){
+    if (!this.orderReportId){
+      this.notify.error("ERROR","An order document must be created before it can be downloaded");
+      return;
+    }
+    this.reportDownloadService.downloadReport(this.orderReportId,"Order.pdf").subscribe((result:boolean)=>{
+      if (result){
+        this.notify.success("Order Download","The order document has been downloaded successfully");
+      }
+    });
+  }
+
+  cancelOrder(event:any){
+    this.orderService.cancelOrder(this.orderId).subscribe(()=>{
+      this.done(event);
     });
   }
 }

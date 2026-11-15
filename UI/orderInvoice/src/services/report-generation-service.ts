@@ -31,15 +31,15 @@ export class ReportGenerationService {
       );
   }
 
-  // public generateOrderReport(orderId:string):Observable<string>{
-  //   var reportUrl = this.configService.config.reportingApiUrl + 'GenerateOrderReport';
-  //   var params = new HttpParams().set('orderId', orderId);
-  //   return this.http.get(reportUrl,{params,responseType:'text'})
-  //     .pipe(
-  //       map((results:any) => {
-  //         return results as string;
-  //       }),
-  //       catchError(this.handleError<string>('generateOrderReport'))
-  //     );
-  // }
+  public generateOrderReport(orderId:string):Observable<string>{
+    var reportUrl = this.configService.config.reportingApiUrl + 'Order';
+
+    return this.http.post(reportUrl,JSON.stringify(orderId),{ headers: { 'Content-Type': 'application/json' } })
+      .pipe(
+        map((results:any) => {
+          return results as string;
+        }),
+        catchError(this.handleError<string>('generateOrderReport'))
+      );
+  }
 }

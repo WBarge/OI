@@ -25,12 +25,12 @@ export class App {
       {label:'Home', routerLink:'/'},
       {label:'Customers', routerLink:'/customers'},
       {label:'About',routerLink:'/about'},
-      {label:'Hub Test',routerLink:'/hubTest'}
     ];
     if (this.auth.roles().includes('Admin')) {
       items.push({
         label: 'Admin',
         items: [
+          {label:'Hub Test',routerLink:'/admin/hubTest'},
           {label:'Users', routerLink:'/admin/users'},
           {label:'Roles', routerLink:'/admin/roles'},
           {label:'Groups', routerLink:'/admin/groups'}

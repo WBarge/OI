@@ -3,6 +3,7 @@ using OI.Glue.Notifications;
 using OI.Glue.Repos;
 using OI.Reporting.Reports;
 using OI.Reporting.Reports.EstimateReport;
+using OI.Reporting.Reports.OrderReport;
 
 namespace OI.Reporting.Managers;
 
@@ -46,9 +47,6 @@ public class ReportManager(ILogger<ReportManager> logger, IReportFactory reportF
     /// <returns>
     /// A <see cref="Task"/> representing the asynchronous operation.
     /// </returns>
-    /// <exception cref="NotImplementedException">
-    /// Thrown when the method is not implemented.
-    /// </exception>
     public async Task CreateEstimateAsync(Guid reportId, Guid orderId, string userName, string userId, CancellationToken token = default)
     {
         userName.Required(nameof(userName));
@@ -73,6 +71,55 @@ public class ReportManager(ILogger<ReportManager> logger, IReportFactory reportF
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to generate estimate report for ReportId: {ReportId}", reportId);
+            await NotifyUserOfReportingError(userName, userId, reportName, reportId, token);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Asynchronously creates an order report for a given order.
+    /// </summary>
+    /// <param name="reportId">
+    ///     A unique identifier for the report. This ID is used to retrieve the report later.
+    /// </param>
+    /// <param name="orderId">
+    ///     The unique identifier of the order for which the order report is being generated.
+    /// </param>
+    /// <param name="userName">
+    ///     The name of the user initiating the report creation. This will be stored as the creator of the report.
+    /// </param>
+    /// <param name="userId"></param>
+    /// <param name="token">
+    ///     A cancellation token that can be used to cancel the operation. Defaults to <see cref="CancellationToken.None"/>.
+    /// </param>
+    /// <returns>
+    /// A <see cref="Task"/> representing the asynchronous operation.
+    /// </returns>
+    /// </exception>
+    public async Task CreateOrderAsync(Guid reportId, Guid orderId, string userName, string userId, CancellationToken token = default)
+    {
+        userName.Required(nameof(userName));
+
+        _logger.LogInformation(
+            "Starting estimate report generation for OrderId: {OrderId}, ReportId: {ReportId}, User: {UserName}", orderId,
+            reportId, userName);
+        string reportName = string.Empty;
+        try
+        {
+            await _jobResultRepo.CreateJobResultPlaceholderAsync(reportId, $"Estimate for Order {orderId}", userName, token);
+            
+            BaseReport report = _reportFactory.GetReport<OrderReport>(reportId, ("OrderId", orderId));
+            reportName = report.ReportName;
+            byte[] reportResult = await report.GenerateReportAsync(token);
+
+            await _jobResultRepo.SaveJobResultAsync(reportId, report.ReportName, reportResult, token);
+
+            _logger.LogInformation("Successfully generated and saved order report for ReportId: {ReportId}", reportId);
+            await NotifyUserOfReportGeneration(userName, userId, reportName, reportId, token);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to generate order report for ReportId: {ReportId}", reportId);
             await NotifyUserOfReportingError(userName, userId, reportName, reportId, token);
             throw;
         }

@@ -16,7 +16,7 @@ partial class OiServiceDbContextModelSnapshot : ModelSnapshot
     // If you encounter a merge conflict in the line below, it means you need to
     // discard one of the migration branches and recreate its migrations on top of
     // the other branch. See https://aka.ms/efcore-docs-migrations-conflicts for more info.
-    public override string LastMigrationId => "20261113020053_AddEstimate_Order_InvoiceTracking";
+    public override string LastMigrationId => "20261114234747_AddCanceledFields";
 
     protected override void BuildModel(ModelBuilder modelBuilder)
     {
@@ -147,6 +147,15 @@ partial class OiServiceDbContextModelSnapshot : ModelSnapshot
                     .HasMaxLength(10)
                     .HasColumnType("nvarchar(10)")
                     .HasColumnName("BillingZipCode");
+
+                b.Property<string>("CanceledBy")
+                    .HasMaxLength(150)
+                    .HasColumnType("nvarchar(150)")
+                    .HasColumnName("CanceledBy");
+
+                b.Property<DateTime?>("CanceledDate")
+                    .HasColumnType("datetime2")
+                    .HasColumnName("CanceledDate");
 
                 b.Property<DateTime?>("CompletedDate")
                     .HasColumnType("datetime2")

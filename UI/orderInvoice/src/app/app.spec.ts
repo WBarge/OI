@@ -64,10 +64,10 @@ describe('App', () => {
     expect(compiled.querySelector('router-outlet')).toBeTruthy();
   });
 
-  it('should offer Home, Customers, About and Hub Test in the menu', () => {
+  it('should offer Home, Customers, About in the menu', () => {
     const app = TestBed.createComponent(App).componentInstance;
 
-    expect(app.items().map(item => item.label)).toEqual(['Home', 'Customers', 'About', 'Hub Test']);
+    expect(app.items().map(item => item.label)).toEqual(['Home', 'Customers', 'About']);
   });
 
   it('should start the hub connection, which stays connected while someone is signed in', () => {
@@ -140,7 +140,7 @@ describe('App', () => {
   it('should link Hub Test to the hub test page', () => {
     const app = TestBed.createComponent(App).componentInstance;
 
-    expect(app.items().find(item => item.label === 'Hub Test')?.routerLink).toBe('/hubTest');
+    expect(app.items().find(item => item.label === 'Hub Test')?.routerLink).toBe(undefined);   // only appears for administrators, so not there for this test
   });
 
   it('should link About to the about page', () => {
@@ -167,8 +167,8 @@ describe('App', () => {
 
       const admin = adminEntry(TestBed.createComponent(App).componentInstance);
 
-      expect(admin?.items?.map(item => item.label)).toEqual(['Users', 'Roles', 'Groups']);
-      expect(admin?.items?.map(item => item.routerLink)).toEqual(['/admin/users', '/admin/roles', '/admin/groups']);
+      expect(admin?.items?.map(item => item.label)).toEqual(['Hub Test','Users', 'Roles', 'Groups']);
+      expect(admin?.items?.map(item => item.routerLink)).toEqual(['/admin/hubTest', '/admin/users', '/admin/roles', '/admin/groups']);
     });
 
     it('should not match a role that only looks like Admin', () => {
@@ -193,7 +193,7 @@ describe('App', () => {
 
       const labels = TestBed.createComponent(App).componentInstance.items().map(item => item.label);
 
-      expect(labels).toEqual(['Home', 'Customers', 'About', 'Hub Test', 'Admin']);
+      expect(labels).toEqual(['Home', 'Customers', 'About', 'Admin']);
     });
 
     it('should show the Admin entry in the menu bar for an administrator', async () => {

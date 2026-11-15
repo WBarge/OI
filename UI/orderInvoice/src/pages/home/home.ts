@@ -20,4 +20,9 @@ export class Home {
   findOrderClicked(){
     this.router.navigate(['/orderSelection']);
   }
+
+  findCanceledOrderClicked(){
+    this.router.navigate(['/cancelOrderSelection']);
+  }
+
 }

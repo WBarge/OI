@@ -22,8 +22,8 @@ public class EstimateReport(ILogger<EstimateReport> logger,
     
     public Guid OrderId { get; set; }
 
-    private ICompanyProfile? _companyProfile = null;
-    private IOrder? _order = null;
+    private ICompanyProfile? _companyProfile;
+    private IOrder? _order;
     
     protected override async Task BuildDataModelAsync()
     {
@@ -61,34 +61,7 @@ public class EstimateReport(ILogger<EstimateReport> logger,
                 {
                     page.DefaultTextStyle(x => x.FontSize(10));
                     page.Margin(1.3F, Unit.Centimetre);
-                    page.Header().Container()
-                        .AlignCenter()
-                        .ExtendHorizontal()
-                        .Layers(layers =>
-                        {
-                            layers.Layer().Image(_companyProfile!.LogoFile);
-                            layers.Layer().Background(Color.FromHex("#D8FFFFFF"));//white at about 85% opacity.
-                            layers.PrimaryLayer().Padding(20).Column(column =>
-                            {
-                                column.Item().Row(row =>
-                                {
-                                    row.RelativeItem(4).PaddingTop(0).ScaleToFit().Text(text =>
-                                    {
-                                        text.Line(_companyProfile!.CompanyName).FontColor(Colors.Blue.Darken4)
-                                            .FontSize(18).Bold();
-                                        text.Line(_companyProfile!.CompanyAddress).FontColor(Colors.Blue.Darken4)
-                                            .FontSize(14);
-                                        text.Line(_companyProfile!.CompanyCity + ", " + _companyProfile!.CompanyState + " " + _companyProfile!.CompanyZip)
-                                            .FontColor(Colors.Blue.Darken4).FontSize(14);
-                                        text.Line($"Phone: {_companyProfile!.CompanyPhone}")
-                                            .FontColor(Colors.Blue.Darken4).FontSize(14);
-                                    });
-                                    row.RelativeItem(4).Text(ReportName).FontColor(Colors.Blue.Darken4).FontSize(30)
-                                        .AlignRight();
-                                });
-                            });
-
-                        });
+                    page.Header().Container().CreateLetterHead(ReportName,_companyProfile);
                     page.Content().Container()
                         .Column(column =>
                         {
@@ -100,7 +73,7 @@ public class EstimateReport(ILogger<EstimateReport> logger,
                                 //BILL TO
                                 row.RelativeItem(3).Table(table =>
                                 {
-                                    table.ColumnsDefinition(columns => { columns.RelativeColumn(1); });
+                                    table.ColumnsDefinition(columns => { columns.RelativeColumn(); });
 
                                     //BILL TO
                                     table.Cell().Background(Colors.Blue.Darken4).Border(1, Colors.Black).Padding(5)
@@ -108,15 +81,15 @@ public class EstimateReport(ILogger<EstimateReport> logger,
                                     table.Cell().PaddingLeft(5).PaddingTop(3)
                                         .Text(_order!.Customer!.FirstName + " " + _order.Customer.LastName);
                                     table.Cell().PaddingLeft(5).PaddingTop(3).Text(
-                                        _order.BillingAddress1 + " " + _order.BillingAddress2 ?? "");
+                                        _order.BillingAddress1 + " " + _order.BillingAddress2);
                                     table.Cell().PaddingLeft(5).PaddingTop(3).Text(    _order.BillingCity + ", " + _order.BillingStateCode + " " + _order.BillingZipCode);
                                     table.Cell().PaddingLeft(5).PaddingTop(3).Text(_order.Customer.PhoneNumber);
                                 });
                                 //order number and date
-                                row.RelativeItem(5).Column(column =>
+                                row.RelativeItem(5).Column(columnDescriptor =>
                                 {
-                                    column.Spacing(10);
-                                    column.Item().Table(table =>
+                                    columnDescriptor.Spacing(10);
+                                    columnDescriptor.Item().Table(table =>
                                     {
                                         table.ColumnsDefinition(columns =>
                                         {
@@ -125,14 +98,14 @@ public class EstimateReport(ILogger<EstimateReport> logger,
                                             columns.RelativeColumn(6);
                                         });
                                         table.Cell().Background(Colors.Blue.Darken4).Border(1, Colors.Black).Padding(5)
-                                            .Text("INVOICE #").FontColor(Colors.White);
+                                            .Text("Order #").FontColor(Colors.White);
                                         table.Cell().Background(Colors.Blue.Darken4).Border(1, Colors.Black).Padding(5)
                                             .Text("DATE").FontColor(Colors.White);
                                         table.Cell().Background(Colors.Blue.Darken4).Border(1, Colors.Black).Padding(5)
                                             .Text("TERMS").FontColor(Colors.White);
                                         table.Cell().Padding(5).Text(_order!.OrderNumber.ToString());
                                         table.Cell().Padding(5).Text(_order.OrderDate.ToShortDateString());
-                                        table.Cell().Padding(5).Text("Upon Completion");
+                                        table.Cell().Padding(5).Text(_order.Terms);
                                     });
                                 });
                             });

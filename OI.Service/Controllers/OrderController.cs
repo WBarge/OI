@@ -84,4 +84,23 @@ public class OrderController(IOrderManager orderManager, ILogger<OrderController
         _logger.LogInformation("{OrderNumber} was updated",request.OrderNumber);
         return Ok();
     }
+
+    /// <summary>
+    /// Cancel an Order
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="token"></param>
+    /// <returns></returns>
+    [HttpDelete("{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async  Task<IActionResult> CancelOrder(Guid id,CancellationToken token)
+    {
+        if (id.IsEmpty())
+        {
+            return new BadRequestResult();
+        }
+        _logger.LogDebug("request to cancel order {id}",id);
+        await _orderManager.CancelOrderAsync(id, token);
+        return Ok();
+    }
 }

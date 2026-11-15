@@ -5,6 +5,7 @@ using OI.Business.Managers;
 using OI.Common.Exceptions;
 using OI.Glue.Models;
 using OI.Glue.Repos;
+using OI.Glue.Security;
 
 namespace OI.Business.Tests.ManagerTests;
 
@@ -15,7 +16,9 @@ public class OrderManagerTests
     public void Constructor_ThrowsWhenOrderRepoIsNull()
     {
         Mock<ICustomerRepo> customerRepoMock = new();
-        Action act = () => _ = new OrderManager(null!, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+
+        Action act = () => _ = new OrderManager(null!, customerRepoMock.Object, NullLogger<OrderManager>.Instance,clientContextMock.Object);
         act.Should().Throw<ArgumentNullException>().WithParameterName("orderRepo");
     }
 
@@ -23,7 +26,9 @@ public class OrderManagerTests
     public void Constructor_ThrowsWhenCustomerRepoIsNull()
     {
         Mock<IOrderRepo> orderRepoMock = new();
-        Action act = () => _ = new OrderManager(orderRepoMock.Object, null!, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+
+        Action act = () => _ = new OrderManager(orderRepoMock.Object, null!, NullLogger<OrderManager>.Instance,clientContextMock.Object);
         act.Should().Throw<ArgumentNullException>().WithParameterName("customerRepo");
     }
 
@@ -32,8 +37,21 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        Action act = () => _ = new OrderManager(orderRepoMock.Object, customerRepoMock.Object, null!);
+        Mock<IClientContext> clientContextMock = new();
+
+        Action act = () => _ = new OrderManager(orderRepoMock.Object, customerRepoMock.Object, null!,clientContextMock.Object);
         act.Should().Throw<ArgumentNullException>().WithParameterName("logger");
+    }
+
+    [Test, Description("Constructor should throw when logger is null")]
+    public void Constructor_ThrowsWhenClientContextIsNull()
+    {
+        Mock<IOrderRepo> orderRepoMock = new();
+        Mock<ICustomerRepo> customerRepoMock = new();
+        Mock<IClientContext> clientContextMock = new();
+
+        Action act = () => _ = new OrderManager(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance,null);
+        act.Should().Throw<ArgumentNullException>().WithParameterName("clientContext");
     }
 
     [Test, Description("CreateOrderAsync should return the order from the repo")]
@@ -41,7 +59,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance,clientContextMock.Object);
         Mock<IOrder> expectedOrder = new();
         expectedOrder.Setup(o => o.OrderNumber).Returns(1000);
         Mock<ICreateOrder> requestMock = new();
@@ -61,7 +80,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance, clientContextMock.Object);
         Mock<IOrder> orderMock = new();
         orderMock.Setup(o => o.OrderNumber).Returns(1000);
         Mock<ICreateOrder> requestMock = new();
@@ -81,7 +101,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance, clientContextMock.Object);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrder> requestMock = new();
         customerRepoMock.Setup(c=>c.GetCustomerByIdAsync(It.IsAny<Guid>(),It.IsAny<CancellationToken>())).ReturnsAsync(new Mock<ICustomer>().Object);
@@ -102,7 +123,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance, clientContextMock.Object);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrder> requestMock = new();
         requestMock.SetupProperty(r => r.OrderDate, null);
@@ -124,7 +146,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance, clientContextMock.Object);
         Mock<IOrder> orderMock = new();
         DateTime specificDate = new DateTime(2025, 3, 10, 0, 0, 0, DateTimeKind.Utc);
         Mock<ICreateOrder> requestMock = new();
@@ -145,7 +168,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance, clientContextMock.Object);
         Mock<IOrder> orderMock = new();
         orderMock.Setup(o => o.OrderNumber).Returns(1000);
         Mock<ICreateOrder> requestMock = new();
@@ -167,7 +191,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance, clientContextMock.Object);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrder> requestMock = new();
         customerRepoMock.Setup(c=>c.GetCustomerByIdAsync(It.IsAny<Guid>(),It.IsAny<CancellationToken>())).ReturnsAsync(new Mock<ICustomer>().Object);
@@ -188,7 +213,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance, clientContextMock.Object);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrder> requestMock = new();
         requestMock.SetupProperty(r => r.SubTotal, null);
@@ -208,7 +234,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance, clientContextMock.Object);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrder> requestMock = new();
         requestMock.SetupProperty(r => r.SubTotal, 49.99m);
@@ -228,7 +255,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance, clientContextMock.Object);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrder> requestMock = new();
         requestMock.SetupAllProperties();
@@ -250,7 +278,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance, clientContextMock.Object);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrder> requestMock = new();
         Mock<ICreateOrderItem> item1 = new();
@@ -283,7 +312,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance,clientContextMock.Object);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrder> requestMock = new();
         Mock<ICreateOrderItem> item1 = new();
@@ -312,7 +342,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance, clientContextMock.Object);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrder> requestMock = new();
         Mock<ICreateOrderItem> item1 = new();
@@ -340,7 +371,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance, clientContextMock.Object);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrderItem> item = new();
         item.Setup(i => i.ProductId).Returns(Guid.Empty);
@@ -369,7 +401,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance,clientContextMock.Object);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrderItem> validItem = new();
         validItem.Setup(i => i.ProductId).Returns(Guid.NewGuid());
@@ -402,7 +435,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance, clientContextMock.Object);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrderItem> item = new();
         item.Setup(i => i.ProductId).Returns(Guid.Empty);
@@ -435,7 +469,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance,clientContextMock.Object);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrderItem> item = new();
         item.Setup(i => i.ProductId).Returns(Guid.NewGuid());
@@ -466,7 +501,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance, clientContextMock.Object);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrderItem> item = new();
         item.Setup(i => i.ProductId).Returns(Guid.NewGuid());
@@ -495,7 +531,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance, clientContextMock.Object);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrderItem> item = new();
         item.Setup(i => i.ProductId).Returns(Guid.NewGuid());
@@ -524,7 +561,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance, clientContextMock.Object);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrder> requestMock = new();
         requestMock.SetupProperty(r => r.SubTotal, 49.99m);
@@ -548,7 +586,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance, clientContextMock.Object);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrder> requestMock = new();
         requestMock.SetupProperty(r => r.SubTotal, 49.99m);
@@ -572,7 +611,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance, clientContextMock.Object);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrder> requestMock = new();
         requestMock.SetupProperty(r => r.SubTotal, 10m);
@@ -597,7 +637,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance, clientContextMock.Object);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrder> requestMock = new();
         using CancellationTokenSource cts = new();
@@ -618,7 +659,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance, clientContextMock.Object);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrder> requestMock = new();
         customerRepoMock.Setup(c=>c.GetCustomerByIdAsync(It.IsAny<Guid>(),It.IsAny<CancellationToken>())).ReturnsAsync(new Mock<ICustomer>().Object);
@@ -641,7 +683,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance, clientContextMock.Object);
         Mock<ICreateOrder> requestMock = new();
         customerRepoMock.Setup(c=>c.GetCustomerByIdAsync(It.IsAny<Guid>(),It.IsAny<CancellationToken>())).ReturnsAsync(new Mock<ICustomer>().Object);
         orderRepoMock.Setup(r => r.GetNextOrderNumberAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1000);
@@ -660,7 +703,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance, clientContextMock.Object);
         Mock<IOrder> orderMock = new();
         Guid customerId = Guid.NewGuid();
         using CancellationTokenSource cts = new();
@@ -682,7 +726,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance, clientContextMock.Object);
         Mock<IOrder> orderMock = new();
         Guid customerId = Guid.NewGuid();
         Mock<ICustomer> customerMock = new();
@@ -724,7 +769,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance,clientContextMock.Object);
         Mock<IOrder> orderMock = new();
         Guid customerId = Guid.NewGuid();
         Mock<ICustomer> customerMock = new();
@@ -766,7 +812,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance, clientContextMock.Object);
         Mock<IOrder> orderMock = new();
         Guid customerId = Guid.NewGuid();
         Mock<ICustomer> customerMock = new();
@@ -816,7 +863,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance, clientContextMock.Object);
         Mock<IOrder> orderMock = new();
         Guid customerId = Guid.NewGuid();
         Mock<ICustomer> customerMock = new();
@@ -865,7 +913,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance, clientContextMock.Object);
         Mock<IOrder> orderMock = new();
         Guid customerId = Guid.NewGuid();
         Mock<ICustomer> customerMock = new();
@@ -905,7 +954,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance, clientContextMock.Object);
         Guid customerId = Guid.NewGuid();
         Mock<ICreateOrder> requestMock = new();
         requestMock.SetupProperty(r => r.CustomerId, customerId);
@@ -926,7 +976,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance, clientContextMock.Object);
         Mock<ICreateOrder> requestMock = new();
         requestMock.SetupProperty(r => r.CustomerId, Guid.Empty);
         customerRepoMock.Setup(r => r.GetCustomerByIdAsync(Guid.Empty, It.IsAny<CancellationToken>()))
@@ -944,7 +995,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance, clientContextMock.Object);
         customerRepoMock.Setup(r => r.GetCustomerByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((ICustomer?)null);
 
@@ -960,7 +1012,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance, clientContextMock.Object);
         Mock<IOrder> orderMock = new();
         Guid customerId = Guid.NewGuid();
         Mock<ICustomer> customerMock = new();
@@ -990,7 +1043,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance, clientContextMock.Object);
         Mock<IOrder> orderMock = new();
         Guid customerId = Guid.NewGuid();
         Mock<ICustomer> customerMock = new();
@@ -1030,7 +1084,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance, clientContextMock.Object);
         Guid customerId = Guid.NewGuid();
         Mock<ICreateOrder> requestMock = new();
         requestMock.SetupProperty(r => r.CustomerId, customerId);
@@ -1052,7 +1107,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance,clientContextMock.Object);
         Mock<IOrder> orderMock = new();
         Guid customerId = Guid.NewGuid();
         Mock<ICustomer> customerMock = new();
@@ -1078,7 +1134,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance,clientContextMock.Object);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrderItem> item1 = new();
         item1.Setup(i => i.ProductId).Returns(Guid.NewGuid());
@@ -1114,7 +1171,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance,clientContextMock.Object);
         Mock<IOrder> orderMock = new();
         Mock<ICreateOrderItem> item1 = new();
         item1.Setup(i => i.ProductId).Returns(Guid.NewGuid());
@@ -1150,7 +1208,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance,clientContextMock.Object);
         Mock<IOrder> orderMock = new();
         Guid customerId = Guid.NewGuid();
         Mock<ICustomer> customerMock = new();
@@ -1186,7 +1245,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance,clientContextMock.Object);
         Mock<IOrder> orderMock = new();
         Guid customerId = Guid.NewGuid();
         Mock<ICustomer> customerMock = new();
@@ -1221,7 +1281,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance,clientContextMock.Object);
         Mock<IOrder> orderMock = new();
         Guid customerId = Guid.NewGuid();
         Mock<ICreateOrder> requestMock = new();
@@ -1250,7 +1311,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance,clientContextMock.Object);
         Mock<IOrder> orderMock = new();
         Guid customerId = Guid.NewGuid();
         Mock<ICustomer> customerMock = new();
@@ -1278,7 +1340,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance,clientContextMock.Object);
         Guid orderId = Guid.NewGuid();
         Mock<IOrder> expectedOrder = new();
         expectedOrder.Setup(o => o.Id).Returns(orderId);
@@ -1295,7 +1358,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance,clientContextMock.Object);
         orderRepoMock.Setup(r => r.GetOrderAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((IOrder?)null);
 
@@ -1309,7 +1373,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance,clientContextMock.Object);
         Guid orderId = Guid.NewGuid();
         using CancellationTokenSource cts = new();
 
@@ -1323,7 +1388,8 @@ public class OrderManagerTests
     {
         Mock<IOrderRepo> orderRepoMock = new();
         Mock<ICustomerRepo> customerRepoMock = new();
-        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance);
+        Mock<IClientContext> clientContextMock = new();
+        OrderManager sut = new(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance,clientContextMock.Object);
         orderRepoMock.Setup(r => r.GetOrderAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("repo failed"));
 

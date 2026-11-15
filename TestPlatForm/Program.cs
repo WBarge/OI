@@ -51,7 +51,7 @@ namespace TestPlatForm
         {
             await BuildDataModel(scope);
 
-            GenerateEstimateDocument("Estimate");
+            GenerateEstimateDocument("Order");
         }
 
         private static async Task BuildDataModel(IServiceScope scope)
@@ -110,6 +110,8 @@ namespace TestPlatForm
                                             .FontSize(18).Bold();
                                         text.Line(_companyProfile!.CompanyAddress).FontColor(Colors.Blue.Darken4)
                                             .FontSize(14);
+                                        text.Line(_companyProfile!.CompanyCity + ", " + _companyProfile!.CompanyState + " " + _companyProfile!.CompanyZip)
+                                            .FontColor(Colors.Blue.Darken4).FontSize(14);
                                         text.Line($"Phone: {_companyProfile!.CompanyPhone}")
                                             .FontColor(Colors.Blue.Darken4).FontSize(14);
                                     });
@@ -138,9 +140,8 @@ namespace TestPlatForm
                                     table.Cell().PaddingLeft(5).PaddingTop(3)
                                         .Text(_order!.Customer!.FirstName + " " + _order.Customer.LastName);
                                     table.Cell().PaddingLeft(5).PaddingTop(3).Text(
-                                        _order.BillingAddress1 + " " + _order.BillingAddress2 ?? "" + ", " +
-                                        _order.BillingCity + ", " + _order.BillingStateCode + " " +
-                                        _order.BillingZipCode);
+                                        _order.BillingAddress1 + " " + _order.BillingAddress2 ?? "");
+                                    table.Cell().PaddingLeft(5).PaddingTop(3).Text(    _order.BillingCity + ", " + _order.BillingStateCode + " " + _order.BillingZipCode);
                                     table.Cell().PaddingLeft(5).PaddingTop(3).Text(_order.Customer.PhoneNumber);
                                 });
                                 //order number and date
@@ -151,19 +152,23 @@ namespace TestPlatForm
                                     {
                                         table.ColumnsDefinition(columns =>
                                         {
-                                            columns.RelativeColumn(4);
                                             columns.RelativeColumn(3);
+                                            columns.RelativeColumn(4);
+                                            columns.RelativeColumn(6);
                                             columns.RelativeColumn(6);
                                         });
                                         table.Cell().Background(Colors.Blue.Darken4).Border(1, Colors.Black).Padding(5)
-                                            .Text("INVOICE #").FontColor(Colors.White);
+                                            .Text("Order #").FontColor(Colors.White).AlignLeft();
                                         table.Cell().Background(Colors.Blue.Darken4).Border(1, Colors.Black).Padding(5)
-                                            .Text("DATE").FontColor(Colors.White);
+                                            .Text("DATE").FontColor(Colors.White).AlignCenter();
                                         table.Cell().Background(Colors.Blue.Darken4).Border(1, Colors.Black).Padding(5)
-                                            .Text("TERMS").FontColor(Colors.White);
-                                        table.Cell().Padding(5).Text(_order!.OrderNumber.ToString());
-                                        table.Cell().Padding(5).Text(_order.OrderDate.ToShortDateString());
-                                        table.Cell().Padding(5).Text("Upon Completion");
+                                            .Text("TERMS").FontColor(Colors.White).AlignCenter();
+                                        table.Cell().Background(Colors.Blue.Darken4).Border(1, Colors.Black).Padding(5)
+                                            .Text("Ship Via").FontColor(Colors.White).AlignCenter();
+                                        table.Cell().Padding(5).Text(_order!.OrderNumber.ToString()).AlignLeft();
+                                        table.Cell().Padding(5).Text(_order.OrderDate.ToShortDateString()).AlignCenter();
+                                        table.Cell().Padding(5).Text(_order.Terms).AlignCenter();
+                                        table.Cell().Padding(5).Text(_order.Via).AlignCenter();
                                     });
                                 });
                             });
@@ -202,21 +207,21 @@ namespace TestPlatForm
                                         .AlignRight();
                                 }
 
-                                table.Cell().Border(1, Colors.Black).Padding(5).Text("Thank you for your business!")
+                                table.Cell().Border(1, Colors.Black).Padding(5).Text("")
                                     .FontColor(Colors.Blue.Darken4).AlignCenter().Italic();
                                 table.Cell().Border(1, Colors.Black).Padding(5).Text("").AlignRight();
                                 table.Cell().Border(1, Colors.Black).Padding(5).Text("Sub-Total").AlignRight();
-                                table.Cell().Border(1, Colors.Black).Padding(5).Text(_order.SubTotal.ToCurrency());
+                                table.Cell().Border(1, Colors.Black).Padding(5).Text(_order.SubTotal.ToCurrency()).AlignRight();
 
                                 table.Cell().Border(1, Colors.Black).Padding(5).Text("").AlignRight();
                                 table.Cell().Border(1, Colors.Black).Padding(5).Text("").AlignRight();
                                 table.Cell().Border(1, Colors.Black).Padding(5).Text("Shipping").AlignRight();
-                                table.Cell().Border(1, Colors.Black).Padding(5).Text(_order.Shipping.ToCurrency());
+                                table.Cell().Border(1, Colors.Black).Padding(5).Text(_order.Shipping.ToCurrency()).AlignRight();
 
                                 table.Cell().Border(1, Colors.Black).Padding(5).Text("").AlignRight();
                                 table.Cell().Border(1, Colors.Black).Padding(5).Text("").AlignRight();
                                 table.Cell().Border(1, Colors.Black).Padding(5).Text("Tax").AlignRight();
-                                table.Cell().Border(1, Colors.Black).Padding(5).Text(_order.Tax.ToCurrency());
+                                table.Cell().Border(1, Colors.Black).Padding(5).Text(_order.Tax.ToCurrency()).AlignRight();
 
                                 table.Cell().Border(1, Colors.Black).Padding(5).Text("").AlignRight();
                                 table.Cell().Border(1, Colors.Black).Padding(5).Text("").AlignRight();
@@ -227,36 +232,14 @@ namespace TestPlatForm
 
                             column.Item().Text(txt => txt.EmptyLine());
 
-                            //signature line
-                            column.Item().Row(row =>
-                            {
-                                row.ConstantItem(220).Column(col =>
-                                {
-                                    col.Item().Height(30).BorderBottom(1);
-                                    col.Item().PaddingTop(4).Text("Signature").FontSize(9);
-                                });
-
-                                row.ConstantItem(30); // gap
-
-                                row.ConstantItem(120).Column(col =>
-                                {
-                                    col.Item().Height(30).BorderBottom(1);
-                                    col.Item().PaddingTop(4).Text("Date").FontSize(9);
-                                });
-                            });
-
                             column.Item().PaddingTop(20)
-                                .Text("If you have any questions about this {reportName}, please contact").FontSize(10)
+                                .Text("Thank you for your business!").FontSize(10)
                                 .Italic().AlignCenter();
-                            column.Item()
-                                .Text(
-                                    $"{_companyProfile!.CompanyContactName} at {_companyProfile.CompanyContactPhone} or {_companyProfile.CompanyContactEmail}")
-                                .FontSize(10).Bold().AlignCenter();
                         });
                 });
             });
             
-            doc.GeneratePdf(@"d:\temp\Estimate.pdf");
+            doc.GeneratePdf(@"d:\temp\Order.pdf");
 
         }
     }

@@ -32,6 +32,11 @@ internal class OrderConfig : IEntityTypeConfiguration<Order>,IServiceConfigurati
             .IsRequired();
         builder.Property(o => o.CompletedDate)
             .HasColumnName("CompletedDate");
+        builder.Property(o => o.CanceledDate)
+            .HasColumnName("CanceledDate");
+        builder.Property(o=>o.CanceledBy)
+            .HasColumnName("CanceledBy")
+            .HasMaxLength(150);
         builder.Property(o => o.PoNumber)
             .HasColumnName("PoNumber")
             .HasMaxLength(50);

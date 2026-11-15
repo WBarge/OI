@@ -17,6 +17,8 @@ internal static class OrderTranslator
             OrderNumber = order.OrderNumber,
             OrderDate = order.OrderDate,
             CompletedDate = order.CompletedDate ?? DateTime.MinValue,
+            CanceledDate = order.CanceledDate ?? null,
+            CanceledBy = order.CanceledBy ?? null,
             PoNumber = order.PoNumber,  
             Terms = order.Terms,
             Via = order.Via,

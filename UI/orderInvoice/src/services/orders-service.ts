@@ -1,6 +1,6 @@
 import { inject, Service } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { catchError, map, Observable } from 'rxjs';
+import { catchError, EMPTY, map, Observable } from 'rxjs';
 
 import { ConfigService } from './config-service';
 import { ErrorHandlerService, HandleError } from '../utils/error-handler.service';
@@ -41,6 +41,8 @@ export class OrdersService {
             tempOrder.orderNumber= order.orderNumber;
             tempOrder.orderDate = new Date(order.orderDate);
             tempOrder.completedDate = new Date(order.completedDate);
+            tempOrder.canceledDate = order.canceledDate !==null ? new Date(order.canceledDate) : null;
+            tempOrder.canceledBy = order.canceledBy;
             tempOrder.poNumber = order.poNumber ?? "";
             tempOrder.terms = order.terms ?? "";
             tempOrder.via = order.via ?? "";
@@ -133,6 +135,56 @@ export class OrdersService {
         catchError(this.handleError<Order>('createOrder'))
       );
   }
+
+  cancelOrder(orderId: string | null):Observable<any> {
+    if (orderId !== null){
+      var requestURl = this.orderServiceLocation+'/'+ orderId;
+      return this.http.delete(requestURl).pipe(catchError(this.handleError<any>('cancelOrder')));
+    }
+    return EMPTY;
+  }
+
+  public getCanceledOrders(currentPage: number =1 ,
+      pageSize: number = 10 ,
+      filters?:FilterDictionary ):Observable<OrderListResult>{
+
+    var filtersAsObject:any = null;
+    if(filters && filters?.size>0){
+      filtersAsObject = {};
+      filters?.forEach((value:FilterDetail[],key:string)=>{
+        var tempObj = {[key]:value};
+        filtersAsObject = Object.assign(filtersAsObject,tempObj);
+      });
+    }
+
+    var request:ListRequest = {
+      page: currentPage,
+      pageSize: pageSize,
+      filters:  filtersAsObject
+    };
+    return this.http.post<OrderListResult>(this.ordersServiceLocation + "/Canceled",request)
+      .pipe(
+        map((results:any) => {
+          const returnValue = new OrderListResult();
+          returnValue.totalRecordSize = results.totalRecordSize;
+          returnValue.data = results.data.map((order:any) => {
+            const tempCustomer = new OrderSearch();
+            tempCustomer.idValue = order.id;
+            tempCustomer.customerName= order.customerName;
+            tempCustomer.phoneNumber= order.phoneNumber;
+            tempCustomer.orderNumber= order.orderNumber;
+            tempCustomer.orderDate= new Date(order.orderDate);
+            tempCustomer.completedDate= new Date(order.completedDate);
+            tempCustomer.total= order.total;
+            tempCustomer.isPending= order.isPending;
+            return tempCustomer;
+          });
+          return returnValue;
+        }),
+        catchError(this.handleError<OrderListResult>('getCanceledOrders'))
+      );
+  }
+
 
   private toOrder(created:any, submitted:Order):Order{
     const order = new Order();

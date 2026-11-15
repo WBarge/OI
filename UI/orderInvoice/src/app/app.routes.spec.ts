@@ -79,10 +79,6 @@ describe('routes', () => {
     expect(find('about')?.component).toBe(About);
   });
 
-  it('should route hubTest to the HubTest page', () => {
-    expect(find('hubTest')?.component).toBe(HubTest);
-  });
-
   it('should not define the same path twice', () => {
     const topLevel = routes.map(route => route.path);
     const inside = pages.map(route => route.path);
@@ -96,7 +92,7 @@ describe('routes', () => {
     const adminPage = (path: string) => admin().children?.find(route => route.path === path);
 
     it('should group the admin pages under admin', () => {
-      expect(admin().children?.map(route => route.path)).toEqual(['', 'users', 'roles', 'groups']);
+      expect(admin().children?.map(route => route.path)).toEqual(['hubTest','', 'users', 'roles', 'groups']);
     });
 
     it('should send admin on its own to the users page', () => {
@@ -229,7 +225,7 @@ describe('routes', () => {
       expect(router.url).toBe('/home');
     });
 
-    it.each(['/home', '/orderInvoice', '/orderInvoice/abc-123', '/orderInvoice-view/abc-123', '/orderSelection', '/customers', '/about', '/hubTest'])(
+    it.each(['/home', '/orderInvoice', '/orderInvoice/abc-123', '/orderInvoice-view/abc-123', '/orderSelection', '/customers', '/about'])(
       'should navigate to %s',
       async url => {
         const router = configure();
@@ -270,7 +266,7 @@ describe('routes', () => {
       expect(router.url).toBe('/login?returnUrl=%2Fhome');
     });
 
-    it.each(['/home', '/orderInvoice', '/orderInvoice/abc-123', '/orderInvoice-view/abc-123', '/orderSelection', '/customers', '/about', '/hubTest'])(
+    it.each(['/home', '/orderInvoice', '/orderInvoice/abc-123', '/orderInvoice-view/abc-123', '/orderSelection', '/customers', '/about'])(
       'should send %s to the sign-in page and remember it',
       async url => {
         const router = configure();
