@@ -23,7 +23,7 @@ export class App {
   public readonly items = computed<MenuItem[]>(() => {
     const items: MenuItem[] = [
       {label:'Home', routerLink:'/'},
-      {label:'Customers', routerLink:'/customers'},
+      {label:'Customer', routerLink:'/customers'},
       {label:'About',routerLink:'/about'},
     ];
     if (this.auth.roles().includes('Admin')) {
