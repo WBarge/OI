@@ -1,0 +1,78 @@
+<br>
+<p-fieldset legend="Quick Create">
+  <p-toolbar>
+    <ng-template #start>
+    </ng-template>
+    <ng-template #center>
+        <p-iftalabel>
+          <input id="sku" type="text" pInputText [(ngModel)]="newProduct.sku" />
+          <label for="sku">SKU</label>
+        </p-iftalabel>
+        <p-iftalabel>
+          <input id="name" type="text" pInputText [(ngModel)]="newProduct.name" />
+          <label for="name">Name</label>
+        </p-iftalabel>
+        <p-iftalabel>
+          <input id="description" type="text" pInputText [(ngModel)]="newProduct.shortDescription" />
+          <label for="description">Quick Description</label>
+        </p-iftalabel>
+        <p-iftalabel>
+          <p-inputnumber inputId="price" [(ngModel)]="newProduct.price" mode="currency" currency="USD" locale="en-US" />
+          <label for="price">Price</label>
+        </p-iftalabel>
+    </ng-template>
+    <ng-template #end>
+        <button type="button" pButton (click)="submit(newProduct)">Create</button>
+    </ng-template>
+  </p-toolbar>
+
+</p-fieldset>
+<br>
+<p-table id="productTable" #productTable
+[value]="products"
+[paginator]="true"
+[alwaysShowPaginator]="true"
+[totalRecords]="totalItems"
+[lazy]="true"
+(onLazyLoad)="loadProductsLazy($event)"
+(onPage)="pageChange($event)"
+[rowsPerPageOptions]="[10, 25, 50]"
+[rows]="pageSize"
+[showCurrentPageReport]="true"
+currentPageReportTemplate="{first}-{last} of {totalRecords}"
+>
+  <ng-template #header>
+    <tr>
+      <th colspan="5" class="gridHeader" >Products</th>
+    </tr>
+    <tr>
+      <th>SKU
+        <p-column-filter type="text" field="sku" display="menu" />
+      </th>
+      <th>Name
+        <p-column-filter type="text" field="name" display="menu" />
+      </th>
+      <th>Description
+        <p-column-filter type="text" field="shortDescription" display="menu" />
+      </th>
+      <th>Price</th>
+      <th></th>
+    </tr>
+  </ng-template>
+  <ng-template #body let-product>
+    <tr>
+      <td>{{product.sku}}</td>
+      <td>{{product.name}}</td>
+      <td>{{product.shortDescription}}</td>
+      <td>{{product.price | currency}}</td>
+      <td>
+        <div class="rightAlign">
+          <button pButton [routerLink]="['/product',product.idValue]" iconOnly="true" ><svg data-p-icon="pencil"></svg></button>
+          <button pButton (click)="delete(product)" iconOnly="true" ><svg data-p-icon="trash"></svg></button>
+        </div>
+
+      </td>
+    </tr>
+  </ng-template>
+</p-table>
+

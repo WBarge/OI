@@ -1,0 +1,7 @@
+# Use this workspace to collaborate
+workspace:
+  id: b73630b8-39e9-43ce-9a82-0af91b1b2263
+
+localResources:
+  specs:
+    - ../ProductManager.Service/obj/Debug/net8.0/EndpointInfo/ProductManager.Service.json

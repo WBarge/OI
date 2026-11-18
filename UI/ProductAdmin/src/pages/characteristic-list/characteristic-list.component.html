@@ -1,0 +1,98 @@
+<p-splitter class="characteristic-splitter" [panelSizes]="[50,50]">
+  <p-splitter-panel class="form-panel">
+    <p-fieldset legend="Characteristic">
+    <p-toolbar>
+      <ng-template #start>
+      </ng-template>
+      <ng-template #center>
+          <p-iftalabel>
+            <input id="name" type="text" pInputText [(ngModel)]="newCharacteristic.name" />
+            <label for="name">Name</label>
+          </p-iftalabel>
+      </ng-template>
+      <ng-template #end>
+          <button type="button" pButton (click)="submitCharacteristic(newCharacteristic)">Create</button>
+      </ng-template>
+    </p-toolbar>
+  </p-fieldset>
+  <br/>
+    <p-table id="characteristicsTable"
+     [value]="characteristics"
+     [paginator]="true"
+     [rowsPerPageOptions]="[10, 25, 50]"
+     [rows]="10"
+     selectionMode="single"
+     [(selection)]="selectedCharacteristic"
+     dataKey="idValue" (onRowSelect)="onCharRowSelect($event)"
+     >
+      <ng-template #header>
+        <tr>
+          <th colspan="5" class="gridHeader" >Characteristics</th>
+        </tr>
+        <tr>
+          <th>Name
+            <p-column-filter type="text" field="name" display="menu" />
+          </th>
+          <th></th>
+        </tr>
+      </ng-template>
+      <ng-template #body let-characteristic>
+        <tr [pSelectableRow]="characteristic">
+          <td>{{characteristic.name}}</td>
+          <td>
+            <div class="rightAlign">
+              <button pButton (click)="deleteCharacteristic(characteristic)" iconOnly="true" ><svg data-p-icon="trash"></svg></button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </p-splitter-panel>
+  <p-splitter-panel class="form-panel">
+    <p-fieldset legend="Characteristic Value">
+    <p-toolbar>
+      <ng-template #start>
+      </ng-template>
+      <ng-template #center>
+          <p-iftalabel>
+            <input id="name" type="text" pInputText [(ngModel)]="newCharacteristicValue.value" />
+            <label for="name">Name</label>
+          </p-iftalabel>
+      </ng-template>
+      <ng-template #end>
+          <button type="button" pButton (click)="submitCharacteristicValue(newCharacteristicValue)">Create</button>
+      </ng-template>
+    </p-toolbar>
+  </p-fieldset>
+  <br/>
+    <p-table id="characteristicsValuesTable"
+     [value]="characteristicValues"
+     [paginator]="true"
+     [rowsPerPageOptions]="[10, 25, 50]"
+     [rows]="10"
+     dataKey="idValue"
+     >
+      <ng-template #header>
+        <tr>
+          <th colspan="5" class="gridHeader" >Characteristic Values</th>
+        </tr>
+        <tr>
+          <th>Value
+            <p-column-filter type="text" field="name" display="menu" />
+          </th>
+          <th></th>
+        </tr>
+      </ng-template>
+      <ng-template #body let-characteristicValue>
+        <tr >
+          <td>{{characteristicValue.value}}</td>
+          <td>
+            <div class="rightAlign">
+              <button pButton (click)="deleteCharacteristicValue(characteristicValue)" iconOnly="true" ><svg data-p-icon="trash"></svg></button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </p-splitter-panel>
+</p-splitter>

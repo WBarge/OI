@@ -31,3 +31,8 @@ OI.Service/appsettings.Development.json
 /OI.Reporting/appsettings.json
 /OI.Service/appsettings.json
 /TestPlatForm/appsettings.json
+
+# ProductManager: local settings (connection strings) stay out of git
+/ProductManager.Service/appsettings.Development.json
+/ProductManager.Tool.EF/appsettings.json
+/ProductManager.Service/appsettings.json

@@ -2,7 +2,7 @@ using System.Reflection;
 using FluentAssertions;
 using Microsoft.AspNetCore.Authorization;
 using OI.Auth.Controllers;
-using OI.Auth.Security;
+using OI.Integration.Security;
 
 namespace OI.Auth.Tests.ControllerTests;
 

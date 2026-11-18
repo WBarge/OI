@@ -14,7 +14,7 @@ import { authResult } from '../testing/jwt-helper';
 describe('appConfig', () => {
   let httpTestingController: HttpTestingController;
 
-  const isConfigRequest = (req: { url: string }) => req.url.startsWith('/config.json?');
+  const isConfigRequest = (req: { url: string }) => req.url.startsWith('config.json?');
 
   const settle = () => new Promise(resolve => setTimeout(resolve, 0));
 
@@ -185,7 +185,7 @@ describe('appConfig', () => {
   });
 
   describe('the http client', () => {
-    it('should add the signed-in token to calls to the order api, and to nothing else', async () => {
+    it('should add the signed-in token to calls to the order api and the product api, and to nothing else', async () => {
       localStorage.setItem(REFRESH_KEY, 'kept-token');
       const initStatus = TestBed.inject(ApplicationInitStatus);
       httpTestingController.expectOne(isConfigRequest).flush({
@@ -199,13 +199,17 @@ describe('appConfig', () => {
       const http = TestBed.inject(HttpClient);
       http.get('https://oi.test/api/Orders').subscribe();
       http.get('https://products.test/api/Products').subscribe();
+      http.get('https://elsewhere.test/api/Things').subscribe();
 
       const orders = httpTestingController.expectOne('https://oi.test/api/Orders');
       const products = httpTestingController.expectOne('https://products.test/api/Products');
       expect(orders.request.headers.get('Authorization')).toBe(`Bearer ${issued.accessToken}`);
-      expect(products.request.headers.has('Authorization')).toBe(false);
+      const elsewhere = httpTestingController.expectOne('https://elsewhere.test/api/Things');
+      expect(products.request.headers.get('Authorization')).toBe(`Bearer ${issued.accessToken}`);
+      expect(elsewhere.request.headers.has('Authorization')).toBe(false);
       orders.flush([]);
       products.flush([]);
+      elsewhere.flush([]);
     });
 
     it('should load config.json without needing the configuration it is loading', () => {

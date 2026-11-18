@@ -1,0 +1,2 @@
+# npm workspace: one shared install for orderInvoice, ProductAdmin and oi-ui-common
+node_modules/

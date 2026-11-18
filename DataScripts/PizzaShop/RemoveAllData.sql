@@ -1,0 +1,3 @@
+delete ProductOption
+delete ProductCharacteristic
+delete product

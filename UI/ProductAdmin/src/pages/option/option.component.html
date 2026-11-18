@@ -1,0 +1,60 @@
+<p-splitter class="product-splitter" [panelSizes]="[25,40,35]">
+  <p-splitter-panel class="form-panel">
+    <span class="fieldOnSide">
+      <label for="name">Name</label>
+      <input
+        id="name"
+        type="text"
+        pInputText
+        placeholder="Name"
+        [ngModel]="_optionObj?.name"
+        (ngModelChange)="_optionObj && (_optionObj.name = $event)"
+      />
+    </span>
+    <span  class="fieldOnSide">
+      <label for="price">Price</label>
+      <p-inputnumber class="price-input"
+        inputId="price"
+        placeholder="Price"
+        [ngModel]="_optionObj?.price"
+        (ngModelChange)="_optionObj && (_optionObj.price = $event)"
+        mode="currency"
+        currency="USD"
+        locale="en-US"
+      />
+    </span>
+    <span  class="fieldOnSide">
+      <label for="cost">Price</label>
+      <p-inputnumber class="price-input"
+        inputId="cost"
+        placeholder="Cost"
+        [ngModel]="_optionObj?.cost"
+        (ngModelChange)="_optionObj && (_optionObj.cost = $event)"
+        mode="currency"
+        currency="USD"
+        locale="en-US"
+      />
+    </span>
+    <span  class="fieldOnSide">
+      <label for="price">Est.</label>
+      <p-inputnumber class="price-input"
+        inputId="est"
+        placeholder="Estimated"
+        [ngModel]="_optionObj?.estimate"
+        (ngModelChange)="_optionObj && (_optionObj.estimate = $event)"
+        mode="currency"
+        currency="USD"
+        locale="en-US"
+      />
+    </span>
+    <span class="field">
+      <label for="description">Description</label>
+      <textarea rows="5" cols="30" pTextarea
+        id="description"
+        placeholder="Full Description"
+        [ngModel]="_optionObj?.description"
+        (ngModelChange)="_optionObj && (_optionObj.description = $event)"></textarea>
+    </span>
+  </p-splitter-panel>
+</p-splitter>
+<button type="button" pButton (click)="submit(_optionObj!)">Done</button>

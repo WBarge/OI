@@ -1,0 +1,75 @@
+.form-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  overflow: auto;
+}
+
+
+.fieldOnSide{
+  display:flex;
+  flex-direction: row;
+
+}
+
+.fieldOnSide label{
+  flex-basis: 10rem;
+  flex-grow: 0;
+  flex-shrink: 0;
+  padding-top: 0.25rem;
+}
+
+.fieldOnSide input{
+  flex-basis: 5rem;
+  flex-grow: 0;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+label {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.option-list {
+  list-style-type: none;
+}
+
+.option-fieldset {
+  display: flex;
+  flex-direction: row;
+  flex-basis: 5rem;
+  flex-grow: 1;
+  flex-shrink: 0;
+}
+
+.option-name label {
+  padding-right: 0.2rem;
+  margin-bottom: 0.25rem;
+}
+
+p-select .option-name  {
+  padding-right: 0.2rem;
+  margin-bottom: 0.25rem;
+  overflow:visible;
+}
+
+.option-price label {
+  padding-left: 0.7rem;
+  padding-right: 0.2rem;
+  margin-bottom: 0.25rem;
+}
+
+
+p-inputnumber .option-price {
+  padding-left: 0.2rem;
+  margin-bottom: 0.25rem;
+  flex-basis: 15px;
+}

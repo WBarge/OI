@@ -1,0 +1,92 @@
+{
+  // For more information, visit: https://go.microsoft.com/fwlink/?LinkId=733558
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "typescript",
+        "pattern": "$tsc",
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": {
+            "regexp": "(.*?)"
+          },
+          "endsPattern": {
+            "regexp": "bundle generation complete"
+          }
+        }
+      }
+    },
+    {
+      "type": "npm",
+      "script": "test",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "typescript",
+        "pattern": "$tsc",
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": {
+            "regexp": "(.*?)"
+          },
+          "endsPattern": {
+            "regexp": "bundle generation complete"
+          }
+        }
+      }
+    },
+    {
+      "type": "npm",
+      "script": "testui",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "typescript",
+        "pattern": "$tsc",
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": {
+            "regexp": "(.*?)"
+          },
+          "endsPattern": {
+            "regexp": "bundle generation complete"
+          }
+        }
+      }
+    },
+    {
+      // The OI UI and this UI are browsed through ONE address so they share one sign-in.
+      // Safe to start from every window: a second copy sees the first and steps aside.
+      "label": "dev proxy",
+      "type": "shell",
+      "command": "npm run dev-proxy --prefix ..",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "dev-proxy",
+        "pattern": {
+          "regexp": "^DEV-PROXY-ERROR: (.*)$",
+          "message": 1
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": {
+            "regexp": "Starting dev proxy"
+          },
+          "endsPattern": {
+            "regexp": "Dev proxy listening"
+          }
+        }
+      }
+    },
+    {
+      "label": "start with proxy",
+      "dependsOn": [
+        "npm: start",
+        "dev proxy"
+      ],
+      "dependsOrder": "parallel"
+    }
+  ]
+}
