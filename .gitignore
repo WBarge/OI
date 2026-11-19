@@ -36,3 +36,5 @@ OI.Service/appsettings.Development.json
 /ProductManager.Service/appsettings.Development.json
 /ProductManager.Tool.EF/appsettings.json
 /ProductManager.Service/appsettings.json
+
+*.ps1
