@@ -1,0 +1,16 @@
+.hubOnline {
+  color: var(--p-green-600, #16a34a);
+}
+
+.hubOffline {
+  color: var(--p-red-600, #dc2626);
+}
+
+.hubNotice {
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.hubTestActions {
+  margin: 1rem 0;
+}

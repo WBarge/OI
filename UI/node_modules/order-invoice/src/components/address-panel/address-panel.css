@@ -1,0 +1,15 @@
+.fieldOnSide{
+  display:flex;
+  flex-direction: row;
+  padding: 5px;
+}
+.addressPanel{
+  display:flex;
+  flex-direction: row;
+}
+
+label{
+  width: 150px;
+  text-align: right;
+  padding-right: 10px;
+}

@@ -45,7 +45,7 @@ internal class JobResultRepo(OiReportingDbContext reportingDbContext): BaseEfRep
     /// Saves the result of a job report to the database.
     /// </summary>
     /// <param name="reportId">The unique identifier of the report.</param>
-    /// <param name="reportName">The name of the report.</param>
+    /// <param name="reportName">The name of the report use for the file name.</param>
     /// <param name="reportResult">The binary content of the report.</param>
     /// <param name="token">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
     /// <returns>A <see cref="Task"/> that represents the asynchronous operation.</returns>

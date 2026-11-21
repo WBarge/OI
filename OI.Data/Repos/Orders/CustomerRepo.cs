@@ -24,6 +24,13 @@ internal class CustomerRepo(OiServiceDbContext serviceDbContext) : BaseEfRepo<Oi
         return customer?.Translate();
     }
 
+    public async Task<IEnumerable<ICustomer>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        List<Customer> customers = await base.GetAllRecordsAsync(cancellationToken);
+        IEnumerable<ICustomer> returnValue = [.. customers.Select(c => c.Translate())];
+        return returnValue;
+    }
+
     /// <summary>
     /// Gets one page of customers that match the filter criteria.
     /// The query is ordered (last name, first name, id) so that paging is stable between requests,

@@ -1,0 +1,23 @@
+.groupRow button {
+  margin-right: 0.25rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.field input {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.label {
+  font-weight: 600;
+}
+
+.member {
+  display: block;
+}

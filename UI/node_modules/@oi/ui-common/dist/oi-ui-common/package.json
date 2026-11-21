@@ -1,0 +1,31 @@
+{
+  "name": "@oi/ui-common",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sign-in, configuration and back-end notification plumbing shared by the OI UI and the ProductManager UI.",
+  "peerDependencies": {
+    "@angular/common": "^22.1.0",
+    "@angular/core": "^22.1.0",
+    "@angular/forms": "^22.1.0",
+    "@angular/router": "^22.1.0",
+    "@microsoft/signalr": "^10.0.11",
+    "primeng": "^22.1.2",
+    "rxjs": "~7.8.0"
+  },
+  "dependencies": {
+    "tslib": "^2.3.0"
+  },
+  "sideEffects": false,
+  "module": "fesm2022/oi-ui-common.mjs",
+  "typings": "types/oi-ui-common.d.ts",
+  "exports": {
+    "./package.json": {
+      "default": "./package.json"
+    },
+    ".": {
+      "types": "./types/oi-ui-common.d.ts",
+      "default": "./fesm2022/oi-ui-common.mjs"
+    }
+  },
+  "type": "module"
+}

@@ -61,7 +61,7 @@ public class EstimateReport(ILogger<EstimateReport> logger,
                 {
                     page.DefaultTextStyle(x => x.FontSize(10));
                     page.Margin(1.3F, Unit.Centimetre);
-                    page.Header().Container().CreateLetterHead(ReportName,_companyProfile);
+                    page.Header().Container().CreatePublicLetterHead(ReportName,_companyProfile);
                     page.Content().Container()
                         .Column(column =>
                         {

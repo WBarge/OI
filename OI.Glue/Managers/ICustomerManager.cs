@@ -49,4 +49,11 @@ public interface ICustomerManager
     /// <param name="token"></param>
     /// <returns></returns>
     Task UpdateCustomerAsync(IUpdateCustomer request, CancellationToken token = default);
+
+    /// <summary>
+    /// Retrieves all customers.
+    /// </summary>
+    /// <param name="token">Propagates notification that operations should be canceled.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains all customers.</returns>
+    Task<IEnumerable<ICustomer>> GetAllCustomers(CancellationToken token = default);
 }

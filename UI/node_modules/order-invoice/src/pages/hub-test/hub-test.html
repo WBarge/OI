@@ -1,0 +1,27 @@
+<h2>Hub test</h2>
+
+<p>
+  Press the button to ask the Reporting API to send you a message. It goes through the central hub and
+  comes back to this browser as a notification.
+</p>
+
+<p>
+  Hub connection:
+  <strong [class.hubOnline]="hub.isConnected()" [class.hubOffline]="!hub.isConnected()">
+    {{ hub.isConnected() ? 'Connected' : 'Not connected' }}
+  </strong>
+</p>
+
+@if (!hub.isConnected()) {
+  <p-message severity="warn" class="hubNotice">
+    This browser is not connected to the hub right now, so a message sent now would not reach you.
+  </p-message>
+}
+
+<div class="hubTestActions">
+  <button type="button" pButton (click)="send()" [disabled]="busy()">{{ busy() ? 'Sending...' : 'Send me a test message' }}</button>
+</div>
+
+@if (lastSent(); as text) {
+  <p class="hubSent">{{ text }}</p>
+}

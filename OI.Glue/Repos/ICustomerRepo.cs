@@ -43,4 +43,6 @@ public interface ICustomerRepo
     Task<ICustomer> CreateCustomerAsync(ICreateCustomer request, CancellationToken cancellationToken = default);
 
     Task UpdateCustomerAsync(IUpdateCustomer request, CancellationToken token = default);
+
+    Task<IEnumerable<ICustomer>> GetAllAsync(CancellationToken cancellationToken = default);
 }

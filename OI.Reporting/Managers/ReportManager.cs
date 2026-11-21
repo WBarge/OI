@@ -2,7 +2,9 @@
 using OI.Glue.Notifications;
 using OI.Glue.Repos;
 using OI.Reporting.Reports;
+using OI.Reporting.Reports.CustomerReports;
 using OI.Reporting.Reports.EstimateReport;
+using OI.Reporting.Reports.InvoiceReport;
 using OI.Reporting.Reports.OrderReport;
 
 namespace OI.Reporting.Managers;
@@ -19,10 +21,10 @@ namespace OI.Reporting.Managers;
 public class ReportManager(ILogger<ReportManager> logger, IReportFactory reportFactory, IJobResultRepo jobResultRepo,INotificationPublisher notificationPublisher)
     : IReportManager
 {
-    readonly ILogger<ReportManager> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    readonly IReportFactory _reportFactory = reportFactory ?? throw new ArgumentNullException(nameof(reportFactory));
-    readonly IJobResultRepo _jobResultRepo = jobResultRepo ?? throw new ArgumentNullException(nameof(jobResultRepo));
-    readonly INotificationPublisher _notificationPublisher = notificationPublisher ?? throw new ArgumentNullException(nameof(notificationPublisher));
+    private readonly ILogger<ReportManager> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    private readonly IReportFactory _reportFactory = reportFactory ?? throw new ArgumentNullException(nameof(reportFactory));
+    private readonly IJobResultRepo _jobResultRepo = jobResultRepo ?? throw new ArgumentNullException(nameof(jobResultRepo));
+    private readonly INotificationPublisher _notificationPublisher = notificationPublisher ?? throw new ArgumentNullException(nameof(notificationPublisher));
 
     public const string SUCCESS_MESSAGE_TYPE = "Success";
     public const string ERROR_MESSAGE_TYPE = "Error";
@@ -51,29 +53,11 @@ public class ReportManager(ILogger<ReportManager> logger, IReportFactory reportF
     {
         userName.Required(nameof(userName));
 
-        _logger.LogInformation(
-            "Starting estimate report generation for OrderId: {OrderId}, ReportId: {ReportId}, User: {UserName}", orderId,
-            reportId, userName);
-        string reportName = string.Empty;
-        try
-        {
-            await _jobResultRepo.CreateJobResultPlaceholderAsync(reportId, $"Estimate for Order {orderId}", userName, token);
-            
-            BaseReport report = _reportFactory.GetReport<EstimateReport>(reportId, ("OrderId", orderId));
-            reportName = report.ReportName;
-            byte[] reportResult = await report.GenerateReportAsync(token);
+        _logger.LogInformation("Starting estimate report generation for OrderId: {OrderId}, ReportId: {ReportId}, User: {UserName}", orderId, reportId, userName);
 
-            await _jobResultRepo.SaveJobResultAsync(reportId, report.ReportName, reportResult, token);
+        await CreateAndSaveReport<EstimateReport>(reportId, $"Estimate for Order {orderId}", userName, userId, token, ("OrderId", orderId));
 
-            _logger.LogInformation("Successfully generated and saved estimate report for ReportId: {ReportId}", reportId);
-            await NotifyUserOfReportGeneration(userName, userId, reportName, reportId, token);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to generate estimate report for ReportId: {ReportId}", reportId);
-            await NotifyUserOfReportingError(userName, userId, reportName, reportId, token);
-            throw;
-        }
+       _logger.LogInformation("Successfully generated and saved estimate report for ReportId: {ReportId}", reportId);
     }
 
     /// <summary>
@@ -100,21 +84,91 @@ public class ReportManager(ILogger<ReportManager> logger, IReportFactory reportF
     {
         userName.Required(nameof(userName));
 
+        _logger.LogInformation("Starting order report generation for OrderId: {OrderId}, ReportId: {ReportId}, User: {UserName}", orderId, reportId, userName);
+
+        await CreateAndSaveReport<OrderReport>(reportId, $"The Order document for {orderId}", userName, userId, token, ("OrderId", orderId));
+
+        _logger.LogInformation("Successfully generated and saved order report for ReportId: {ReportId}", reportId);
+    }
+
+    /// <summary>
+    /// Asynchronously creates an invoice report for a given order.
+    /// </summary>
+    /// <param name="reportId">
+    ///     A unique identifier for the report. This ID is used to retrieve the report later.
+    /// </param>
+    /// <param name="orderId">
+    ///     The unique identifier of the order for which the order report is being generated.
+    /// </param>
+    /// <param name="userName">
+    ///     The name of the user initiating the report creation. This will be stored as the creator of the report.
+    /// </param>
+    /// <param name="userId"></param>
+    /// <param name="token">
+    ///     A cancellation token that can be used to cancel the operation. Defaults to <see cref="CancellationToken.None"/>.
+    /// </param>
+    /// <returns>
+    /// A <see cref="Task"/> representing the asynchronous operation.
+    /// </returns>
+    /// </exception>
+    public async Task CreateInvoiceAsync(Guid reportId, Guid orderId, string userName, string userId, CancellationToken token = default)
+    {
+        userName.Required(nameof(userName));
+
         _logger.LogInformation(
-            "Starting estimate report generation for OrderId: {OrderId}, ReportId: {ReportId}, User: {UserName}", orderId,
-            reportId, userName);
+            "Starting Invoice report generation for OrderId: {OrderId}, ReportId: {ReportId}, User: {UserName}", orderId, reportId, userName);
+
+        await CreateAndSaveReport<InvoiceReport>(reportId, $"Estimate for Order {orderId}", userName, userId, token, ("OrderId", orderId));
+
+        _logger.LogInformation("Successfully generated and saved invoice report for ReportId: {ReportId}", reportId);
+    }
+
+    /// <summary>
+    /// Creates and saves a Customer List report.
+    /// </summary>
+    /// <param name="reportId">The identifier of the report to create.</param>
+    /// <param name="userName">The name of the user requesting the report.</param>
+    /// <param name="userId">The identifier of the user requesting the report.</param>
+    /// <param name="token">A cancellation token that can be used to cancel the operation.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    public async Task CreateCustomerList(Guid reportId, string userName, string userId, CancellationToken token = default)
+    {
+        userName.Required(nameof(userName));
+
+        _logger.LogInformation(
+            "Starting Customer List report generation , ReportId: {ReportId}, User: {UserName}", reportId, userName);
+
+        await CreateAndSaveReport<CustomerList>(reportId, $"Customer List", userName, userId, token, []);
+
+        _logger.LogInformation("Successfully generated and saved Customer List report for ReportId: {ReportId}", reportId);
+
+    }
+
+    /// <summary>
+    ///  Creates and saves the report in the DB
+    /// </summary>
+    /// <typeparam name="TReportType"></typeparam>
+    /// <param name="reportId">an id to uniquely id the report</param>
+    /// <param name="reportingName">the name of the report that will show as a job result name</param>
+    /// <param name="userName"></param>
+    /// <param name="userId"></param>
+    /// <param name="token"></param>
+    /// <param name="properties">the properties needed to generate the report done via property injection</param>
+    /// <returns></returns>
+    private async Task CreateAndSaveReport<TReportType>(Guid reportId,string reportingName,string userName, string userId,CancellationToken token,params (string Name, object? Value)[] properties) where TReportType : BaseReport
+    {
         string reportName = string.Empty;
         try
         {
-            await _jobResultRepo.CreateJobResultPlaceholderAsync(reportId, $"Estimate for Order {orderId}", userName, token);
+            //This is an async process so we want to create a job record in case the user tries to get the report before its finished
+            await _jobResultRepo.CreateJobResultPlaceholderAsync(reportId, reportingName,userName, token);
             
-            BaseReport report = _reportFactory.GetReport<OrderReport>(reportId, ("OrderId", orderId));
+            BaseReport report = _reportFactory.GetReport<TReportType>(reportId,properties );
             reportName = report.ReportName;
             byte[] reportResult = await report.GenerateReportAsync(token);
 
             await _jobResultRepo.SaveJobResultAsync(reportId, report.ReportName, reportResult, token);
 
-            _logger.LogInformation("Successfully generated and saved order report for ReportId: {ReportId}", reportId);
             await NotifyUserOfReportGeneration(userName, userId, reportName, reportId, token);
         }
         catch (Exception ex)
@@ -124,7 +178,7 @@ public class ReportManager(ILogger<ReportManager> logger, IReportFactory reportF
             throw;
         }
     }
-
+    
     /// <summary>
     /// Notifies a user about an error that occurred during the generation of a report.
     /// </summary>

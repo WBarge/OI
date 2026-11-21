@@ -106,6 +106,13 @@ internal class CustomerManager(ICustomerRepo customerRepo, ILogger<CustomerManag
         return customer;
     }
 
+    /// <summary>
+    /// Updates an existing customer.
+    /// </summary>
+    /// <param name="request">The customer update request.</param>
+    /// <param name="token">The cancellation token.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    /// <exception cref="RequestException">The request is invalid or the customer ID is empty.</exception>
     public async Task UpdateCustomerAsync(IUpdateCustomer request, CancellationToken token = default)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -119,6 +126,16 @@ internal class CustomerManager(ICustomerRepo customerRepo, ILogger<CustomerManag
         _logger.LogInformation("Updating Customer {id}",request.Id);
         await _customerRepo.UpdateCustomerAsync(request, token);
         _logger.LogInformation("Updated customer {id}",request.Id);
+    }
+
+    /// <summary>
+    /// Retrieves all customers.
+    /// </summary>
+    /// <param name="token">A cancellation token for canceling the operation.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains all customers.</returns>
+    public async Task<IEnumerable<ICustomer>> GetAllCustomers(CancellationToken token = default)
+    {
+        return await _customerRepo.GetAllAsync(token);
     }
 
     /// <summary>
@@ -204,4 +221,6 @@ internal class CustomerManager(ICustomerRepo customerRepo, ILogger<CustomerManag
             problems.Add($"{propName} is required.");
         }
     }
+
+
 }

@@ -7,36 +7,56 @@ namespace OI.Reporting.Reports;
 
 internal static class PredefinedSections
 {
-    internal static void CreateLetterHead(this IContainer parentContainer, string reportName,
-        ICompanyProfile? companyProfile)
+    extension(IContainer parentContainer)
     {
-        parentContainer.AlignCenter()
-            .ExtendHorizontal()
-            .Layers(layers =>
-            {
-                layers.Layer().Image(companyProfile!.LogoFile);
-                layers.Layer().Background(Color.FromHex("#D8FFFFFF")); //white at about 85% opacity.
-                layers.PrimaryLayer().Padding(20).Column(column =>
+        internal void CreatePublicLetterHead(string reportName, ICompanyProfile? companyProfile)
+        {
+            parentContainer.AlignCenter()
+                .ExtendHorizontal()
+                .Layers(layers =>
                 {
-                    column.Item().Row(row =>
+                    layers.Layer().Image(companyProfile!.LogoFile);
+                    layers.Layer().Background(Color.FromHex("#F2FFFFFF")); //white at about 85% opacity.
+                    layers.PrimaryLayer().Padding(20).Column(column =>
                     {
-                        row.RelativeItem(4).PaddingTop(0).ScaleToFit().Text(text =>
+                        column.Item().Row(row =>
                         {
-                            text.Line(companyProfile!.CompanyName).FontColor(Colors.Blue.Darken4)
-                                .FontSize(18).Bold();
-                            text.Line(companyProfile!.CompanyAddress).FontColor(Colors.Blue.Darken4)
-                                .FontSize(14);
-                            text.Line(companyProfile!.CompanyCity + ", " + companyProfile!.CompanyState + " " +
-                                      companyProfile!.CompanyZip)
-                                .FontColor(Colors.Blue.Darken4).FontSize(14);
-                            text.Line($"Phone: {companyProfile!.CompanyPhone}")
-                                .FontColor(Colors.Blue.Darken4).FontSize(14);
+                            row.RelativeItem(4).PaddingTop(0).ScaleToFit().Text(text =>
+                            {
+                                text.Line(companyProfile!.CompanyName).FontColor(Colors.Blue.Darken4)
+                                    .FontSize(18).Bold();
+                                text.Line(companyProfile!.CompanyAddress).FontColor(Colors.Blue.Darken4)
+                                    .FontSize(14);
+                                text .Line(companyProfile!.CompanyCity + ", " + companyProfile!.CompanyState + " " +
+                                          companyProfile!.CompanyZip)
+                                    .FontColor(Colors.Blue.Darken4).FontSize(14);
+                                text.Line($"Phone: {companyProfile!.CompanyPhone}")
+                                    .FontColor(Colors.Blue.Darken4).FontSize(14);
+                            });
+                            row.RelativeItem(4).Text(reportName).FontColor(Colors.Blue.Darken4).FontSize(30)
+                                .AlignRight();
                         });
-                        row.RelativeItem(4).Text(reportName).FontColor(Colors.Blue.Darken4).FontSize(30)
-                            .AlignRight();
                     });
-                });
 
-            });
+                });
+        }
+
+        internal void CreateInternalLetterHead(string reportName, ICompanyProfile? companyProfile)
+        {
+            parentContainer.AlignCenter()
+                .ExtendHorizontal()
+                .Layers(layers =>
+                {
+                    layers.Layer().AlignCenter().Image(companyProfile!.LogoFile).FitArea();
+                    layers.Layer().Background(Color.FromHex("#D8FFFFFF")); 
+                    layers.PrimaryLayer()
+                        .Padding(20)
+                        .AlignCenter()
+                        .Text(reportName)
+                        .FontColor(Colors.Blue.Darken4)
+                        .Bold()
+                        .FontSize(30);
+                });
+        }
     }
 }

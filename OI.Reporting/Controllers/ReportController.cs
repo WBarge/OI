@@ -16,7 +16,7 @@ namespace OI.Reporting.Controllers
             _logger.LogInformation("Retrieving report with ID: {ReportId}", reportId);
             byte[]? fileResult = await _reportResultManager.GetReportAsync(reportId);
             return fileResult is null
-                ? NotFound()
+                ? NotFound("Try again in a few minutes") //the manager should have notified the user but just in case send back a friendly message
                 : File(fileResult, "application/octet-stream");
         }
     }
