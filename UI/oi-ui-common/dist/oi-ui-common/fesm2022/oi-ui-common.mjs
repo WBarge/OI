@@ -1,19 +1,27 @@
 import * as i0 from "@angular/core";
 import { Component, DestroyRef, InjectionToken, Service, computed, effect, inject, input, makeEnvironmentProviders, signal, untracked } from "@angular/core";
-import { HttpClient, HttpErrorResponse } from "@angular/common/http";
 import { Router } from "@angular/router";
+import { UserManager, WebStorageStateStore } from "oidc-client-ts";
+import { HttpClient, HttpErrorResponse } from "@angular/common/http";
 import { Observable, catchError, firstValueFrom, from, switchMap, throwError } from "rxjs";
-import * as i1 from "@angular/forms";
-import { FormsModule } from "@angular/forms";
 import { ButtonDirective } from "primeng/button";
-import * as i2 from "primeng/card";
+import * as i1 from "primeng/card";
 import { CardModule } from "primeng/card";
-import * as i3 from "primeng/inputtext";
-import { InputTextModule } from "primeng/inputtext";
-import * as i4 from "primeng/message";
+import * as i2 from "primeng/message";
 import { MessageModule } from "primeng/message";
 import { MessageService } from "primeng/api";
 import { HubConnectionBuilder, HubConnectionState, LogLevel } from "@microsoft/signalr";
+function safeReturnUrl(url, fallback = "/home") {
+	if (!url) return fallback;
+	const isLocalPath = url.startsWith("/") && !url.startsWith("//") && !url.includes("\\");
+	const hasControlCharacters = /\p{Cc}/u.test(url);
+	const isSignInPlumbing = [
+		"/login",
+		"/auth/callback",
+		"/signed-out"
+	].some((path) => url === path || url.startsWith(path + "?") || url.startsWith(path + "/") || url.startsWith(path + "#"));
+	return isLocalPath && !hasControlCharacters && !isSignInPlumbing ? url : fallback;
+}
 const OI_CONFIG_DEFAULTS = new InjectionToken("OI_CONFIG_DEFAULTS");
 var ConfigService = class ConfigService {
 	http = inject(HttpClient);
@@ -52,97 +60,156 @@ i0.ɵɵngDeclareClassMetadata({
 	type: ConfigService,
 	decorators: [{ type: Service }]
 });
-const REFRESH_KEY = "oi.refresh";
-var LocalStorageRefreshTokenStore = class {
-	get() {
-		return localStorage.getItem(REFRESH_KEY);
+function authorityFrom(authApiUrl) {
+	return authApiUrl.replace(/\/+$/, "").replace(/\/api$/i, "");
+}
+function absoluteRouteUrl(route, baseUri) {
+	return new URL(route.replace(/^\/+/, ""), baseUri).href;
+}
+function newNonce() {
+	const bytes = crypto.getRandomValues(/* @__PURE__ */ new Uint8Array(16));
+	return btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+function signinArgs(state) {
+	return {
+		state,
+		nonce: newNonce()
+	};
+}
+function buildUserManagerSettings(config, options, baseUri, storage) {
+	return {
+		authority: authorityFrom(config.authApiUrl),
+		client_id: options.clientId,
+		redirect_uri: absoluteRouteUrl(options.callbackRoute, baseUri),
+		post_logout_redirect_uri: absoluteRouteUrl(options.signedOutRoute, baseUri),
+		response_type: "code",
+		scope: options.scopes,
+		userStore: new WebStorageStateStore({ store: storage }),
+		stateStore: new WebStorageStateStore({ store: storage }),
+		loadUserInfo: false,
+		automaticSilentRenew: false,
+		monitorSession: false,
+		revokeTokensOnSignout: false
+	};
+}
+var UserManagerOidcSession = class {
+	configService;
+	options;
+	manager = null;
+	constructor(configService, options) {
+		this.configService = configService;
+		this.options = options;
 	}
-	set(token) {
-		localStorage.setItem(REFRESH_KEY, token);
+	get users() {
+		this.manager ??= new UserManager(buildUserManagerSettings(this.configService.config, this.options, document.baseURI, window.sessionStorage));
+		return this.manager;
 	}
-	clear() {
-		localStorage.removeItem(REFRESH_KEY);
+	getUser() {
+		return this.users.getUser();
 	}
-	onExternalRemoval(callback) {
-		const onStorage = (event) => {
-			if ((event.key === "oi.refresh" || event.key === null) && this.get() === null) callback();
-		};
-		window.addEventListener("storage", onStorage);
-		return () => window.removeEventListener("storage", onStorage);
+	async signinRedirect(state) {
+		await this.users.signinRedirect(signinArgs(state));
+	}
+	signinCallback(url) {
+		return this.users.signinRedirectCallback(url);
+	}
+	signinSilent() {
+		return this.users.signinSilent();
+	}
+	async signoutRedirect() {
+		await this.users.signoutRedirect();
+	}
+	async removeUser() {
+		await this.users.removeUser();
 	}
 };
-const REFRESH_TOKEN_STORE = new InjectionToken("REFRESH_TOKEN_STORE", {
+const OIDC_SESSION = new InjectionToken("OIDC_SESSION", {
 	providedIn: "root",
-	factory: () => new LocalStorageRefreshTokenStore()
+	factory: () => new UserManagerOidcSession(inject(ConfigService), inject(OI_UI_OPTIONS))
 });
-const REFRESH_LOCK = "oi-token-refresh";
+const REFUSALS = [
+	"invalid_grant",
+	"invalid_token",
+	"invalid_client",
+	"unauthorized_client",
+	"access_denied"
+];
 const RENEW_BEFORE_EXPIRY_MS = 6e4;
+const SIGN_IN_RESET_MS = 5e3;
 const toArray = (v) => v === void 0 ? [] : Array.isArray(v) ? v : [v];
 var AuthService = class AuthService {
-	http = inject(HttpClient);
-	configService = inject(ConfigService);
 	router = inject(Router);
 	options = inject(OI_UI_OPTIONS);
-	store = inject(REFRESH_TOKEN_STORE);
+	oidc = inject(OIDC_SESSION);
 	accessToken = signal(null, ...ngDevMode ? [{ debugName: "accessToken" }] : /* istanbul ignore next */ []);
 	claims = signal(null, ...ngDevMode ? [{ debugName: "claims" }] : /* istanbul ignore next */ []);
 	refreshInFlight = null;
 	sessionEnding = false;
+	signInStarted = false;
 	isAuthenticated = computed(() => this.accessToken() !== null, ...ngDevMode ? [{ debugName: "isAuthenticated" }] : /* istanbul ignore next */ []);
 	userId = computed(() => this.claims()?.sub ?? "", ...ngDevMode ? [{ debugName: "userId" }] : /* istanbul ignore next */ []);
 	userName = computed(() => this.claims()?.name ?? "", ...ngDevMode ? [{ debugName: "userName" }] : /* istanbul ignore next */ []);
 	roles = computed(() => toArray(this.claims()?.role), ...ngDevMode ? [{ debugName: "roles" }] : /* istanbul ignore next */ []);
 	groups = computed(() => toArray(this.claims()?.group), ...ngDevMode ? [{ debugName: "groups" }] : /* istanbul ignore next */ []);
-	constructor() {
-		const stopListening = this.store.onExternalRemoval(() => {
-			if (this.accessToken() !== null) {
-				this.clearSession();
-				this.router.navigate([this.options.loginRoute]);
-			}
-		});
-		inject(DestroyRef).onDestroy(stopListening);
-	}
-	get authUrl() {
-		return this.configService.config.authApiUrl + "auth/";
-	}
 	get currentToken() {
 		return this.accessToken();
 	}
 	async restore() {
-		if (this.store.get()) await this.refresh();
+		let user;
+		try {
+			user = await this.oidc.getUser();
+		} catch {
+			return;
+		}
+		if (!user) return;
+		if (this.isFresh(user) && this.applyUser(user)) return;
+		await this.refresh();
 	}
-	async login(email, password) {
-		const result = await firstValueFrom(this.http.post(this.authUrl + "login", {
-			email,
-			password
-		}));
-		this.applySession(result);
+	async signIn(returnUrl) {
+		if (this.signInStarted) return;
+		this.signInStarted = true;
+		try {
+			const state = { returnUrl: safeReturnUrl(returnUrl ?? this.router.url, this.options.homeRoute) };
+			await this.oidc.signinRedirect(state);
+			setTimeout(() => this.signInStarted = false, SIGN_IN_RESET_MS);
+		} catch (error) {
+			this.signInStarted = false;
+			throw error;
+		}
+	}
+	async completeSignIn(url) {
+		const user = await this.oidc.signinCallback(url);
+		if (!this.applyUser(user)) throw new Error("OI.Auth returned an access token that cannot be read.");
+		this.signInStarted = false;
+		const state = user.state;
+		return safeReturnUrl(state?.returnUrl, this.options.homeRoute);
 	}
 	async logout() {
-		const refreshToken = this.store.get();
 		this.clearSession();
-		await this.router.navigate([this.options.loginRoute]);
-		if (refreshToken) try {
-			await firstValueFrom(this.http.post(this.authUrl + "logout", { refreshToken }));
-		} catch {}
+		try {
+			await this.oidc.signoutRedirect();
+		} catch {
+			await this.forget();
+			await this.router.navigate([this.options.signedOutRoute]);
+		}
 	}
 	async sessionExpired() {
 		this.clearSession();
+		await this.forget();
 		const here = this.router.url;
-		const loginRoute = this.options.loginRoute;
-		if (this.sessionEnding || here === loginRoute || here.startsWith(loginRoute + "?")) return;
+		const plumbing = [this.options.callbackRoute, this.options.signedOutRoute];
+		if (this.sessionEnding || plumbing.some((route) => here === route || here.startsWith(route + "?"))) return;
 		this.sessionEnding = true;
 		try {
-			await this.router.navigate([loginRoute], { queryParams: {
-				reason: "expired",
-				returnUrl: here
-			} });
+			await this.signIn(here);
+		} catch {
+			await this.router.navigate([this.options.signedOutRoute], { queryParams: { error: "unavailable" } });
 		} finally {
 			this.sessionEnding = false;
 		}
 	}
 	refresh() {
-		this.refreshInFlight ??= this.refreshAcrossTabs().finally(() => this.refreshInFlight = null);
+		this.refreshInFlight ??= this.doRefresh().finally(() => this.refreshInFlight = null);
 		return this.refreshInFlight;
 	}
 	async renewAfterRejection(rejectedToken) {
@@ -155,38 +222,55 @@ var AuthService = class AuthService {
 		if (!this.accessToken() || exp * 1e3 - Date.now() < RENEW_BEFORE_EXPIRY_MS) await this.refresh();
 		return this.accessToken() ?? "";
 	}
-	refreshAcrossTabs() {
-		const locks = typeof navigator === "undefined" ? void 0 : navigator.locks;
-		return locks ? locks.request(REFRESH_LOCK, () => this.doRefresh()) : this.doRefresh();
-	}
 	async doRefresh() {
-		const refreshToken = this.store.get();
-		if (!refreshToken) {
+		let stored;
+		try {
+			stored = await this.oidc.getUser();
+		} catch {
+			return "unavailable";
+		}
+		if (!stored?.refresh_token) {
 			this.clearSession();
 			return "rejected";
 		}
 		try {
-			const result = await firstValueFrom(this.http.post(this.authUrl + "refresh", { refreshToken }));
-			this.applySession(result);
+			const user = await this.oidc.signinSilent();
+			if (!user || !this.applyUser(user)) return await this.reject();
 			return "refreshed";
 		} catch (error) {
-			if (error instanceof HttpErrorResponse && (error.status === 400 || error.status === 401 || error.status === 403)) {
-				this.clearSession();
-				return "rejected";
-			}
-			return "unavailable";
+			return this.isRefusal(error) ? await this.reject() : "unavailable";
 		}
 	}
-	applySession(result) {
-		const claims = this.decode(result.accessToken);
-		this.accessToken.set(result.accessToken);
-		this.claims.set(claims);
-		this.store.set(result.refreshToken);
+	async reject() {
+		this.clearSession();
+		await this.forget();
+		return "rejected";
+	}
+	isRefusal(error) {
+		const failure = error;
+		return failure?.name === "ErrorResponse" && typeof failure.error === "string" && REFUSALS.includes(failure.error);
+	}
+	isFresh(user) {
+		return user.expires_at === void 0 || user.expires_at * 1e3 - Date.now() > RENEW_BEFORE_EXPIRY_MS;
+	}
+	applyUser(user) {
+		try {
+			const claims = this.decode(user.access_token);
+			this.accessToken.set(user.access_token);
+			this.claims.set(claims);
+			return true;
+		} catch {
+			return false;
+		}
 	}
 	clearSession() {
 		this.accessToken.set(null);
 		this.claims.set(null);
-		this.store.clear();
+	}
+	async forget() {
+		try {
+			await this.oidc.removeUser();
+		} catch {}
 	}
 	decode(jwt) {
 		const payload = (jwt.split(".")[1] ?? "").replace(/-/g, "+").replace(/_/g, "/");
@@ -213,12 +297,14 @@ i0.ɵɵngDeclareClassMetadata({
 	version: "22.2.6",
 	ngImport: i0,
 	type: AuthService,
-	decorators: [{ type: Service }],
-	ctorParameters: () => []
+	decorators: [{ type: Service }]
 });
 const DEFAULT_OPTIONS = {
 	securedUrls: () => [],
-	loginRoute: "/login",
+	clientId: "",
+	scopes: "openid profile email offline_access",
+	callbackRoute: "/auth/callback",
+	signedOutRoute: "/signed-out",
 	homeRoute: "/home",
 	forbiddenRoute: "/home",
 	appTitle: "Sign in"
@@ -285,162 +371,67 @@ const authInterceptor = (req, next) => {
 	}));
 };
 const authGuard = (_route, state) => {
-	if (inject(AuthService).isAuthenticated()) return true;
-	const queryParams = state.url && state.url !== "/" ? { returnUrl: state.url } : void 0;
-	return inject(Router).createUrlTree([inject(OI_UI_OPTIONS).loginRoute], { queryParams });
+	const auth = inject(AuthService);
+	if (auth.isAuthenticated()) return true;
+	const router = inject(Router);
+	const options = inject(OI_UI_OPTIONS);
+	return auth.signIn(state.url).then(() => false, () => router.createUrlTree([options.signedOutRoute], { queryParams: { error: "unavailable" } }));
 };
-const guestGuard = () => inject(AuthService).isAuthenticated() ? inject(Router).createUrlTree([inject(OI_UI_OPTIONS).homeRoute]) : true;
 const roleGuard = (role) => () => inject(AuthService).roles().includes(role) || inject(Router).createUrlTree([inject(OI_UI_OPTIONS).forbiddenRoute]);
 const adminGuard = roleGuard("Admin");
-function safeReturnUrl(url, fallback = "/home") {
-	if (!url) return fallback;
-	const isLocalPath = url.startsWith("/") && !url.startsWith("//") && !url.includes("\\");
-	const hasControlCharacters = /\p{Cc}/u.test(url);
-	const isLoginPage = url === "/login" || url.startsWith("/login?") || url.startsWith("/login/");
-	return isLocalPath && !hasControlCharacters && !isLoginPage ? url : fallback;
-}
-var Login = class Login {
+var AuthCallback = class AuthCallback {
 	auth = inject(AuthService);
 	router = inject(Router);
 	options = inject(OI_UI_OPTIONS);
 	title = this.options.appTitle;
-	returnUrl = input(...ngDevMode ? [void 0, { debugName: "returnUrl" }] : /* istanbul ignore next */ []);
-	reason = input(...ngDevMode ? [void 0, { debugName: "reason" }] : /* istanbul ignore next */ []);
-	email = signal("", ...ngDevMode ? [{ debugName: "email" }] : /* istanbul ignore next */ []);
-	password = signal("", ...ngDevMode ? [{ debugName: "password" }] : /* istanbul ignore next */ []);
-	busy = signal(false, ...ngDevMode ? [{ debugName: "busy" }] : /* istanbul ignore next */ []);
-	error = signal(null, ...ngDevMode ? [{ debugName: "error" }] : /* istanbul ignore next */ []);
-	sessionExpired = computed(() => this.reason() === "expired", ...ngDevMode ? [{ debugName: "sessionExpired" }] : /* istanbul ignore next */ []);
-	canSubmit = computed(() => !this.busy() && this.email().trim().length > 0 && this.password().length > 0, ...ngDevMode ? [{ debugName: "canSubmit" }] : /* istanbul ignore next */ []);
-	async signIn() {
-		if (!this.canSubmit()) return;
-		this.busy.set(true);
-		this.error.set(null);
+	failed = signal(false, ...ngDevMode ? [{ debugName: "failed" }] : /* istanbul ignore next */ []);
+	starting = signal(false, ...ngDevMode ? [{ debugName: "starting" }] : /* istanbul ignore next */ []);
+	ngOnInit() {
+		this.finish();
+	}
+	async tryAgain() {
+		this.starting.set(true);
 		try {
-			await this.auth.login(this.email().trim(), this.password());
-			this.password.set("");
-			await this.router.navigateByUrl(safeReturnUrl(this.returnUrl(), this.options.homeRoute));
-		} catch (error) {
-			this.error.set(this.describe(error));
-		} finally {
-			this.busy.set(false);
+			await this.auth.signIn(this.options.homeRoute);
+		} catch {
+			this.starting.set(false);
 		}
 	}
-	describe(error) {
-		if (error instanceof HttpErrorResponse) switch (error.status) {
-			case 0: return "Unable to reach the sign-in service. Check your connection and try again.";
-			case 400: return "Enter your email and your password.";
-			case 401: return "The email or password is incorrect.";
-			case 429: return "Too many attempts. Wait a minute and try again.";
+	async finish() {
+		try {
+			const target = await this.auth.completeSignIn();
+			await this.router.navigateByUrl(target, { replaceUrl: true });
+		} catch {
+			this.failed.set(true);
 		}
-		return "Something went wrong while signing in. Try again.";
 	}
 	static ɵfac = i0.ɵɵngDeclareFactory({
 		minVersion: "12.0.0",
 		version: "22.2.6",
 		ngImport: i0,
-		type: Login,
+		type: AuthCallback,
 		deps: [],
 		target: i0.ɵɵFactoryTarget.Component
 	});
 	static ɵcmp = i0.ɵɵngDeclareComponent({
 		minVersion: "17.0.0",
 		version: "22.2.6",
-		type: Login,
+		type: AuthCallback,
 		isStandalone: true,
-		selector: "app-login",
-		inputs: {
-			returnUrl: {
-				classPropertyName: "returnUrl",
-				publicName: "returnUrl",
-				isSignal: true,
-				isRequired: false,
-				transformFunction: null
-			},
-			reason: {
-				classPropertyName: "reason",
-				publicName: "reason",
-				isSignal: true,
-				isRequired: false,
-				transformFunction: null
-			}
-		},
+		selector: "oi-auth-callback",
 		ngImport: i0,
-		template: "<div class=\"loginPage\">\n  <p-card class=\"loginCard\" [header]=\"title\" subheader=\"Sign in to continue\">\n    <form (ngSubmit)=\"signIn()\" novalidate>\n      @if (sessionExpired()) {\n        <p-message severity=\"info\" class=\"loginMessage\">Your session has expired. Please sign in again.</p-message>\n      }\n      @if (error(); as message) {\n        <p-message severity=\"error\" class=\"loginMessage\" role=\"alert\">{{ message }}</p-message>\n      }\n\n      <div class=\"loginField\">\n        <label for=\"loginEmail\">Email</label>\n        <input id=\"loginEmail\" name=\"email\" type=\"email\" pInputText autocomplete=\"username\" autofocus\n               [ngModel]=\"email()\" (ngModelChange)=\"email.set($event)\" />\n      </div>\n\n      <div class=\"loginField\">\n        <label for=\"loginPassword\">Password</label>\n        <input id=\"loginPassword\" name=\"password\" type=\"password\" pInputText autocomplete=\"current-password\"\n               [ngModel]=\"password()\" (ngModelChange)=\"password.set($event)\" />\n      </div>\n\n      <button type=\"submit\" pButton class=\"loginSubmit\" [disabled]=\"!canSubmit()\">{{ busy() ? 'Signing in...' : 'Sign in' }}</button>\n    </form>\n  </p-card>\n</div>\n",
-		styles: [".loginPage{display:flex;justify-content:center;padding:4rem 1rem}.loginCard{width:100%;max-width:24rem}.loginMessage{display:block;margin-bottom:1rem}.loginField{display:flex;flex-direction:column;gap:.35rem;margin-bottom:1rem}.loginField input{box-sizing:border-box;width:100%}.loginSubmit{width:100%}\n"],
+		template: "<div class=\"authPage\">\n  <p-card class=\"authCard\" [header]=\"title\">\n    @if (failed()) {\n      <p-message severity=\"error\" class=\"authMessage\" role=\"alert\">We could not finish signing you in.</p-message>\n      <button type=\"button\" pButton class=\"authButton\" [disabled]=\"starting()\" (click)=\"tryAgain()\">Try again</button>\n    } @else {\n      <p class=\"authStatus\" role=\"status\">Signing you in...</p>\n    }\n  </p-card>\n</div>\n",
+		styles: [".authPage{display:flex;justify-content:center;padding:4rem 1rem}.authCard{width:100%;max-width:24rem}.authMessage{display:block;margin-bottom:1rem}.authStatus{margin:0}.authButton{width:100%}\n"],
 		dependencies: [
-			{
-				kind: "ngmodule",
-				type: FormsModule
-			},
-			{
-				kind: "directive",
-				type: i1.ɵNgNoValidate,
-				selector: "form:not([ngNoForm]):not([ngNativeValidate])"
-			},
-			{
-				kind: "directive",
-				type: i1.DefaultValueAccessor,
-				selector: "input:not([type=checkbox]):not([ngNoCva])[formControlName],textarea:not([ngNoCva])[formControlName],input:not([type=checkbox]):not([ngNoCva])[formControl],textarea:not([ngNoCva])[formControl],input:not([type=checkbox]):not([ngNoCva])[ngModel],textarea:not([ngNoCva])[ngModel],[ngDefaultControl]"
-			},
-			{
-				kind: "directive",
-				type: i1.NgControlStatus,
-				selector: "[formControlName],[ngModel],[formControl]"
-			},
-			{
-				kind: "directive",
-				type: i1.NgControlStatusGroup,
-				selector: "[formGroupName],[formArrayName],[ngModelGroup],[formGroup],[formArray],form:not([ngNoForm]),[ngForm]"
-			},
-			{
-				kind: "directive",
-				type: i1.NgModel,
-				selector: "[ngModel]:not([formControlName]):not([formControl])",
-				inputs: [
-					"name",
-					"disabled",
-					"ngModel",
-					"ngModelOptions"
-				],
-				outputs: ["ngModelChange"],
-				exportAs: ["ngModel"]
-			},
-			{
-				kind: "directive",
-				type: i1.NgForm,
-				selector: "form:not([ngNoForm]):not([formGroup]):not([formArray]),ng-form,[ngForm]",
-				inputs: ["ngFormOptions"],
-				outputs: ["ngSubmit"],
-				exportAs: ["ngForm"]
-			},
 			{
 				kind: "ngmodule",
 				type: CardModule
 			},
 			{
 				kind: "component",
-				type: i2.Card,
+				type: i1.Card,
 				selector: "p-card",
 				inputs: ["header", "subheader"]
-			},
-			{
-				kind: "ngmodule",
-				type: InputTextModule
-			},
-			{
-				kind: "directive",
-				type: i3.InputText,
-				selector: "[pInputText]",
-				inputs: [
-					"hostName",
-					"pInputTextPT",
-					"pInputTextUnstyled",
-					"pSize",
-					"variant",
-					"fluid",
-					"invalid"
-				]
 			},
 			{
 				kind: "directive",
@@ -471,7 +462,7 @@ var Login = class Login {
 			},
 			{
 				kind: "component",
-				type: i4.Message,
+				type: i2.Message,
 				selector: "p-message",
 				inputs: [
 					"severity",
@@ -492,40 +483,146 @@ i0.ɵɵngDeclareClassMetadata({
 	minVersion: "12.0.0",
 	version: "22.2.6",
 	ngImport: i0,
-	type: Login,
+	type: AuthCallback,
 	decorators: [{
 		type: Component,
 		args: [{
 			imports: [
-				FormsModule,
 				CardModule,
-				InputTextModule,
 				ButtonDirective,
 				MessageModule
 			],
-			selector: "app-login",
-			template: "<div class=\"loginPage\">\n  <p-card class=\"loginCard\" [header]=\"title\" subheader=\"Sign in to continue\">\n    <form (ngSubmit)=\"signIn()\" novalidate>\n      @if (sessionExpired()) {\n        <p-message severity=\"info\" class=\"loginMessage\">Your session has expired. Please sign in again.</p-message>\n      }\n      @if (error(); as message) {\n        <p-message severity=\"error\" class=\"loginMessage\" role=\"alert\">{{ message }}</p-message>\n      }\n\n      <div class=\"loginField\">\n        <label for=\"loginEmail\">Email</label>\n        <input id=\"loginEmail\" name=\"email\" type=\"email\" pInputText autocomplete=\"username\" autofocus\n               [ngModel]=\"email()\" (ngModelChange)=\"email.set($event)\" />\n      </div>\n\n      <div class=\"loginField\">\n        <label for=\"loginPassword\">Password</label>\n        <input id=\"loginPassword\" name=\"password\" type=\"password\" pInputText autocomplete=\"current-password\"\n               [ngModel]=\"password()\" (ngModelChange)=\"password.set($event)\" />\n      </div>\n\n      <button type=\"submit\" pButton class=\"loginSubmit\" [disabled]=\"!canSubmit()\">{{ busy() ? 'Signing in...' : 'Sign in' }}</button>\n    </form>\n  </p-card>\n</div>\n",
-			styles: [".loginPage{display:flex;justify-content:center;padding:4rem 1rem}.loginCard{width:100%;max-width:24rem}.loginMessage{display:block;margin-bottom:1rem}.loginField{display:flex;flex-direction:column;gap:.35rem;margin-bottom:1rem}.loginField input{box-sizing:border-box;width:100%}.loginSubmit{width:100%}\n"]
+			selector: "oi-auth-callback",
+			template: "<div class=\"authPage\">\n  <p-card class=\"authCard\" [header]=\"title\">\n    @if (failed()) {\n      <p-message severity=\"error\" class=\"authMessage\" role=\"alert\">We could not finish signing you in.</p-message>\n      <button type=\"button\" pButton class=\"authButton\" [disabled]=\"starting()\" (click)=\"tryAgain()\">Try again</button>\n    } @else {\n      <p class=\"authStatus\" role=\"status\">Signing you in...</p>\n    }\n  </p-card>\n</div>\n",
+			styles: [".authPage{display:flex;justify-content:center;padding:4rem 1rem}.authCard{width:100%;max-width:24rem}.authMessage{display:block;margin-bottom:1rem}.authStatus{margin:0}.authButton{width:100%}\n"]
+		}]
+	}]
+});
+var SignedOut = class SignedOut {
+	auth = inject(AuthService);
+	options = inject(OI_UI_OPTIONS);
+	title = this.options.appTitle;
+	error = input(...ngDevMode ? [void 0, { debugName: "error" }] : /* istanbul ignore next */ []);
+	startFailed = signal(false, ...ngDevMode ? [{ debugName: "startFailed" }] : /* istanbul ignore next */ []);
+	starting = signal(false, ...ngDevMode ? [{ debugName: "starting" }] : /* istanbul ignore next */ []);
+	unavailable = computed(() => this.error() === "unavailable" || this.startFailed(), ...ngDevMode ? [{ debugName: "unavailable" }] : /* istanbul ignore next */ []);
+	async signIn() {
+		this.starting.set(true);
+		this.startFailed.set(false);
+		try {
+			await this.auth.signIn(this.options.homeRoute);
+		} catch {
+			this.startFailed.set(true);
+			this.starting.set(false);
+		}
+	}
+	static ɵfac = i0.ɵɵngDeclareFactory({
+		minVersion: "12.0.0",
+		version: "22.2.6",
+		ngImport: i0,
+		type: SignedOut,
+		deps: [],
+		target: i0.ɵɵFactoryTarget.Component
+	});
+	static ɵcmp = i0.ɵɵngDeclareComponent({
+		minVersion: "17.0.0",
+		version: "22.2.6",
+		type: SignedOut,
+		isStandalone: true,
+		selector: "oi-signed-out",
+		inputs: { error: {
+			classPropertyName: "error",
+			publicName: "error",
+			isSignal: true,
+			isRequired: false,
+			transformFunction: null
+		} },
+		ngImport: i0,
+		template: "<div class=\"authPage\">\n  <p-card class=\"authCard\" [header]=\"title\">\n    @if (unavailable()) {\n      <p-message severity=\"error\" class=\"authMessage\" role=\"alert\">Sign-in is not available right now. Try again in a moment.</p-message>\n    } @else {\n      <p-message severity=\"info\" class=\"authMessage\" role=\"status\">You have been signed out.</p-message>\n    }\n    <button type=\"button\" pButton class=\"authButton\" [disabled]=\"starting()\" (click)=\"signIn()\">Sign in</button>\n  </p-card>\n</div>\n",
+		styles: [".authPage{display:flex;justify-content:center;padding:4rem 1rem}.authCard{width:100%;max-width:24rem}.authMessage{display:block;margin-bottom:1rem}.authStatus{margin:0}.authButton{width:100%}\n"],
+		dependencies: [
+			{
+				kind: "ngmodule",
+				type: CardModule
+			},
+			{
+				kind: "component",
+				type: i1.Card,
+				selector: "p-card",
+				inputs: ["header", "subheader"]
+			},
+			{
+				kind: "directive",
+				type: ButtonDirective,
+				selector: "[pButton]",
+				inputs: [
+					"pButton",
+					"pButtonPT",
+					"pButtonUnstyled",
+					"hostName",
+					"text",
+					"plain",
+					"raised",
+					"size",
+					"outlined",
+					"link",
+					"rounded",
+					"fluid",
+					"variant",
+					"iconOnly",
+					"loading",
+					"severity"
+				]
+			},
+			{
+				kind: "ngmodule",
+				type: MessageModule
+			},
+			{
+				kind: "component",
+				type: i2.Message,
+				selector: "p-message",
+				inputs: [
+					"severity",
+					"closable",
+					"icon",
+					"closeIcon",
+					"life",
+					"size",
+					"variant",
+					"motionOptions"
+				],
+				outputs: ["onClose"]
+			}
+		]
+	});
+};
+i0.ɵɵngDeclareClassMetadata({
+	minVersion: "12.0.0",
+	version: "22.2.6",
+	ngImport: i0,
+	type: SignedOut,
+	decorators: [{
+		type: Component,
+		args: [{
+			imports: [
+				CardModule,
+				ButtonDirective,
+				MessageModule
+			],
+			selector: "oi-signed-out",
+			template: "<div class=\"authPage\">\n  <p-card class=\"authCard\" [header]=\"title\">\n    @if (unavailable()) {\n      <p-message severity=\"error\" class=\"authMessage\" role=\"alert\">Sign-in is not available right now. Try again in a moment.</p-message>\n    } @else {\n      <p-message severity=\"info\" class=\"authMessage\" role=\"status\">You have been signed out.</p-message>\n    }\n    <button type=\"button\" pButton class=\"authButton\" [disabled]=\"starting()\" (click)=\"signIn()\">Sign in</button>\n  </p-card>\n</div>\n",
+			styles: [".authPage{display:flex;justify-content:center;padding:4rem 1rem}.authCard{width:100%;max-width:24rem}.authMessage{display:block;margin-bottom:1rem}.authStatus{margin:0}.authButton{width:100%}\n"]
 		}]
 	}],
-	propDecorators: {
-		returnUrl: [{
-			type: i0.Input,
-			args: [{
-				isSignal: true,
-				alias: "returnUrl",
-				required: false
-			}]
-		}],
-		reason: [{
-			type: i0.Input,
-			args: [{
-				isSignal: true,
-				alias: "reason",
-				required: false
-			}]
+	propDecorators: { error: [{
+		type: i0.Input,
+		args: [{
+			isSignal: true,
+			alias: "error",
+			required: false
 		}]
-	}
+	}] }
 });
 var UserMenu = class UserMenu {
 	auth = inject(AuthService);
@@ -547,7 +644,7 @@ var UserMenu = class UserMenu {
 		isStandalone: true,
 		selector: "oi-user-menu",
 		ngImport: i0,
-		template: "<span class=\"signedInAs\">{{ auth.userName() }}</span>\n<button type=\"button\" pButton severity=\"secondary\" size=\"small\" (click)=\"signOut()\">Sign out</button>\n",
+		template: "<span class=\"signedInAs\">{{ auth.userName() }}</span>\r\n<button type=\"button\" pButton severity=\"secondary\" size=\"small\" (click)=\"signOut()\">Sign out</button>\r\n",
 		styles: [".signedInAs{margin-right:.75rem}\n"],
 		dependencies: [{
 			kind: "directive",
@@ -584,7 +681,7 @@ i0.ɵɵngDeclareClassMetadata({
 		args: [{
 			imports: [ButtonDirective],
 			selector: "oi-user-menu",
-			template: "<span class=\"signedInAs\">{{ auth.userName() }}</span>\n<button type=\"button\" pButton severity=\"secondary\" size=\"small\" (click)=\"signOut()\">Sign out</button>\n",
+			template: "<span class=\"signedInAs\">{{ auth.userName() }}</span>\r\n<button type=\"button\" pButton severity=\"secondary\" size=\"small\" (click)=\"signOut()\">Sign out</button>\r\n",
 			styles: [".signedInAs{margin-right:.75rem}\n"]
 		}]
 	}]
@@ -913,6 +1010,6 @@ i0.ɵɵngDeclareClassMetadata({
 	decorators: [{ type: Service }],
 	ctorParameters: () => []
 });
-export { AppHubService, AuthService, BackoffRetryPolicy, ConfigService, HUB_CONNECTION_FACTORY, HUB_NOTIFICATION_HANDLER, HubConnectionService, LocalStorageRefreshTokenStore, Login, NotificationService, OI_CONFIG_DEFAULTS, OI_UI_OPTIONS, REFRESH_KEY, REFRESH_TOKEN_STORE, SessionEndedError, SignalRService, UserMenu, adminGuard, authGuard, authInterceptor, defaultHubConnectionFactory, guestGuard, provideOiUiCommon, roleGuard, safeReturnUrl, startOiSession };
+export { AppHubService, AuthCallback, AuthService, BackoffRetryPolicy, ConfigService, HUB_CONNECTION_FACTORY, HUB_NOTIFICATION_HANDLER, HubConnectionService, NotificationService, OIDC_SESSION, OI_CONFIG_DEFAULTS, OI_UI_OPTIONS, SessionEndedError, SignalRService, SignedOut, UserManagerOidcSession, UserMenu, absoluteRouteUrl, adminGuard, authGuard, authInterceptor, authorityFrom, buildUserManagerSettings, defaultHubConnectionFactory, newNonce, provideOiUiCommon, roleGuard, safeReturnUrl, signinArgs, startOiSession };
 
 //# sourceMappingURL=oi-ui-common.mjs.map

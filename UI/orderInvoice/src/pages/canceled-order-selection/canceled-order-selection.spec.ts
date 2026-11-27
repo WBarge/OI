@@ -4,17 +4,17 @@ import { FilterMetadata, MessageService } from 'primeng/api';
 import { TableLazyLoadEvent, TablePageEvent, TableRowSelectEvent } from 'primeng/table';
 import { NEVER, of } from 'rxjs';
 import { vi } from 'vitest';
-import { CanceledOrderSelection } from './canceled-order-selection';
+import { OrderSelection } from './order-selection';
 import { OrdersService } from '../../services/orders-service';
 import { FilterTransformerService } from '../../services/transformers/filter-transformer.service';
 import { OrderListResult } from '../../model/results/order-list-result';
 import { OrderSearch } from '../../model/results/order-search';
 
-describe('CanceledOrderSelection', () => {
-  let component: CanceledOrderSelection;
-  let fixture: ComponentFixture<CanceledOrderSelection>;
+describe('OrderSelection', () => {
+  let component: OrderSelection;
+  let fixture: ComponentFixture<OrderSelection>;
   let messageService: MessageService;
-  let getCanceledOrders: ReturnType<typeof vi.fn>;
+  let getOrders: ReturnType<typeof vi.fn>;
   let navigate: ReturnType<typeof vi.fn>;
 
   const first = Object.assign(new OrderSearch(), {
@@ -31,30 +31,30 @@ describe('CanceledOrderSelection', () => {
     // the table asks for its first page while it renders. Real HTTP answers asynchronously, so until the
     // test is ready to drive the component the service never answers (a synchronous answer would change
     // bound state in the middle of change detection and throw NG0100).
-    getCanceledOrders = vi.fn().mockReturnValue(NEVER);
+    getOrders = vi.fn().mockReturnValue(NEVER);
     navigate = vi.fn();
 
     await TestBed.configureTestingModule({
-      imports: [CanceledOrderSelection],
+      imports: [OrderSelection],
       providers: [
         MessageService,
         { provide: Router, useValue: { navigate } }
       ]
     })
       // the component declares its own OrdersService provider, so that is the one to replace
-      .overrideComponent(CanceledOrderSelection, {
-        set: { providers: [{ provide: OrdersService, useValue: { getCanceledOrders } }, FilterTransformerService] }
+      .overrideComponent(OrderSelection, {
+        set: { providers: [{ provide: OrdersService, useValue: { getOrders } }, FilterTransformerService] }
       })
       .compileComponents();
 
     messageService = TestBed.inject(MessageService);
-    fixture = TestBed.createComponent(CanceledOrderSelection);
+    fixture = TestBed.createComponent(OrderSelection);
     component = fixture.componentInstance;
     fixture.detectChanges();
     await fixture.whenStable();
-    expect(getCanceledOrders).toHaveBeenCalled(); // the table requested its first page
-    getCanceledOrders.mockReset();
-    getCanceledOrders.mockReturnValue(of(page));
+    expect(getOrders).toHaveBeenCalled(); // the table requested its first page
+    getOrders.mockReset();
+    getOrders.mockReturnValue(of(page));
   });
 
   it('should create', () => {
@@ -81,8 +81,8 @@ describe('CanceledOrderSelection', () => {
 
       component.loadOrders();
 
-      expect(getCanceledOrders).toHaveBeenCalledTimes(1);
-      expect(getCanceledOrders).toHaveBeenCalledWith(3, 25, expect.any(Map));
+      expect(getOrders).toHaveBeenCalledTimes(1);
+      expect(getOrders).toHaveBeenCalledWith(3, 25, expect.any(Map));
     });
 
     it('should store the orders and the total record count that come back', () => {
@@ -97,7 +97,7 @@ describe('CanceledOrderSelection', () => {
 
       component.loadOrders();
 
-      const sentFilters = getCanceledOrders.mock.calls[0][2] as Map<string, unknown>;
+      const sentFilters = getOrders.mock.calls[0][2] as Map<string, unknown>;
       expect(sentFilters.get('CustomerName')).toEqual([
         { searchValue: 'ad', matchMode: 'contains', logicalOperator: 'and' }
       ]);
@@ -106,7 +106,7 @@ describe('CanceledOrderSelection', () => {
     it('should send no filters when none are set', () => {
       component.loadOrders();
 
-      expect((getCanceledOrders.mock.calls[0][2] as Map<string, unknown>).size).toBe(0);
+      expect((getOrders.mock.calls[0][2] as Map<string, unknown>).size).toBe(0);
     });
   });
 
@@ -119,8 +119,8 @@ describe('CanceledOrderSelection', () => {
       component.loadOrdersLazy({ filters } as TableLazyLoadEvent);
 
       expect(component.filters).toBe(filters);
-      expect(getCanceledOrders).toHaveBeenCalledTimes(1);
-      expect((getCanceledOrders.mock.calls[0][2] as Map<string, unknown>).has('OrderNumber')).toBe(true);
+      expect(getOrders).toHaveBeenCalledTimes(1);
+      expect((getOrders.mock.calls[0][2] as Map<string, unknown>).has('OrderNumber')).toBe(true);
     });
   });
 
@@ -153,7 +153,7 @@ describe('CanceledOrderSelection', () => {
       component.onSelect({ data: first } as TableRowSelectEvent);
 
       expect(navigate).toHaveBeenCalledTimes(1);
-      expect(navigate).toHaveBeenCalledWith(['/orderInvoice-view', 'order-1']);
+      expect(navigate).toHaveBeenCalledWith(['/orderInvoice', 'order-1']);
     });
 
     it('should open the order when a row of the table is clicked', async () => {
@@ -164,7 +164,7 @@ describe('CanceledOrderSelection', () => {
       const rows = (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('tbody tr');
       rows[1].click();
 
-      expect(navigate).toHaveBeenCalledWith(['/orderInvoice-view', 'order-2']);
+      expect(navigate).toHaveBeenCalledWith(['/orderInvoice', 'order-2']);
     });
   });
 });

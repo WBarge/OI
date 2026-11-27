@@ -8,13 +8,17 @@ anywhere: both apps read its built output from `dist/oi-ui-common` (see `paths` 
 
 | Piece | What it does |
 |---|---|
-| `ConfigService` | Reads `config.json` (relative to the page's base href, so `/config.json` for the OI UI and `/products/config.json` for the ProductManager UI). |
-| `AuthService` | Signs in and out, keeps the short-lived access token in memory, renews it with the long-lived refresh token, restores a session on page load. |
-| `RefreshTokenStore` | Where the refresh token is kept: `localStorage` by default. **This is what makes the two UIs share one sign-in, and it only works because they share one origin.** Replacing the way a session is shared (for example with a single sign-on flow) means replacing this one class. |
+| `ConfigService` | Reads `config.json` (relative to the page's base href: both UIs are served at the root of their own address, so `/config.json`). |
+| `AuthService` | Signs in and out through **OI.Auth** (OpenID Connect, authorization code with PKCE), keeps the short-lived access token, renews it with the refresh token, restores a session on page load. No password is ever typed into a UI. |
+| `OidcSession`, `OIDC_SESSION` | The seam over **oidc-client-ts** that `AuthService` uses (redirect to OI.Auth, trade the code for tokens, renew, sign out). Tokens are kept in the tab's **`sessionStorage`**, so each browser tab has its own sign-in. Replace it in tests with a fake. |
 | `authInterceptor` | Adds the bearer token to calls to the APIs the application listed, and renews and repeats a call that comes back 401. |
-| `authGuard`, `guestGuard`, `roleGuard`, `adminGuard` | Route guards. Where they redirect is set per application. |
-| `Login`, `UserMenu` | The sign-in page and the "signed in as ... / Sign out" piece for a menu bar. |
+| `authGuard`, `roleGuard`, `adminGuard` | Route guards. A signed-out user is sent to OI.Auth and comes back to the page they asked for. Where `roleGuard` redirects is set per application. |
+| `AuthCallback`, `SignedOut` | The two pages OI.Auth sends the browser back to: after signing in (`/auth/callback`, trades the code and carries on) and after signing out (`/signed-out`, with a Sign in button). Register both **without a guard**. |
+| `UserMenu` | The "signed in as ... / Sign out" piece for a menu bar. |
 | `SignalRService`, `AppHubService`, `HubConnectionService`, `NotificationService` | The connection to the hub and the toasts for what the back end sends. An application that wants to react to notifications registers a `HUB_NOTIFICATION_HANDLER`. |
+
+Single sign-on across the two UIs comes from **OI.Auth's own session cookie** (on OI.Auth's address), not from anything the UIs share. They can be served
+from different hosts and ports.
 
 ## Using it in an application
 
@@ -23,13 +27,18 @@ anywhere: both apps read its built output from `dist/oi-ui-common` (see `paths` 
 provideHttpClient(withInterceptors([authInterceptor])),
 provideOiUiCommon({
   appTitle: 'Product Manager',
+  clientId: 'product-admin',            // the id registered in OI.Auth's "Clients" settings
   homeRoute: '/products',
   forbiddenRoute: '/access-denied',
   securedUrls: (config) => [(config as MyConfig).productApiUrl],   // the token is sent here and nowhere else
 }),
 { provide: OI_CONFIG_DEFAULTS, useValue: () => new MyConfig() },   // optional: defaults for settings missing from config.json
-provideAppInitializer(() => startOiSession()),                      // read config.json, then restore the session
+provideAppInitializer(() => startOiSession()),                      // read config.json, then pick this tab's session back up
 ```
+
+Routes: register `{ path: 'auth/callback', component: AuthCallback }` and `{ path: 'signed-out', component: SignedOut }` with no guard, and put `authGuard`
+on everything else. The addresses `<origin>/auth/callback` and `<origin>/signed-out` must be registered for the application's client id in OI.Auth's `Clients` settings.
+The options `scopes`, `callbackRoute` and `signedOutRoute` have defaults (`openid profile email offline_access`, `/auth/callback`, `/signed-out`).
 
 Inject `HubConnectionService` once in the root component to start the hub connection and the toasts.
 
@@ -44,4 +53,4 @@ Run these in this folder (a VS Code window opened on `UI\oi-ui-common`):
 | `npm test` | Runs the library's tests (stays running, re-runs on save). `npm test -- --watch=false` runs them once. |
 | `npm run testui` (or `testui` once the PowerShell function is set up) | The same tests with the Vitest UI at http://localhost:51204/__vitest__/ |
 
-Install once from the `UI` folder (`npm install`): the three projects share one `node_modules`.
+Install once from the `UI` folder (`npm install`): the three projects share one `node_modules`. The library needs `oidc-client-ts` (a peer dependency, installed through the two apps).

@@ -3,6 +3,7 @@
     <File Path="DevNotes.txt" />
     <File Path="OptionC-SSO-Handoff.md" />
     <File Path="ProductManager.README.md" />
+    <File Path="README.md" />
     <File Path="SettingsNotes.md" />
   </Folder>
   <Project Path="OI.Auth.Tests/OI.Auth.Tests.csproj" Id="7d3a9b52-6c18-4e0f-a5b4-2f81c9d04e67" />

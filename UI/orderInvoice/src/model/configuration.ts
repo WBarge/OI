@@ -3,7 +3,6 @@ export class Configuration {
   public HideShippingAddress: boolean = false;
   public EnableCustomProducts: boolean = false;
   public productApiUrl: string = "";
-  public productUiUrl: string = "http://localhost:4200/";
   public oiApiUrl:string = "";
   public authApiUrl: string = "";
   public reportingApiUrl: string = "";

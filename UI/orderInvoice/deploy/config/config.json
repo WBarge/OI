@@ -3,7 +3,6 @@
   "HideShippingAddress": false,
   "EnableCustomProducts": false,
   "productApiUrl": "https://localhost:7253/api/",
-  "productUiUrl": "http://localhost:4200/",
   "oiApiUrl": "https://localhost:7128/api/",
   "authApiUrl": "https://localhost:7300/api/",
   "reportingApiUrl": "https://localhost:7267/api/",

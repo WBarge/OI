@@ -3,8 +3,6 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { CompanyProfileSyncService } from './company-profile-sync-service';
-import { OI_CONFIG_DEFAULTS } from '@oi/ui-common';
-import { Configuration } from '../model/configuration';
 import { ConfigService } from './config-service';
 import { AuthService } from './auth-service';
 
@@ -14,7 +12,7 @@ describe('CompanyProfileSyncService', () => {
   let httpTestingController: HttpTestingController;
   let signedIn = signal(false);
 
-  const isConfigRequest = (req: { url: string }) => req.url.startsWith('config.json?');
+  const isConfigRequest = (req: { url: string }) => req.url.startsWith('/config.json?');
   const uploadUrl = 'https://reporting.test/api/CompanyProfile';
   const logoUrl = 'https://cdn.test/images/brand/logo.png';
   const logoBytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 1, 2, 3]);
@@ -58,7 +56,6 @@ describe('CompanyProfileSyncService', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: OI_CONFIG_DEFAULTS, useValue: () => new Configuration() },   // what app.config.ts registers
         { provide: AuthService, useValue: { isAuthenticated: signedIn.asReadonly(), currentToken: null } },
       ],
     });
