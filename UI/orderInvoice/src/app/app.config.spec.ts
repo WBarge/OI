@@ -8,26 +8,28 @@ import { PrimeNG } from 'primeng/config';
 import { appConfig } from './app.config';
 import { routes } from './app.routes';
 import { ConfigService } from '../services/config-service';
-import { AuthService, REFRESH_KEY } from '../services/auth-service';
-import { authResult } from '../testing/jwt-helper';
+import { AuthService } from '../services/auth-service';
+import { OI_UI_OPTIONS, OIDC_SESSION } from '@oi/ui-common';
+import { FakeOidcSession, errorResponse } from '../testing/fake-oidc-session';
+import { oidcUser } from '../testing/jwt-helper';
 
 describe('appConfig', () => {
   let httpTestingController: HttpTestingController;
+  let oidc: FakeOidcSession;
 
-  const isConfigRequest = (req: { url: string }) => req.url.startsWith('/config.json?');
+  const isConfigRequest = (req: { url: string }) => req.url.startsWith('config.json?');
 
   const settle = () => new Promise(resolve => setTimeout(resolve, 0));
 
   beforeEach(() => {
-    localStorage.clear();
-    // the testing backend comes last so it replaces the real one provided by appConfig
-    TestBed.configureTestingModule({ providers: [...appConfig.providers, provideHttpClientTesting()] });
+    oidc = new FakeOidcSession();
+    // the testing backend and the fake OpenID Connect session come last so they replace the real ones provided by appConfig
+    TestBed.configureTestingModule({ providers: [...appConfig.providers, provideHttpClientTesting(), { provide: OIDC_SESSION, useValue: oidc }] });
     httpTestingController = TestBed.inject(HttpTestingController);
   });
 
   afterEach(() => {
     httpTestingController.verify();
-    localStorage.clear();
   });
 
   it('should provide the router with the application routes', () => {
@@ -81,25 +83,21 @@ describe('appConfig', () => {
       productApiUrl: 'https://products.test/api/'
     };
 
-    it('should not ask the server about a session when none was kept from an earlier visit', async () => {
+    it('should not try to renew anything when this tab holds no session', async () => {
       const initStatus = TestBed.inject(ApplicationInitStatus);
 
       httpTestingController.expectOne(isConfigRequest).flush(serverConfig);
       await initStatus.donePromise;
 
-      httpTestingController.expectNone('https://auth.test/api/auth/refresh');
+      expect(oidc.signinSilent).not.toHaveBeenCalled();
       expect(TestBed.inject(AuthService).isAuthenticated()).toBe(false);
     });
 
-    it('should sign the user back in, once the configuration is loaded, when a session was kept', async () => {
-      localStorage.setItem(REFRESH_KEY, 'kept-token');
+    it('should sign the user back in, once the configuration is loaded, when this tab was already signed in', async () => {
+      oidc.user = oidcUser({ name: 'Pat Example' });
       const initStatus = TestBed.inject(ApplicationInitStatus);
 
       httpTestingController.expectOne(isConfigRequest).flush(serverConfig);
-      await settle();
-      const refresh = httpTestingController.expectOne('https://auth.test/api/auth/refresh');
-      expect(refresh.request.body).toEqual({ refreshToken: 'kept-token' });
-      refresh.flush(authResult({ name: 'Pat Example' }, 'next-token'));
       await initStatus.donePromise;
 
       const auth = TestBed.inject(AuthService);
@@ -107,42 +105,55 @@ describe('appConfig', () => {
       expect(auth.userName()).toBe('Pat Example');
     });
 
-    it('should hold the application back until the session is restored, so no page flashes the sign-in screen first', async () => {
-      localStorage.setItem(REFRESH_KEY, 'kept-token');
+    it('should hold the application back until an expired session is renewed, so no page flashes before it', async () => {
+      oidc.user = oidcUser({}, { expiresInSeconds: -10 });
+      let renewed!: (user: ReturnType<typeof oidcUser>) => void;
+      oidc.signinSilent.mockReturnValue(new Promise(resolve => (renewed = resolve)));
       const initStatus = TestBed.inject(ApplicationInitStatus);
 
       httpTestingController.expectOne(isConfigRequest).flush(serverConfig);
       await settle();
       expect(initStatus.done).toBe(false);
 
-      httpTestingController.expectOne('https://auth.test/api/auth/refresh').flush(authResult());
+      renewed(oidcUser());
       await initStatus.donePromise;
       expect(initStatus.done).toBe(true);
+      expect(TestBed.inject(AuthService).isAuthenticated()).toBe(true);
     });
 
     it('should still start when the kept session is refused, leaving the user to sign in', async () => {
-      localStorage.setItem(REFRESH_KEY, 'expired-token');
+      oidc.user = oidcUser({}, { expiresInSeconds: -10 });
+      oidc.signinSilent.mockRejectedValue(errorResponse('invalid_grant'));
       const initStatus = TestBed.inject(ApplicationInitStatus);
 
       httpTestingController.expectOne(isConfigRequest).flush(serverConfig);
-      await settle();
-      httpTestingController.expectOne('https://auth.test/api/auth/refresh').flush('no', { status: 401, statusText: 'Unauthorized' });
       await initStatus.donePromise;
 
       expect(TestBed.inject(AuthService).isAuthenticated()).toBe(false);
-      expect(localStorage.getItem(REFRESH_KEY)).toBeNull();
+      expect(oidc.removeUser).toHaveBeenCalled();
     });
 
-    it('should still start when the auth service is down, and keep the session for next time', async () => {
-      localStorage.setItem(REFRESH_KEY, 'kept-token');
+    it('should still start when OI.Auth is down, and keep the session for next time', async () => {
+      oidc.user = oidcUser({}, { expiresInSeconds: -10 });
+      oidc.signinSilent.mockRejectedValue(new Error('Network Error'));
       const initStatus = TestBed.inject(ApplicationInitStatus);
 
       httpTestingController.expectOne(isConfigRequest).flush(serverConfig);
-      await settle();
-      httpTestingController.expectOne('https://auth.test/api/auth/refresh').error(new ProgressEvent('error'));
       await initStatus.donePromise;
 
-      expect(localStorage.getItem(REFRESH_KEY)).toBe('kept-token');
+      expect(oidc.removeUser).not.toHaveBeenCalled();
+      expect(oidc.user).not.toBeNull();
+    });
+
+    it('should register itself with OI.Auth as the oi-ui client', () => {
+      // the id has to match the "Clients" entry in OI.Auth's settings, or OI.Auth refuses every sign-in
+      httpTestingController.expectOne(isConfigRequest).flush({});
+
+      const options = TestBed.inject(OI_UI_OPTIONS);
+
+      expect(options.clientId).toBe('oi-ui');
+      expect(options.callbackRoute).toBe('/auth/callback');
+      expect(options.signedOutRoute).toBe('/signed-out');
     });
   });
 
@@ -155,12 +166,10 @@ describe('appConfig', () => {
     };
 
     it('should send the company details to the Reporting API after the configuration is loaded and the session restored', async () => {
-      localStorage.setItem(REFRESH_KEY, 'kept-token');
+      oidc.user = oidcUser();
       const initStatus = TestBed.inject(ApplicationInitStatus);
 
       httpTestingController.expectOne(isConfigRequest).flush(withCompany);
-      await settle();
-      httpTestingController.expectOne('https://auth.test/api/auth/refresh').flush(authResult());
       await initStatus.donePromise;
       TestBed.tick();
       await settle();
@@ -172,7 +181,7 @@ describe('appConfig', () => {
       upload.flush(null, { status: 204, statusText: 'No Content' });
     });
 
-    it('should send nothing while no one is signed in, rather than be refused and sent to the sign-in page', async () => {
+    it('should send nothing while no one is signed in, rather than be refused and sent to OI.Auth', async () => {
       const initStatus = TestBed.inject(ApplicationInitStatus);
 
       httpTestingController.expectOne(isConfigRequest).flush(withCompany);
@@ -185,27 +194,29 @@ describe('appConfig', () => {
   });
 
   describe('the http client', () => {
-    it('should add the signed-in token to calls to the order api, and to nothing else', async () => {
-      localStorage.setItem(REFRESH_KEY, 'kept-token');
+    it('should add the signed-in token to calls to the order api and the product api, and to nothing else', async () => {
+      const issued = oidcUser();
+      oidc.user = issued;
       const initStatus = TestBed.inject(ApplicationInitStatus);
       httpTestingController.expectOne(isConfigRequest).flush({
         authApiUrl: 'https://auth.test/api/', oiApiUrl: 'https://oi.test/api/', productApiUrl: 'https://products.test/api/'
       });
-      await settle();
-      const issued = authResult();
-      httpTestingController.expectOne('https://auth.test/api/auth/refresh').flush(issued);
       await initStatus.donePromise;
 
       const http = TestBed.inject(HttpClient);
       http.get('https://oi.test/api/Orders').subscribe();
       http.get('https://products.test/api/Products').subscribe();
+      http.get('https://elsewhere.test/api/Things').subscribe();
 
       const orders = httpTestingController.expectOne('https://oi.test/api/Orders');
       const products = httpTestingController.expectOne('https://products.test/api/Products');
-      expect(orders.request.headers.get('Authorization')).toBe(`Bearer ${issued.accessToken}`);
-      expect(products.request.headers.has('Authorization')).toBe(false);
+      expect(orders.request.headers.get('Authorization')).toBe(`Bearer ${issued.access_token}`);
+      const elsewhere = httpTestingController.expectOne('https://elsewhere.test/api/Things');
+      expect(products.request.headers.get('Authorization')).toBe(`Bearer ${issued.access_token}`);
+      expect(elsewhere.request.headers.has('Authorization')).toBe(false);
       orders.flush([]);
       products.flush([]);
+      elsewhere.flush([]);
     });
 
     it('should load config.json without needing the configuration it is loading', () => {

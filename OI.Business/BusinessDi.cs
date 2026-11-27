@@ -38,7 +38,7 @@ public static class BusinessDi
     /// by registering services and dependencies with the provided IServiceCollection.
     /// This specific configuration is for the OI.Auth API application.
     /// Deliberately does not register the order managers.
-    /// The application must also provide IPasswordService, IAccessTokenFactory and TimeProvider.
+    /// The application must also provide IPasswordService, IUserSessionRevoker and TimeProvider.
     /// Register your own AuthPolicy first to change the lockout or password rules.
     /// </summary>
     /// <param name="services">The services.</param>

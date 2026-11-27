@@ -9,11 +9,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="coverlet.collector" Version="10.1.0">
+    <PackageReference Include="coverlet.collector" Version="10.1.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="FluentAssertions" Version="[6.12.1]" />
+    <PackageReference Include="FluentAssertions" Version="8.11.0" />
     <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.3.14" />
     <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="11.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="11.0.0" />

@@ -1,0 +1,10 @@
+<div class="authPage">
+  <p-card class="authCard" [header]="title">
+    @if (failed()) {
+      <p-message severity="error" class="authMessage" role="alert">We could not finish signing you in.</p-message>
+      <button type="button" pButton class="authButton" [disabled]="starting()" (click)="tryAgain()">Try again</button>
+    } @else {
+      <p class="authStatus" role="status">Signing you in...</p>
+    }
+  </p-card>
+</div>

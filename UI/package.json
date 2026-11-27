@@ -1,0 +1,16 @@
+{
+  "name": "oi-ui",
+  "private": true,
+  "description": "One npm install for the OI UI, the ProductManager UI and the library they share.",
+  "workspaces": [
+    "oi-ui-common",
+    "orderInvoice",
+    "ProductAdmin"
+  ],
+  "scripts": {
+    "build:lib": "npm run build --workspace oi-ui-common",
+    "build:all": "node scripts/run-all.mjs build",
+    "test:all": "node scripts/run-all.mjs test"
+  },
+  "devDependencies": {}
+}

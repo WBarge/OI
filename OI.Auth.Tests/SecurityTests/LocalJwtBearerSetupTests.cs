@@ -7,9 +7,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
-using Moq;
 using OI.Auth.Security;
-using OI.Glue.Models;
 
 namespace OI.Auth.Tests.SecurityTests;
 
@@ -41,15 +39,25 @@ public class LocalJwtBearerSetupTests
         return services.BuildServiceProvider();
     }
 
-    private static IAuthUser UserWith(string[] roles, params (string Type, string Value)[] claims)
+    /// <summary>A token shaped like the ones OpenIddict issues for a person: same key, issuer and audience, same claim names.</summary>
+    private static string UserToken(ServiceProvider provider, string[] roles, params (string Type, string Value)[] claims)
     {
-        Mock<IAuthUser> user = new();
-        user.SetupGet(u => u.Id).Returns("user-1");
-        user.SetupGet(u => u.Email).Returns("pat@example.com");
-        user.SetupGet(u => u.DisplayName).Returns("Pat Example");
-        user.SetupGet(u => u.Roles).Returns(roles);
-        user.SetupGet(u => u.Claims).Returns(claims.Select(c => new KeyValuePair<string, string>(c.Type, c.Value)).ToList());
-        return user.Object;
+        JwtOptions jwt = provider.GetRequiredService<IOptions<JwtOptions>>().Value;
+        SigningKeyProvider keys = provider.GetRequiredService<SigningKeyProvider>();
+        Dictionary<string, object> payload = new() { ["sub"] = "user-1", ["name"] = "Pat Example", ["role"] = roles, ["token_use"] = "user" };
+        foreach (IGrouping<string, (string Type, string Value)> group in claims.GroupBy(c => c.Type))
+        {
+            payload[group.Key] = group.Select(c => c.Value).ToArray();
+        }
+
+        return new JsonWebTokenHandler().CreateToken(new SecurityTokenDescriptor
+        {
+            Issuer = jwt.NormalizedIssuer,
+            Audience = jwt.Audience,
+            Claims = payload,
+            Expires = DateTime.UtcNow.AddMinutes(5),
+            SigningCredentials = new SigningCredentials(keys.SigningKey, SecurityAlgorithms.RsaSha256),
+        });
     }
 
     private static TokenValidationParameters ValidationParameters(ServiceProvider provider) =>
@@ -58,11 +66,19 @@ public class LocalJwtBearerSetupTests
     private static Task<TokenValidationResult> ValidateAsync(ServiceProvider provider, string token) =>
         new JsonWebTokenHandler().ValidateTokenAsync(token, ValidationParameters(provider));
 
+    [Test, Description("The accepted issuer should be the normalised address, the same value every token is written with")]
+    public void TheAcceptedIssuer_IsTheNormalizedAddress()
+    {
+        using ServiceProvider provider = BuildProvider();
+
+        ValidationParameters(provider).ValidIssuer.Should().Be("https://auth.test/");
+    }
+
     [Test, Description("A token OI.Auth issued should be accepted by OI.Auth")]
     public async Task ATokenItIssued_IsAccepted()
     {
         using ServiceProvider provider = BuildProvider();
-        string token = provider.GetRequiredService<AccessTokenFactory>().CreateUserToken(UserWith(["Admin"])).Token;
+        string token = UserToken(provider, ["Admin"]);
 
         TokenValidationResult result = await ValidateAsync(provider, token);
 
@@ -73,8 +89,7 @@ public class LocalJwtBearerSetupTests
     public async Task TheClaimsKeepTheirNames()
     {
         using ServiceProvider provider = BuildProvider();
-        string token = provider.GetRequiredService<AccessTokenFactory>()
-            .CreateUserToken(UserWith(["Admin", "User"], ("group", "sales"), ("group", "ops"))).Token;
+        string token = UserToken(provider, ["Admin", "User"], ("group", "sales"), ("group", "ops"));
 
         TokenValidationResult result = await ValidateAsync(provider, token);
         ClaimsPrincipal principal = new ClaimsPrincipal(result.ClaimsIdentity);
@@ -99,7 +114,7 @@ public class LocalJwtBearerSetupTests
     public async Task ARoleThatWasNotGranted_IsNotInTheIdentity()
     {
         using ServiceProvider provider = BuildProvider();
-        string token = provider.GetRequiredService<AccessTokenFactory>().CreateUserToken(UserWith(["User"])).Token;
+        string token = UserToken(provider, ["User"]);
 
         TokenValidationResult result = await ValidateAsync(provider, token);
 
@@ -112,7 +127,7 @@ public class LocalJwtBearerSetupTests
     {
         using ServiceProvider provider = BuildProvider(audience: "oi");
         using ServiceProvider other = BuildProvider(audience: "someone-else");
-        string token = other.GetRequiredService<AccessTokenFactory>().CreateUserToken(UserWith(["Admin"])).Token;
+        string token = UserToken(other, ["Admin"]);
 
         // the two providers also have different keys, so check the audience on its own with the same key
         TokenValidationParameters parameters = ValidationParameters(provider).Clone();
@@ -127,7 +142,7 @@ public class LocalJwtBearerSetupTests
     {
         using ServiceProvider provider = BuildProvider();
         using ServiceProvider stranger = BuildProvider();   // makes its own temporary key
-        string forged = stranger.GetRequiredService<AccessTokenFactory>().CreateUserToken(UserWith(["Admin"])).Token;
+        string forged = UserToken(stranger, ["Admin"]);
 
         TokenValidationResult result = await ValidateAsync(provider, forged);
 
@@ -150,7 +165,7 @@ public class LocalJwtBearerSetupTests
         using ServiceProvider provider = BuildProvider();
         string unsigned = new JsonWebTokenHandler().CreateToken(new SecurityTokenDescriptor
         {
-            Issuer = "https://auth.test",
+            Issuer = "https://auth.test/",
             Audience = "oi",
             Claims = new Dictionary<string, object> { ["sub"] = "u1", ["role"] = "Admin", ["token_use"] = "user" },
             Expires = DateTime.UtcNow.AddMinutes(5),
@@ -187,7 +202,7 @@ public class LocalJwtBearerSetupTests
         SigningKeyProvider keys = provider.GetRequiredService<SigningKeyProvider>();
         string token = new JsonWebTokenHandler().CreateToken(new SecurityTokenDescriptor
         {
-            Issuer = "https://auth.test",
+            Issuer = "https://auth.test/",
             Audience = "oi",
             Claims = new Dictionary<string, object> { ["sub"] = "u1", ["role"] = "Admin", ["token_use"] = "user" },
             NotBefore = DateTime.UtcNow.AddHours(-2),

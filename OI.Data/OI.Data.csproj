@@ -9,6 +9,10 @@
   <ItemGroup>
     <!-- Only addition: Identity's EF Core stores (users, roles, claims). No ASP.NET Core framework reference needed. -->
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="11.0.0" />
+    <!-- Shared key ring for the OI.Auth sign-in cookie, so several OI.Auth instances can run side by side. -->
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="11.0.0" />
+    <!-- OpenIddict's Entity Framework Core stores (applications, authorizations, scopes, tokens). Only the storage half lives here. -->
+    <PackageReference Include="OpenIddict.EntityFrameworkCore" Version="7.9.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="11.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" Version="11.0.0" />

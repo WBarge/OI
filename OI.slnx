@@ -1,6 +1,8 @@
 <Solution>
   <Folder Name="/DevNotes/">
     <File Path="DevNotes.txt" />
+    <File Path="OptionC-SSO-Handoff.md" />
+    <File Path="ProductManager.README.md" />
     <File Path="SettingsNotes.md" />
   </Folder>
   <Project Path="OI.Auth.Tests/OI.Auth.Tests.csproj" Id="7d3a9b52-6c18-4e0f-a5b4-2f81c9d04e67" />
@@ -12,8 +14,8 @@
   <Project Path="OI.Data.Tests/OI.Data.Tests.csproj" Id="11d0e869-5bf1-459f-9df6-2db019ca5793" />
   <Project Path="OI.Data/OI.Data.csproj" Id="9008a198-45a8-469a-b850-474445afb46c" />
   <Project Path="OI.Glue.Tests/OI.Glue.Tests.csproj" />
-  <Project Path="OI.Hub.Tests/OI.Hub.Tests.csproj" />
   <Project Path="OI.Glue/OI.Glue.csproj" Id="d24b1c9e-8c7d-4058-8167-6371c1d2072e" />
+  <Project Path="OI.Hub.Tests/OI.Hub.Tests.csproj" />
   <Project Path="OI.Hub/OI.Hub.csproj" Id="880f0ea8-54ca-4076-a845-94b72451d3f4" />
   <Project Path="OI.Integration.Tests/OI.Integration.Tests.csproj" Id="5c7e1f0a-3b6d-4a52-9d84-17e0b8a6c2f3" />
   <Project Path="OI.Integration/OI.Integration.csproj" Id="a4aad1ed-02c7-45b0-87bc-2466f91f8db1" />
@@ -22,5 +24,13 @@
   <Project Path="OI.Service.Tests/OI.Service.Tests.csproj" Id="0f55371f-9dcd-4190-adac-cf1069de31ed" />
   <Project Path="OI.Service/OI.Service.csproj" Id="2ce728b2-f2ba-4b86-9afe-7f0bb8f75c91" />
   <Project Path="OI.Tool.MigrationHelper/OI.Tool.MigrationHelper.csproj" Id="bb48c2f2-e34b-42e4-80fd-735b6d7c526e" />
+  <Project Path="ProductManager.Business.Tests/ProductManager.Business.Tests.csproj" Id="3870c022-b79b-479c-b1c2-bebf1bbb6916" />
+  <Project Path="ProductManager.Business/ProductManager.Business.csproj" Id="3a31bf86-d634-455d-8ec6-a49034c9225e" />
+  <Project Path="ProductManager.Data.EF.Tests/ProductManager.Data.EF.Tests.csproj" Id="1719b9d8-426b-4814-83ce-1e57abe1d0b5" />
+  <Project Path="ProductManager.Data.EF/ProductManager.Data.EF.csproj" Id="abb0650c-f8b2-4feb-8aa1-c5dd66a71727" />
+  <Project Path="ProductManager.Glue/ProductManager.Glue.csproj" Id="f07bd50b-1218-4b52-a82c-ffb8fc465fbb" />
+  <Project Path="ProductManager.Service.Tests/ProductManager.Service.Tests.csproj" Id="13eaf1fb-6c82-4615-9ede-e0c342f9e3b5" />
+  <Project Path="ProductManager.Service/ProductManager.Service.csproj" Id="3e0e5023-b451-491c-8218-ca10020772b4" />
+  <Project Path="ProductManager.Tool.EF/ProductManager.Tool.EF.csproj" Id="a1ea974b-daa4-4a85-86fc-97c8a66dae4f" />
   <Project Path="TestPlatForm/TestPlatForm.csproj" />
 </Solution>

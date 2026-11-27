@@ -1,0 +1,9 @@
+<p-toast position="top-center" [life]="2000"></p-toast>
+@if (auth.isAuthenticated()) {
+  <p-menubar [model]="items()">
+    <ng-template #end>
+      <oi-user-menu />
+    </ng-template>
+  </p-menubar>
+}
+<router-outlet></router-outlet>

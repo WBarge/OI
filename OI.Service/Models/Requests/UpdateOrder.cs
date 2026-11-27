@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.SignalR;
-using OI.Glue.Models;
+﻿using OI.Glue.Models;
 
 namespace OI.Service.Models.Requests;
 

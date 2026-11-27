@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>61b52824-4dad-4f5c-91f9-7be90924f719</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <DockerfileContext>.</DockerfileContext>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="_ReSharper.Caches\**" />
+    <Content Remove="_ReSharper.Caches\**" />
+    <EmbeddedResource Remove="_ReSharper.Caches\**" />
+    <None Remove="_ReSharper.Caches\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.23.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="11.0.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="11.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Models\DTOs\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ProductManager.Business\ProductManager.Business.csproj" />
+    <ProjectReference Include="..\OI.Common\OI.Common.csproj" />
+    <ProjectReference Include="..\OI.Integration\OI.Integration.csproj" />
+    <ProjectReference Include="..\ProductManager.Data.EF\ProductManager.Data.EF.csproj" />
+  </ItemGroup>
+
+</Project>

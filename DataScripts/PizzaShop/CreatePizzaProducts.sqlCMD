@@ -1,0 +1,7 @@
+:setvar path "D:\Src\Wbarge_GitHub\ProductManager\DataScripts\PizzaShop\"
+:r $(path)\10PizzaProduct.sql
+go
+:r $(path)\12PizzaProduct.sql
+go
+:r $(path)\14PizzaProduct.sql
+go

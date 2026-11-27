@@ -1,0 +1,75 @@
+<br>
+<p-fieldset legend="Quick Create">
+  <p-toolbar>
+    <ng-template #start>
+    </ng-template>
+    <ng-template #center>
+        <p-iftalabel>
+          <input id="name" type="text" pInputText [(ngModel)]="newOption.name" />
+          <label for="name">Name</label>
+        </p-iftalabel>
+        <p-iftalabel>
+          <p-inputnumber inputId="price" [(ngModel)]="newOption.price" mode="currency" currency="USD" locale="en-US" />
+          <label for="price">Price</label>
+        </p-iftalabel>
+        <p-iftalabel>
+          <p-inputnumber inputId="cost" [(ngModel)]="newOption.cost" mode="currency" currency="USD" locale="en-US" />
+          <label for="cost">Cost</label>
+        </p-iftalabel>
+        <p-iftalabel>
+          <p-inputnumber inputId="est" [(ngModel)]="newOption.estimate" mode="currency" currency="USD" locale="en-US" />
+          <label for="est">Estimated</label>
+        </p-iftalabel>
+    </ng-template>
+    <ng-template #end>
+        <button type="button" pButton (click)="submit(newOption)">Create</button>
+    </ng-template>
+  </p-toolbar>
+
+</p-fieldset>
+<br>
+
+<p-table id="productTable" #productTable
+[value]="options"
+[paginator]="true"
+[alwaysShowPaginator]="true"
+[totalRecords]="totalItems"
+[lazy]="true"
+(onLazyLoad)="loadOptionsLazy($event)"
+(onPage)="pageChange($event)"
+[rowsPerPageOptions]="[10, 25, 50]"
+[rows]="pageSize"
+[showCurrentPageReport]="true"
+currentPageReportTemplate="{first}-{last} of {totalRecords}"
+>
+  <ng-template #header>
+    <tr>
+      <th colspan="5" class="gridHeader" >Products</th>
+    </tr>
+    <tr>
+      <th>Name
+        <p-column-filter type="text" field="name" display="menu" />
+      </th>
+      <th>Price</th>
+      <th>Cost</th>
+      <th>Est.</th>
+      <th></th>
+    </tr>
+  </ng-template>
+  <ng-template #body let-option>
+    <tr>
+      <td>{{option.name}}</td>
+      <td>{{option.price | currency}}</td>
+      <td>{{option.cost | currency}}</td>
+      <td>{{option.estimate | currency}}</td>
+      <td>
+        <div class="rightAlign">
+          <button pButton [routerLink]="['/option',option.idValue]" iconOnly="true" ><svg data-p-icon="pencil"></svg></button>
+          <button pButton (click)="delete(option)" iconOnly="true" ><svg data-p-icon="trash"></svg></button>
+        </div>
+
+      </td>
+    </tr>
+  </ng-template>
+</p-table>
+

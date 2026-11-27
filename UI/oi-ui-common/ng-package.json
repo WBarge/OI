@@ -1,0 +1,6 @@
+{
+  "dest": "dist/oi-ui-common",
+  "lib": {
+    "entryFile": "src/public-api.ts"
+  }
+}

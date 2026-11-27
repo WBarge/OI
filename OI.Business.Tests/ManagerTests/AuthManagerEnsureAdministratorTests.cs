@@ -25,8 +25,7 @@ public class AuthManagerEnsureAdministratorTests
         _passwords.Setup(p => p.Hash(It.IsAny<string>())).Returns("hashed");
         _authRepo.Setup(r => r.CreateUserAsync(It.IsAny<NewAuthUser>(), It.IsAny<CancellationToken>())).ReturnsAsync("admin-id");
 
-        _sut = new AuthManager(_authRepo.Object, new Mock<IRefreshTokenRepo>().Object, new Mock<IAccessTokenFactory>().Object,
-            _passwords.Object, new AuthPolicy(), TimeProvider.System, NullLogger<AuthManager>.Instance);
+        _sut = new AuthManager(_authRepo.Object, _passwords.Object, new AuthPolicy(), TimeProvider.System, NullLogger<AuthManager>.Instance);
     }
 
     [Test, Description("EnsureAdministratorAsync should refuse a password shorter than the policy minimum")]

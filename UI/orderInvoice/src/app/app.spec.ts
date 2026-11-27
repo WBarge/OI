@@ -7,6 +7,7 @@ import { vi } from 'vitest';
 import { App } from './app';
 import { routes } from './app.routes';
 import { AuthService } from '../services/auth-service';
+import { ConfigService } from '../services/config-service';
 import { HubConnectionService } from '../services/hub-connection-service';
 
 describe('App', () => {
@@ -38,7 +39,8 @@ describe('App', () => {
         MessageService,
         { provide: AuthService, useValue: { isAuthenticated: signedIn, userName, roles, logout } },
         // the real one opens a connection to the hub; what it does is covered by its own spec
-        { provide: HubConnectionService, useValue: {} }
+        { provide: HubConnectionService, useValue: {} },
+        { provide: ConfigService, useValue: { config: { productUiUrl: '/products/' } } }
       ]
     })
       .compileComponents();
@@ -149,6 +151,32 @@ describe('App', () => {
     expect(app.items().find(item => item.label === 'About')?.routerLink).toBe('/about');
   });
 
+  describe('the Products entry (opens the ProductManager UI in its own window)', () => {
+    const productsEntry = (app: App) => app.items().find(item => item.label === 'Products');
+
+    it('should not be offered to someone who is not an administrator', () => {
+      roles.set(['User']);
+
+      expect(productsEntry(TestBed.createComponent(App).componentInstance)).toBeUndefined();
+    });
+
+    it('should be offered to an administrator', () => {
+      roles.set(['Admin']);
+
+      expect(productsEntry(TestBed.createComponent(App).componentInstance)).toBeDefined();
+    });
+
+    it('should open the ProductManager UI in a new window that has no handle back to this one', () => {
+      roles.set(['Admin']);
+      const open = vi.spyOn(window, 'open').mockReturnValue(null);
+
+      productsEntry(TestBed.createComponent(App).componentInstance)!.command!({} as never);
+
+      expect(open).toHaveBeenCalledExactlyOnceWith('/products/', '_blank', 'noopener');
+      open.mockRestore();
+    });
+  });
+
   describe('the Admin menu', () => {
     const adminEntry = (app: App) => app.items().find(item => item.label === 'Admin');
 
@@ -193,7 +221,7 @@ describe('App', () => {
 
       const labels = TestBed.createComponent(App).componentInstance.items().map(item => item.label);
 
-      expect(labels).toEqual(['Home', 'Customers', 'About', 'Admin']);
+      expect(labels).toEqual(['Home', 'Customers', 'About', 'Products', 'Admin']);
     });
 
     it('should show the Admin entry in the menu bar for an administrator', async () => {

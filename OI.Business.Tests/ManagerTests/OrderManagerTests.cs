@@ -50,7 +50,7 @@ public class OrderManagerTests
         Mock<ICustomerRepo> customerRepoMock = new();
         Mock<IClientContext> clientContextMock = new();
 
-        Action act = () => _ = new OrderManager(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance,null);
+        Action act = () => _ = new OrderManager(orderRepoMock.Object, customerRepoMock.Object, NullLogger<OrderManager>.Instance,null!);
         act.Should().Throw<ArgumentNullException>().WithParameterName("clientContext");
     }
 

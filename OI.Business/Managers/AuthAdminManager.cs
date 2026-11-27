@@ -26,7 +26,7 @@ internal class AuthAdminManager : IAuthAdminManager
     private static readonly Regex GroupNamePattern = new(@"^[a-z0-9][a-z0-9_-]{1,62}$", RegexOptions.Compiled, PatternTimeout);
 
     private readonly IAuthRepo _authRepo;
-    private readonly IRefreshTokenRepo _refreshTokenRepo;
+    private readonly IUserSessionRevoker _sessions;
     private readonly IPasswordService _passwords;
     private readonly IClientContext _actor;
     private readonly AuthPolicy _policy;
@@ -35,7 +35,7 @@ internal class AuthAdminManager : IAuthAdminManager
 
     public AuthAdminManager(
         IAuthRepo authRepo,
-        IRefreshTokenRepo refreshTokenRepo,
+        IUserSessionRevoker sessions,
         IPasswordService passwords,
         IClientContext actor,
         AuthPolicy policy,
@@ -43,7 +43,7 @@ internal class AuthAdminManager : IAuthAdminManager
         ILogger<AuthAdminManager> logger)
     {
         _authRepo = authRepo ?? throw new ArgumentNullException(nameof(authRepo));
-        _refreshTokenRepo = refreshTokenRepo ?? throw new ArgumentNullException(nameof(refreshTokenRepo));
+        _sessions = sessions ?? throw new ArgumentNullException(nameof(sessions));
         _passwords = passwords ?? throw new ArgumentNullException(nameof(passwords));
         _actor = actor ?? throw new ArgumentNullException(nameof(actor));
         _policy = policy ?? throw new ArgumentNullException(nameof(policy));
@@ -231,6 +231,7 @@ internal class AuthAdminManager : IAuthAdminManager
             return AdminResult.Conflict(LAST_ADMINISTRATOR_MESSAGE);
         }
 
+        await RevokeSessionsAsync(userId, cancellationToken);   // their sessions must not outlive the account
         await _authRepo.DeleteUserAsync(userId, cancellationToken);
         _logger.LogInformation("Administrator {ActorId} deleted user {UserId}", _actor.UserId, userId);
         return AdminResult.Ok();
@@ -368,7 +369,7 @@ internal class AuthAdminManager : IAuthAdminManager
     // ------------------------------------------------------------------ helpers
 
     private Task RevokeSessionsAsync(string userId, CancellationToken cancellationToken) =>
-        _refreshTokenRepo.RevokeAllAsync(userId, _clock.GetUtcNow(), cancellationToken);
+        _sessions.RevokeAllAsync(userId, cancellationToken);
 
     private static bool HasRole(IEnumerable<string> roles, string role) => roles.Contains(role, StringComparer.OrdinalIgnoreCase);
 

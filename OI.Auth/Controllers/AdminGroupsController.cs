@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OI.Auth.Models.Requests;
-using OI.Auth.Security;
 using OI.Auth.Utilities;
 using OI.Glue.Managers;
 using OI.Glue.Models;
+using OI.Integration.Security;
 
 namespace OI.Auth.Controllers;
 

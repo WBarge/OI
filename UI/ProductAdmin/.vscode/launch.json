@@ -1,0 +1,26 @@
+{
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+
+    {
+      // This UI is served on its own port (4200). It signs in through OI.Auth, so it needs no shared address with the OI UI:
+      // with an OI.Auth session from the OI UI (in the same browser) it signs in without asking for a password.
+      "name": "ng serve",
+      "type": "chrome",
+      "request": "launch",
+      "preLaunchTask": "npm: start",
+      "url": "http://localhost:4200/",
+      "runtimeExecutable": "C:\\Users\\Admin\\AppData\\Local\\Google\\Chrome SxS\\Application\\chrome.exe"
+    },
+    {
+      // the Vitest UI (the same as typing testui in the terminal)
+      "name": "ng test",
+      "type": "chrome",
+      "request": "launch",
+      "preLaunchTask": "npm: testui",
+      "url": "http://localhost:51204/__vitest__/#/",
+      "runtimeExecutable": "C:\\Users\\Admin\\AppData\\Local\\Google\\Chrome SxS\\Application\\chrome.exe"
+    }
+  ]
+}

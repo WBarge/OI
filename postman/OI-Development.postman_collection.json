@@ -1,0 +1,205 @@
+{
+  "info": {
+    "name": "OI (Development)",
+    "description": "Calls to the OI APIs with a token fetched automatically from OI.Auth (the Development-only password grant, client postman-dev). Select the environment 'OI Development' and fill in email and password.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Gets an access token for the Development password grant (client \"postman-dev\") when there is none, or it is about to run out.",
+          "// Needs OI.Auth in Development with Oidc:PasswordGrantEnabled = true. See \"how it works\" for the setup.",
+          "const expiresAt = Number(pm.environment.get('accessTokenExpiresAt') || 0);",
+          "if (pm.environment.get('accessToken') && Date.now() < expiresAt - 60000) {",
+          "    return;   // the token we have is still good",
+          "}",
+          "",
+          "pm.sendRequest({",
+          "    url: pm.environment.get('authUrl') + '/connect/token',",
+          "    method: 'POST',",
+          "    header: { 'Content-Type': 'application/x-www-form-urlencoded' },",
+          "    body: {",
+          "        mode: 'urlencoded',",
+          "        urlencoded: [",
+          "            { key: 'grant_type', value: 'password' },",
+          "            { key: 'client_id', value: pm.environment.get('clientId') },",
+          "            { key: 'username', value: pm.environment.get('email') },",
+          "            { key: 'password', value: pm.environment.get('password') },",
+          "            { key: 'scope', value: 'openid' }",
+          "        ]",
+          "    }",
+          "}, (error, response) => {",
+          "    if (error || response.code !== 200) {",
+          "        const why = error ? String(error) : response.code + ' ' + response.text();",
+          "        throw new Error('Could not get a token from OI.Auth: ' + why);",
+          "    }",
+          "    const token = response.json();",
+          "    pm.environment.set('accessToken', token.access_token);",
+          "    pm.environment.set('accessTokenExpiresAt', Date.now() + token.expires_in * 1000);",
+          "});"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "OI.Auth",
+      "item": [
+        {
+          "name": "Get a token now (optional)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{authUrl}}/connect/token"
+            },
+            "description": "Development only. Not needed for the other requests: the collection fetches and renews the token by itself. Use it to see what OI.Auth returns.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "grant_type",
+                  "value": "password"
+                },
+                {
+                  "key": "client_id",
+                  "value": "{{clientId}}"
+                },
+                {
+                  "key": "username",
+                  "value": "{{email}}"
+                },
+                {
+                  "key": "password",
+                  "value": "{{password}}"
+                },
+                {
+                  "key": "scope",
+                  "value": "openid"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OI.Auth issued a token', () => pm.response.to.have.status(200));",
+                  "const token = pm.response.json();",
+                  "pm.environment.set('accessToken', token.access_token);",
+                  "pm.environment.set('accessTokenExpiresAt', Date.now() + token.expires_in * 1000);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Discovery document",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{authUrl}}/.well-known/openid-configuration"
+            },
+            "description": "Public. The OpenID Connect settings: endpoints, issuer, supported scopes.",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Signing keys",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{authUrl}}/.well-known/jwks.json"
+            },
+            "description": "Public. The keys other applications use to check tokens.",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Roles (administrators only)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{authUrl}}/api/admin/roles"
+            },
+            "description": "A secured API call: needs a user token with the Admin role."
+          }
+        },
+        {
+          "name": "Users (administrators only)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{authUrl}}/api/admin/users"
+            },
+            "description": "A secured API call: needs a user token with the Admin role."
+          }
+        }
+      ]
+    },
+    {
+      "name": "OI.Reporting",
+      "item": [
+        {
+          "name": "Company logo (no token needed)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{reportingUrl}}/api/CompanyProfile/logo"
+            },
+            "description": "The one anonymous endpoint: the image shown on the login page. 404 until the OI UI has synced the company profile once.",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "ProductManager.Service",
+      "item": [
+        {
+          "name": "Ping (no token needed)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{productUrl}}/api/Ping"
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

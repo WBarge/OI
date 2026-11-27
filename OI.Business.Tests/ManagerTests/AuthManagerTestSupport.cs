@@ -1,5 +1,3 @@
-using System.Security.Cryptography;
-using System.Text;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using OI.Business.Managers;
@@ -21,11 +19,8 @@ internal sealed class FakeClock(DateTimeOffset now) : TimeProvider
 internal sealed class AuthManagerHarness
 {
     public static readonly DateTimeOffset Start = new(2026, 11, 7, 12, 0, 0, TimeSpan.Zero);
-    public static readonly TimeSpan RefreshLifetime = TimeSpan.FromDays(7);
 
     public Mock<IAuthRepo> AuthRepo { get; } = new();
-    public Mock<IRefreshTokenRepo> RefreshTokenRepo { get; } = new();
-    public Mock<IAccessTokenFactory> TokenFactory { get; } = new();
     public Mock<IPasswordService> Passwords { get; } = new();
     public FakeClock Clock { get; } = new(Start);
     public AuthPolicy Policy { get; }
@@ -36,12 +31,8 @@ internal sealed class AuthManagerHarness
         Policy = policy ?? new AuthPolicy();
 
         Passwords.Setup(p => p.Hash(It.IsAny<string>())).Returns("dummy-hash");
-        TokenFactory.SetupGet(f => f.RefreshTokenLifetime).Returns(RefreshLifetime);
-        TokenFactory.Setup(f => f.CreateUserToken(It.IsAny<IAuthUser>()))
-            .Returns(("access-token", Start.AddMinutes(15)));
 
-        Sut = new AuthManager(AuthRepo.Object, RefreshTokenRepo.Object, TokenFactory.Object, Passwords.Object,
-            Policy, Clock, NullLogger<AuthManager>.Instance);
+        Sut = new AuthManager(AuthRepo.Object, Passwords.Object, Policy, Clock, NullLogger<AuthManager>.Instance);
     }
 
     public static IAuthCredential Credential(string userId = "user-1", string? passwordHash = "stored-hash",
@@ -66,9 +57,6 @@ internal sealed class AuthManagerHarness
         user.SetupGet(u => u.Claims).Returns([]);
         return user.Object;
     }
-
-    /// <summary>The hex SHA-256 the manager stores for a raw refresh token.</summary>
-    public static string HashOf(string rawToken) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(rawToken)));
 
     /// <summary>Makes the repos behave as if this credential and user exist and the password is correct.</summary>
     public void GivenValidSignIn(string email, string password, IAuthCredential credential, IAuthUser user)

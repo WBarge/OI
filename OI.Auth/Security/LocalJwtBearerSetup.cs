@@ -25,7 +25,7 @@ public static class LocalJwtBearerSetup
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
-                    ValidIssuer = jwt.Value.Issuer,
+                    ValidIssuer = jwt.Value.NormalizedIssuer,
                     ValidateAudience = true,
                     ValidAudience = jwt.Value.Audience,
                     ValidateIssuerSigningKey = true,

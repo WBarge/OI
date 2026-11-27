@@ -1,0 +1,146 @@
+.no-resize .p-splitter-gutter {
+  pointer-events: none;
+  cursor: default;
+}
+.no-resize .p-splitter-gutter-handle {
+  display: none;
+}
+
+.main-splitter {
+  height: 100vh; /* or whatever fixed/definite height makes sense in your layout */
+}
+
+.main-splitter > p-splitter-panel {
+  height: 100%;
+  display: flex; /* ensure the inner splitter can flex-grow to fill it */
+}
+
+.form-panel p-splitter-panel{
+   border: none;
+}
+
+.vertical-panel:nth-child(1) {
+  padding-bottom: 1rem;
+}
+
+.product-splitter {
+  width: 100%;
+  height: calc(100% - 1rem);
+  margin-bottom: 1rem;
+}
+
+.form-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+p-scrollarea {
+  height: 300px; /* or height: 100%, if the parent panel has a resolved height */
+  display: block;
+}
+
+.fieldOnSide{
+  display:flex;
+  flex-direction: row;
+
+}
+
+.fieldOnSide label{
+  flex-basis: 10rem;
+  flex-grow: 0;
+  flex-shrink: 0;
+  padding-top: 0.25rem;
+}
+
+.fieldOnSide input{
+  flex-basis: 5rem;
+  flex-grow: 0;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+label {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.option-list {
+  list-style-type: none;
+  width:fit-content;
+}
+
+.option-item{
+  padding-bottom: 1rem;
+}
+
+.option-fieldset {
+  display: flex;
+  flex-direction: row;
+  flex-basis: 5rem;
+  flex-grow: 1;
+  flex-shrink: 0;
+}
+
+.option-name label {
+  padding-right: 0.2rem;
+  margin-bottom: 0.25rem;
+}
+
+.option-button{
+  margin-left: 1rem;
+}
+
+p-select .option-name  {
+  padding-right: 0.2rem;
+  margin-bottom: 0.25rem;
+  overflow:visible;
+}
+
+.option-price label {
+  padding-left: 0.7rem;
+  padding-right: 0.2rem;
+  margin-bottom: 0.25rem;
+}
+
+
+p-inputnumber .option-price {
+  padding-left: 0.2rem;
+  margin-bottom: 0.25rem;
+  flex-basis: 15px;
+}
+
+.characteristic-list .option-item{
+  display: flex;
+  align-items: center;
+}
+
+.characteristic-list{
+  list-style: none;
+  margin-left: 0;
+}
+
+.characteristic-name {
+  padding-right: 0.2rem;
+}
+
+.characteristic-price {
+  padding-left: 1rem;
+  padding-right: 4rem;
+}
+
+.characteristic-button{
+  margin-left: auto;
+}
+
+.sell-period{
+  --p-inputtext-disabled-background: #000;
+  --p-inputtext-disabled-color: #fff;
+}
+

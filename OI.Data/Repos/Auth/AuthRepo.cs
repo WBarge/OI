@@ -305,7 +305,6 @@ internal class AuthRepo(OiAuthDbContext authDbContext) : IAuthRepo
         _db.UserClaims.RemoveRange(await _db.UserClaims.Where(x => x.UserId == userId).ToListAsync(cancellationToken));
         _db.UserLogins.RemoveRange(await _db.UserLogins.Where(x => x.UserId == userId).ToListAsync(cancellationToken));
         _db.UserTokens.RemoveRange(await _db.UserTokens.Where(x => x.UserId == userId).ToListAsync(cancellationToken));
-        _db.RefreshTokens.RemoveRange(await _db.RefreshTokens.Where(x => x.UserId == userId).ToListAsync(cancellationToken));
         _db.AuthUserGroups.RemoveRange(await _db.AuthUserGroups.Where(x => x.UserId == userId).ToListAsync(cancellationToken));
         _db.Users.Remove(user);
 

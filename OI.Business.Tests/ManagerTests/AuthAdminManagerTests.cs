@@ -16,7 +16,7 @@ public class AuthAdminManagerTests
     private const string USER_ID = "user-1";
 
     private Mock<IAuthRepo> _authRepo = null!;
-    private Mock<IRefreshTokenRepo> _tokens = null!;
+    private Mock<IUserSessionRevoker> _tokens = null!;
     private Mock<IPasswordService> _passwords = null!;
     private Mock<IClientContext> _actor = null!;
     private AuthAdminManager _sut = null!;
@@ -25,7 +25,7 @@ public class AuthAdminManagerTests
     public void SetUp()
     {
         _authRepo = new Mock<IAuthRepo>();
-        _tokens = new Mock<IRefreshTokenRepo>();
+        _tokens = new Mock<IUserSessionRevoker>();
         _passwords = new Mock<IPasswordService>();
         _actor = new Mock<IClientContext>();
 
@@ -70,7 +70,7 @@ public class AuthAdminManagerTests
         new(email, name, password, roles ?? ["User"], groups ?? []);
 
     private void VerifySessionsRevoked(string userId, Times times) =>
-        _tokens.Verify(t => t.RevokeAllAsync(userId, It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()), times);
+        _tokens.Verify(t => t.RevokeAllAsync(userId, It.IsAny<CancellationToken>()), times);
 
     // ------------------------------------------------------------------ constructor
 
@@ -81,11 +81,11 @@ public class AuthAdminManagerTests
         act.Should().Throw<ArgumentNullException>().WithParameterName("authRepo");
     }
 
-    [Test, Description("Constructor should throw when refreshTokenRepo is null")]
-    public void Constructor_ThrowsWhenRefreshTokenRepoIsNull()
+    [Test, Description("Constructor should throw when sessions is null")]
+    public void Constructor_ThrowsWhenSessionsIsNull()
     {
         Action act = () => _ = new AuthAdminManager(_authRepo.Object, null!, _passwords.Object, _actor.Object, new AuthPolicy(), TimeProvider.System, NullLogger<AuthAdminManager>.Instance);
-        act.Should().Throw<ArgumentNullException>().WithParameterName("refreshTokenRepo");
+        act.Should().Throw<ArgumentNullException>().WithParameterName("sessions");
     }
 
     [Test, Description("Constructor should throw when passwords is null")]
@@ -668,6 +668,26 @@ public class AuthAdminManagerTests
 
         result.Succeeded.Should().BeTrue();
         _authRepo.Verify(r => r.DeleteUserAsync(USER_ID, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test, Description("DeleteUserAsync should end the user's sessions, so a deleted account cannot keep renewing its tokens")]
+    public async Task DeleteUserAsync_EndsTheUsersSessions()
+    {
+        SetupUser(User());
+
+        await _sut.DeleteUserAsync(USER_ID, Ct);
+
+        VerifySessionsRevoked(USER_ID, Times.Once());
+    }
+
+    [Test, Description("DeleteUserAsync should not touch sessions when the delete is refused")]
+    public async Task DeleteUserAsync_LeavesSessionsAloneWhenRefused()
+    {
+        SetupUser(User(ACTOR_ID));
+
+        await _sut.DeleteUserAsync(ACTOR_ID, Ct);
+
+        VerifySessionsRevoked(ACTOR_ID, Times.Never());
     }
 
     // ------------------------------------------------------------------ roles

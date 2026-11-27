@@ -1,3 +1,4 @@
+using OI.Auth.Oidc;
 using OI.Auth.Security;
 using OI.Business;
 using OI.Data;
@@ -26,9 +27,11 @@ public static class RootComposition
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SECTION));
         services.AddSingleton<SigningKeyProvider>();
         services.AddSingleton<AccessTokenFactory>();
-        services.AddSingleton<IAccessTokenFactory>(sp => sp.GetRequiredService<AccessTokenFactory>());
         services.AddSingleton<IPasswordService, IdentityPasswordService>();
-        services.AddSingleton<ServiceClientRegistry>();
+        services.AddSingleton<ServiceClientRegistry>(new ServiceClientRegistry(configuration));
+
+        // How people sign in: OpenIddict (OpenID Connect with PKCE), the OI.Auth sign-in cookie, the registered browser clients.
+        services.AddOiSignIn(configuration);
 
         // who is calling: the administration rules need to know the signed-in administrator (see Program.cs for the middleware)
         services.AddClientContext();
