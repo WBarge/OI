@@ -1,26 +1,2 @@
-import { inject } from '@angular/core';
-import { CanActivateFn, Router } from '@angular/router';
-import { AuthService } from './auth-service';
-
-/** Everything except the sign-in page. Sends a signed-out user to /login and remembers where they were going. */
-export const authGuard: CanActivateFn = (_route, state) => {
-  if (inject(AuthService).isAuthenticated()) {
-    return true;
-  }
-  const queryParams = state.url && state.url !== '/' ? { returnUrl: state.url } : undefined;
-  return inject(Router).createUrlTree(['/login'], { queryParams });
-};
-
-/** The sign-in page itself: a user who is already signed in has no reason to see it. */
-export const guestGuard: CanActivateFn = () =>
-  inject(AuthService).isAuthenticated() ? inject(Router).createUrlTree(['/home']) : true;
-
-export const roleGuard =
-  (role: string): CanActivateFn =>
-  () => inject(AuthService).roles().includes(role) || inject(Router).createUrlTree(['/home']);
-
-/**
- * The Admin screens. The server enforces the same rule on every admin endpoint, so this only saves a non-admin
- * from landing on a page whose every call would be refused.
- */
-export const adminGuard = roleGuard('Admin');
+// Live in the shared library (UI/oi-ui-common). The routes they redirect to are set in app.config.ts.
+export { authGuard, roleGuard, adminGuard } from '@oi/ui-common';

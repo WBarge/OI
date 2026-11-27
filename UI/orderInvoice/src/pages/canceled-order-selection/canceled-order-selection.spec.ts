@@ -4,7 +4,7 @@ import { FilterMetadata, MessageService } from 'primeng/api';
 import { TableLazyLoadEvent, TablePageEvent, TableRowSelectEvent } from 'primeng/table';
 import { NEVER, of } from 'rxjs';
 import { vi } from 'vitest';
-import { OrderSelection } from './order-selection';
+import { CanceledOrderSelection as OrderSelection } from './canceled-order-selection';
 import { OrdersService } from '../../services/orders-service';
 import { FilterTransformerService } from '../../services/transformers/filter-transformer.service';
 import { OrderListResult } from '../../model/results/order-list-result';

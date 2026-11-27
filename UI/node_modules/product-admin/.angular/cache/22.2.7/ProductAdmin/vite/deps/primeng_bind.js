@@ -1,8 +1,8 @@
-import { Bt as computed, En as ElementRef, In as Input, Sa as ɵɵclassMap, Tl as signal, Vs as ɵɵstyleMap, Wi as setClassMetadata, X as input, ao as ɵɵdefineNgModule, dl as inject, il as effect, io as ɵɵdefineDirective, ir as Renderer2, jl as ɵɵdefineInjector, qc as SecurityContext, qn as NgModule, wn as Directive } from "./core-BRnM5AcM.js";
-import { r as DomSanitizer } from "./platform-browser-CvY9iDxe.js";
+import { Bt as computed, En as ElementRef, In as Input, Sa as ɵɵclassMap, Tl as signal, Vs as ɵɵstyleMap, Wi as setClassMetadata, X as input, ao as ɵɵdefineNgModule, dl as inject, il as effect, io as ɵɵdefineDirective, ir as Renderer2, jl as ɵɵdefineInjector, qc as SecurityContext, qn as NgModule, wn as Directive } from "./core-BVpAqhZc.js";
+import { r as DomSanitizer } from "./platform-browser-pU9S9n-8.js";
 import { g as b } from "./dist-D971aPsi.js";
 import { n as a } from "./classnames-CS4uITFG.js";
-import { r as markInstance } from "./primeng-utils-Ddwu4wH2.js";
+import { r as markInstance } from "./primeng-utils-D5gG-ZJT.js";
 import { r as _defineProperty } from "./asyncToGenerator-CE9zIWF7.js";
 // ../node_modules/primeng/fesm2022/primeng-bind.mjs
 var _Bind;

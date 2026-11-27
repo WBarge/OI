@@ -644,7 +644,7 @@ var UserMenu = class UserMenu {
 		isStandalone: true,
 		selector: "oi-user-menu",
 		ngImport: i0,
-		template: "<span class=\"signedInAs\">{{ auth.userName() }}</span>\r\n<button type=\"button\" pButton severity=\"secondary\" size=\"small\" (click)=\"signOut()\">Sign out</button>\r\n",
+		template: "<span class=\"signedInAs\">{{ auth.userName() }}</span>\n<button type=\"button\" pButton severity=\"secondary\" size=\"small\" (click)=\"signOut()\">Sign out</button>\n",
 		styles: [".signedInAs{margin-right:.75rem}\n"],
 		dependencies: [{
 			kind: "directive",
@@ -681,7 +681,7 @@ i0.ɵɵngDeclareClassMetadata({
 		args: [{
 			imports: [ButtonDirective],
 			selector: "oi-user-menu",
-			template: "<span class=\"signedInAs\">{{ auth.userName() }}</span>\r\n<button type=\"button\" pButton severity=\"secondary\" size=\"small\" (click)=\"signOut()\">Sign out</button>\r\n",
+			template: "<span class=\"signedInAs\">{{ auth.userName() }}</span>\n<button type=\"button\" pButton severity=\"secondary\" size=\"small\" (click)=\"signOut()\">Sign out</button>\n",
 			styles: [".signedInAs{margin-right:.75rem}\n"]
 		}]
 	}]

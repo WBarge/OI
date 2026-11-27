@@ -28,7 +28,7 @@ public static class RootComposition
         services.AddSingleton<SigningKeyProvider>();
         services.AddSingleton<AccessTokenFactory>();
         services.AddSingleton<IPasswordService, IdentityPasswordService>();
-        services.AddSingleton<ServiceClientRegistry>(new ServiceClientRegistry(configuration));
+        services.AddSingleton<ServiceClientRegistry>();
 
         // How people sign in: OpenIddict (OpenID Connect with PKCE), the OI.Auth sign-in cookie, the registered browser clients.
         services.AddOiSignIn(configuration);

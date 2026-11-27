@@ -1,8 +1,7 @@
-using Microsoft.Extensions.DependencyInjection;
 using OI.Data.Contexts;
 
 // The type being extended lives in this namespace, so the extension is found wherever OpenIddict is configured.
-namespace OI.Data;
+namespace Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
 /// The storage half of the OpenIddict setup. <see cref="OiAuthDbContext"/> is internal to OI.Data on purpose (no other

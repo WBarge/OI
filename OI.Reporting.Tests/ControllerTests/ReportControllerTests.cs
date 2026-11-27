@@ -38,10 +38,11 @@ public class ReportControllerTests
     [Test, Description("GetReport should return 404 when the report has not been generated")]
     public async Task GetReport_Returns404WhenTheReportDoesNotExist()
     {
-        _manager.Setup(m => m.GetReportAsync(ReportId, It.IsAny<CancellationToken>())).ReturnsAsync((byte[]?)null);
+        Guid testReportId = Guid.NewGuid();
+        _manager.Setup(m => m.GetReportAsync(testReportId, It.IsAny<CancellationToken>())).ReturnsAsync((byte[]?)null);
 
-        IActionResult result = await _sut.GetReport(ReportId);
+        IActionResult result = await _sut.GetReport(testReportId);
 
-        result.Should().BeOfType<NotFoundResult>();
+        result.Should().BeOfType<NotFoundObjectResult>();
     }
 }

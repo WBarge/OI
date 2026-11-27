@@ -1,5 +1,5 @@
-import { Da as ɵɵconditionalCreate, Rl as ɵɵnamespaceSVG, Ta as ɵɵconditional, Ts as ɵɵrepeaterCreate, Wi as setClassMetadata, ca as ɵɵInheritDefinitionFeature, cn as Component, es as ɵɵnextContext, lo as ɵɵdomElement, ro as ɵɵdefineComponent, ws as ɵɵrepeater, ya as ɵɵattribute } from "./core-BRnM5AcM.js";
-import { t as CoreIcon } from "./primeicons-angular-core-CdzNRoje.js";
+import { Da as ɵɵconditionalCreate, Rl as ɵɵnamespaceSVG, Ta as ɵɵconditional, Ts as ɵɵrepeaterCreate, Wi as setClassMetadata, ca as ɵɵInheritDefinitionFeature, cn as Component, es as ɵɵnextContext, lo as ɵɵdomElement, ro as ɵɵdefineComponent, ws as ɵɵrepeater, ya as ɵɵattribute } from "./core-BVpAqhZc.js";
+import { t as CoreIcon } from "./primeicons-angular-core-ei4boJ1b.js";
 import { r as _defineProperty } from "./asyncToGenerator-CE9zIWF7.js";
 // ../node_modules/@primeicons/core/dist/esm/icons/pencil.mjs
 var t = {
