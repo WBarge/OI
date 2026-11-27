@@ -51,8 +51,11 @@ export const appConfig: ApplicationConfig = {
               // the sign-in plumbing is shared with the ProductManager UI (UI/oi-ui-common)
               provideOiUiCommon({
                 appTitle: 'Order Invoice',
-                // the token is sent to these APIs and to nothing else. OI.Auth's own sign-in, refresh and sign-out calls
-                // must never get one; only its administration endpoints do.
+                // the id this application is registered under in OI.Auth's "Clients" settings; its redirect addresses
+                // there must be this application's /auth/callback and /signed-out
+                clientId: 'oi-ui',
+                // the token is sent to these APIs and to nothing else. OI.Auth's sign-in endpoints (/connect/...) and
+                // service-token must never get one; only its administration endpoints do.
                 securedUrls: (config) => {
                   const settings = config as Configuration;
                   return [

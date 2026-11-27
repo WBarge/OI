@@ -57,8 +57,8 @@ public class ControllerProtectionTests
     }
 
     [TestCase(typeof(AuthController))]
-    [TestCase(typeof(DiscoveryController))]
-    [Description("Sign-in and key discovery must stay open, because they happen before anyone has a token")]
+    [TestCase(typeof(ConnectController))]
+    [Description("Sign-in (service tokens and the OpenID Connect endpoints) must stay open, because they happen before anyone has a token")]
     public void OpenController_StaysAnonymous(Type controller)
     {
         controller.GetCustomAttribute<AllowAnonymousAttribute>().Should().NotBeNull();

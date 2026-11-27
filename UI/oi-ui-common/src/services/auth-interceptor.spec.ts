@@ -36,6 +36,7 @@ describe('authInterceptor', () => {
         provideHttpClientTesting(),
         // this application secures its own two APIs and the Auth admin endpoints, and nothing else
         provideOiUiCommon({
+          clientId: 'oi-ui',
           securedUrls: c => {
             const cfg = c as Configuration;
             return [cfg.oiApiUrl, cfg.reportingApiUrl, cfg.authApiUrl.length > 0 ? cfg.authApiUrl + 'admin/' : ''];

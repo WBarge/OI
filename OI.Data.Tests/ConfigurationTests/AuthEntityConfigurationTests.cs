@@ -1,5 +1,7 @@
 using FluentAssertions;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using OpenIddict.EntityFrameworkCore.Models;
 using Microsoft.EntityFrameworkCore.Metadata;
 using OI.Data.Contexts;
 using OI.Data.Model.Auth;
@@ -31,7 +33,11 @@ public class AuthEntityConfigurationTests
 
     private IEntityType Entity<T>() => _model.FindEntityType(typeof(T))!;
 
-    [TestCase(typeof(RefreshToken), "RefreshTokens")]
+    [TestCase(typeof(OpenIddictEntityFrameworkCoreApplication), "OpenIddictApplications")]
+    [TestCase(typeof(OpenIddictEntityFrameworkCoreAuthorization), "OpenIddictAuthorizations")]
+    [TestCase(typeof(OpenIddictEntityFrameworkCoreScope), "OpenIddictScopes")]
+    [TestCase(typeof(OpenIddictEntityFrameworkCoreToken), "OpenIddictTokens")]
+    [TestCase(typeof(DataProtectionKey), "DataProtectionKey")]
     [TestCase(typeof(AuthGroup), "AuthGroups")]
     [TestCase(typeof(AuthGroupMember), "AuthUserGroups")]
     [Description("Each auth entity should map to its expected table")]
@@ -50,57 +56,24 @@ public class AuthEntityConfigurationTests
         _model.FindEntityType(typeof(JobResult)).Should().BeNull();
     }
 
-    // ---- refresh tokens
+    // ---- tokens now live in OpenIddict's tables
 
-    [Test, Description("A refresh token should have a generated numeric Id as its primary key")]
-    public void RefreshToken_HasIdAsPrimaryKey()
+    [Test, Description("The old refresh token table should be gone: OpenIddict stores authorization codes and refresh tokens now")]
+    public void RefreshTokens_AreNoLongerATable()
     {
-        Entity<RefreshToken>().FindPrimaryKey()!.Properties.Select(p => p.Name).Should().Equal("Id");
+        _model.GetEntityTypes().Select(t => t.GetTableName()).Should().NotContain("RefreshTokens");
     }
 
-    [TestCase("UserId", 450, true)]
-    [TestCase("TokenHash", 64, true)]
-    [TestCase("ReplacedByHash", 64, false)]
-    [Description("Each refresh token text column should have its expected size and requiredness")]
-    public void RefreshToken_TextColumnHasExpectedSizeAndRequiredness(string propertyName, int maxLength, bool required)
+    [Test, Description("The OpenIddict token table should be keyed by a string id (the default OpenIddict expects)")]
+    public void OpenIddictTokens_AreKeyedByAStringId()
     {
-        IProperty property = Entity<RefreshToken>().FindProperty(propertyName)!;
-
-        property.GetMaxLength().Should().Be(maxLength);
-        property.IsNullable.Should().Be(!required);
+        Entity<OpenIddictEntityFrameworkCoreToken>().FindPrimaryKey()!.Properties.Single().ClrType.Should().Be(typeof(string));
     }
 
-    [Test, Description("A refresh token's revoked time should be optional, since a live token has none")]
-    public void RefreshToken_RevokedAtIsOptional()
+    [Test, Description("The shared Data Protection key ring should be stored in the auth database")]
+    public void DataProtectionKeys_AreStoredInTheAuthContext()
     {
-        Entity<RefreshToken>().FindProperty("RevokedAt")!.IsNullable.Should().BeTrue();
-    }
-
-    [Test, Description("The token hash should be unique, so one hash can never match two sessions")]
-    public void RefreshToken_TokenHashIsUnique()
-    {
-        IIndex index = Entity<RefreshToken>().GetIndexes().Single(i => i.Properties.Select(p => p.Name).SequenceEqual(new[] { "TokenHash" }));
-
-        index.IsUnique.Should().BeTrue();
-    }
-
-    [Test, Description("Refresh tokens should be indexed by user, so revoking a user's sessions does not scan the table")]
-    public void RefreshToken_UserIdIsIndexed()
-    {
-        IIndex index = Entity<RefreshToken>().GetIndexes().Single(i => i.Properties.Select(p => p.Name).SequenceEqual(new[] { "UserId" }));
-
-        index.IsUnique.Should().BeFalse("one user can have several sessions");
-    }
-
-    [Test, Description("Deleting a user should delete their refresh tokens")]
-    public void RefreshToken_IsDeletedWithItsUser()
-    {
-        IForeignKey foreignKey = Entity<RefreshToken>().GetForeignKeys()
-            .Single(fk => fk.PrincipalEntityType.ClrType == typeof(ApplicationUser));
-
-        foreignKey.Properties.Select(p => p.Name).Should().Equal("UserId");
-        foreignKey.IsRequired.Should().BeTrue();
-        foreignKey.DeleteBehavior.Should().Be(DeleteBehavior.Cascade);
+        Entity<DataProtectionKey>().FindPrimaryKey()!.Properties.Select(p => p.Name).Should().Equal("Id");
     }
 
     // ---- groups

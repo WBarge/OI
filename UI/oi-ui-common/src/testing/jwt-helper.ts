@@ -1,3 +1,5 @@
+import { OidcUser } from '../services/oidc-session';
+
 /** Builds an unsigned token for specs. The app only reads the payload, the server is what checks the signature. */
 export function makeJwt(claims: Record<string, unknown>): string {
   const encode = (value: unknown) =>
@@ -8,16 +10,20 @@ export function makeJwt(claims: Record<string, unknown>): string {
   return `${encode({ alg: 'RS256', typ: 'JWT' })}.${encode(claims)}.signature`;
 }
 
-/** A login/refresh response whose access token expires in the given number of seconds. */
-export function authResult(
+/** The user oidc-client-ts keeps for a sign-in: an access token that expires in the given number of seconds, and a refresh token. */
+export function oidcUser(
   claims: Record<string, unknown> = {},
-  refreshToken: string = 'refresh-1',
-  expiresInSeconds: number = 900,
-) {
+  options: { refreshToken?: string | null; expiresInSeconds?: number; state?: unknown } = {},
+): OidcUser {
+  const { refreshToken = 'refresh-1', expiresInSeconds = 900, state } = options;
   const exp = Math.floor(Date.now() / 1000) + expiresInSeconds;
-  return {
-    accessToken: makeJwt({ sub: 'user-1', name: 'Pat Example', exp, ...claims }),
-    accessTokenExpires: new Date(exp * 1000).toISOString(),
-    refreshToken,
+  const user: OidcUser = {
+    access_token: makeJwt({ sub: 'user-1', name: 'Pat Example', exp, ...claims }),
+    expires_at: exp,
+    state,
   };
+  if (refreshToken !== null) {
+    user.refresh_token = refreshToken;
+  }
+  return user;
 }

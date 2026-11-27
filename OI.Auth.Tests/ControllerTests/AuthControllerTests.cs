@@ -12,27 +12,21 @@ using OI.Auth.Controllers;
 using OI.Auth.Models.Requests;
 using OI.Auth.Security;
 using OI.Auth.Tests.TestSupport;
-using OI.Glue.Managers;
-using OI.Glue.Models;
 
 namespace OI.Auth.Tests.ControllerTests;
 
-[TestFixture, Description("Tests for AuthController: sign-in, refresh, sign-out and service tokens")]
+[TestFixture, Description("Tests for AuthController: service tokens (people sign in through ConnectController)")]
 public class AuthControllerTests
 {
-    private Mock<IAuthManager> _manager = null!;
     private ServiceClientRegistry _registry = null!;
     private AccessTokenFactory _factory = null!;
     private AuthController _sut = null!;
 
     private static CancellationToken Ct => TestContext.CurrentContext.CancellationToken;
 
-    private static readonly AuthTokens Tokens = new("access", new DateTimeOffset(2026, 11, 7, 12, 15, 0, TimeSpan.Zero), "refresh");
-
     [SetUp]
     public void SetUp()
     {
-        _manager = new Mock<IAuthManager>();
         _registry = new ServiceClientRegistry(new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
         {
             ["ServiceClients:0:ClientId"] = "oi-reporting",
@@ -40,23 +34,15 @@ public class AuthControllerTests
             ["ServiceClients:0:Scopes:0"] = "hub:publish",
         }).Build());
         _factory = AuthTestSupport.Factory();
-        _sut = new AuthController(_manager.Object, _registry, _factory, NullLogger<AuthController>.Instance);
+        _sut = new AuthController(_registry, _factory, NullLogger<AuthController>.Instance);
     }
 
     // ---- constructor
 
-    [Test, Description("Constructor should throw when authManager is null")]
-    public void Constructor_ThrowsWhenManagerIsNull()
-    {
-        Action act = () => _ = new AuthController(null!, _registry, _factory, NullLogger<AuthController>.Instance);
-
-        act.Should().Throw<ArgumentNullException>().WithParameterName("authManager");
-    }
-
     [Test, Description("Constructor should throw when serviceClients is null")]
     public void Constructor_ThrowsWhenServiceClientsIsNull()
     {
-        Action act = () => _ = new AuthController(_manager.Object, null!, _factory, NullLogger<AuthController>.Instance);
+        Action act = () => _ = new AuthController(null!, _factory, NullLogger<AuthController>.Instance);
 
         act.Should().Throw<ArgumentNullException>().WithParameterName("serviceClients");
     }
@@ -64,7 +50,7 @@ public class AuthControllerTests
     [Test, Description("Constructor should throw when tokenFactory is null")]
     public void Constructor_ThrowsWhenTokenFactoryIsNull()
     {
-        Action act = () => _ = new AuthController(_manager.Object, _registry, null!, NullLogger<AuthController>.Instance);
+        Action act = () => _ = new AuthController(_registry, null!, NullLogger<AuthController>.Instance);
 
         act.Should().Throw<ArgumentNullException>().WithParameterName("tokenFactory");
     }
@@ -72,64 +58,9 @@ public class AuthControllerTests
     [Test, Description("Constructor should throw when logger is null")]
     public void Constructor_ThrowsWhenLoggerIsNull()
     {
-        Action act = () => _ = new AuthController(_manager.Object, _registry, _factory, null!);
+        Action act = () => _ = new AuthController(_registry, _factory, null!);
 
         act.Should().Throw<ArgumentNullException>().WithParameterName("logger");
-    }
-
-    // ---- login
-
-    [Test, Description("Login should return the tokens the manager gives")]
-    public async Task Login_ReturnsTheTokens()
-    {
-        _manager.Setup(m => m.LoginAsync("pat@example.com", "pw", It.IsAny<CancellationToken>())).ReturnsAsync(Tokens);
-
-        IActionResult result = await _sut.Login(new LoginRequest { Email = "pat@example.com", Password = "pw" }, Ct);
-
-        result.Should().BeOfType<OkObjectResult>().Which.Value.Should().BeSameAs(Tokens);
-    }
-
-    [Test, Description("Login should return 401 with no explanation when the manager rejects the sign-in")]
-    public async Task Login_ReturnsUnauthorizedWhenRejected()
-    {
-        _manager.Setup(m => m.LoginAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((AuthTokens?)null);
-
-        IActionResult result = await _sut.Login(new LoginRequest { Email = "pat@example.com", Password = "wrong" }, Ct);
-
-        result.Should().BeOfType<UnauthorizedResult>("the response must never say why a sign-in failed");
-    }
-
-    // ---- refresh
-
-    [Test, Description("Refresh should return the new tokens the manager gives")]
-    public async Task Refresh_ReturnsTheTokens()
-    {
-        _manager.Setup(m => m.RefreshAsync("old-refresh", It.IsAny<CancellationToken>())).ReturnsAsync(Tokens);
-
-        IActionResult result = await _sut.Refresh(new RefreshRequest { RefreshToken = "old-refresh" }, Ct);
-
-        result.Should().BeOfType<OkObjectResult>().Which.Value.Should().BeSameAs(Tokens);
-    }
-
-    [Test, Description("Refresh should return 401 when the manager does not accept the token")]
-    public async Task Refresh_ReturnsUnauthorizedWhenRejected()
-    {
-        _manager.Setup(m => m.RefreshAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((AuthTokens?)null);
-
-        IActionResult result = await _sut.Refresh(new RefreshRequest { RefreshToken = "bad" }, Ct);
-
-        result.Should().BeOfType<UnauthorizedResult>();
-    }
-
-    // ---- logout
-
-    [Test, Description("Logout should revoke the refresh token and return 204")]
-    public async Task Logout_RevokesTheTokenAndReturnsNoContent()
-    {
-        IActionResult result = await _sut.Logout(new RefreshRequest { RefreshToken = "old-refresh" }, Ct);
-
-        result.Should().BeOfType<NoContentResult>();
-        _manager.Verify(m => m.LogoutAsync("old-refresh", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // ---- service tokens
@@ -179,7 +110,7 @@ public class AuthControllerTests
     public void ServiceToken_LogsARejection()
     {
         Mock<ILogger<AuthController>> logger = new();
-        AuthController sut = new(_manager.Object, _registry, _factory, logger.Object);
+        AuthController sut = new(_registry, _factory, logger.Object);
 
         sut.ServiceToken(new ServiceTokenRequest { ClientId = "oi-reporting", ClientSecret = "super-secret-guess" });
 
@@ -196,29 +127,30 @@ public class AuthControllerTests
         typeof(AuthController).GetCustomAttribute<AllowAnonymousAttribute>().Should().NotBeNull();
     }
 
-    [TestCase(nameof(AuthController.Login))]
-    [TestCase(nameof(AuthController.Refresh))]
-    [TestCase(nameof(AuthController.ServiceToken))]
-    [Description("Each endpoint that takes a password, token or secret should be rate limited with the login policy")]
-    public void Endpoint_IsRateLimited(string methodName)
+    [Test, Description("The service-token endpoint, which takes a secret, should be rate limited with the login policy")]
+    public void ServiceToken_IsRateLimited()
     {
-        EnableRateLimitingAttribute? attribute = typeof(AuthController).GetMethod(methodName)!.GetCustomAttribute<EnableRateLimitingAttribute>();
+        EnableRateLimitingAttribute? attribute = typeof(AuthController).GetMethod(nameof(AuthController.ServiceToken))!.GetCustomAttribute<EnableRateLimitingAttribute>();
 
-        attribute.Should().NotBeNull($"{methodName} can be hammered to guess credentials");
+        attribute.Should().NotBeNull("the endpoint can be hammered to guess secrets");
         attribute!.PolicyName.Should().Be("login");
     }
 
-    [TestCase(nameof(AuthController.Login), "login")]
-    [TestCase(nameof(AuthController.Refresh), "refresh")]
-    [TestCase(nameof(AuthController.Logout), "logout")]
-    [TestCase(nameof(AuthController.ServiceToken), "service-token")]
-    [Description("Each endpoint should be a POST on its own route")]
-    public void Endpoint_IsAPostOnItsRoute(string methodName, string template)
+    [Test, Description("The service-token endpoint should be a POST on its own route")]
+    public void ServiceToken_IsAPostOnItsRoute()
     {
-        HttpPostAttribute? attribute = typeof(AuthController).GetMethod(methodName)!.GetCustomAttribute<HttpPostAttribute>();
+        HttpPostAttribute? attribute = typeof(AuthController).GetMethod(nameof(AuthController.ServiceToken))!.GetCustomAttribute<HttpPostAttribute>();
 
         attribute.Should().NotBeNull();
-        attribute!.Template.Should().Be(template);
+        attribute!.Template.Should().Be("service-token");
+    }
+
+    [Test, Description("The controller should no longer take passwords or refresh tokens: sign-in moved to the OpenID Connect endpoints")]
+    public void Controller_HasNoSignInEndpointsLeft()
+    {
+        typeof(AuthController).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+            .Select(m => m.Name)
+            .Should().Equal(nameof(AuthController.ServiceToken));
     }
 
     [Test, Description("The controller should be routed under api/auth")]

@@ -55,38 +55,6 @@
           }
         }
       }
-    },
-    {
-      // The OI UI and this UI are browsed through ONE address so they share one sign-in.
-      // Safe to start from every window: a second copy sees the first and steps aside.
-      "label": "dev proxy",
-      "type": "shell",
-      "command": "npm run dev-proxy --prefix ..",
-      "isBackground": true,
-      "problemMatcher": {
-        "owner": "dev-proxy",
-        "pattern": {
-          "regexp": "^DEV-PROXY-ERROR: (.*)$",
-          "message": 1
-        },
-        "background": {
-          "activeOnStart": true,
-          "beginsPattern": {
-            "regexp": "Starting dev proxy"
-          },
-          "endsPattern": {
-            "regexp": "Dev proxy listening"
-          }
-        }
-      }
-    },
-    {
-      "label": "start with proxy",
-      "dependsOn": [
-        "npm: start",
-        "dev proxy"
-      ],
-      "dependsOrder": "parallel"
     }
   ]
 }

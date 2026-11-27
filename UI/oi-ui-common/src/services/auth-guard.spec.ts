@@ -1,13 +1,15 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot, Router, RouterStateSnapshot, UrlTree, provideRouter } from '@angular/router';
-import { adminGuard, authGuard, guestGuard, roleGuard } from './auth-guard';
+import { vi } from 'vitest';
+import { adminGuard, authGuard, roleGuard } from './auth-guard';
 import { AuthService } from './auth-service';
 
 describe('route guards', () => {
   const signedIn = signal(false);
   const roles = signal<string[]>([]);
   let router: Router;
+  let signIn: ReturnType<typeof vi.fn>;
 
   const route = {} as ActivatedRouteSnapshot;
   const at = (url: string) => ({ url }) as RouterStateSnapshot;
@@ -18,8 +20,9 @@ describe('route guards', () => {
   beforeEach(() => {
     signedIn.set(false);
     roles.set([]);
+    signIn = vi.fn().mockResolvedValue(undefined);
     TestBed.configureTestingModule({
-      providers: [provideRouter([]), { provide: AuthService, useValue: { isAuthenticated: signedIn, roles } }]
+      providers: [provideRouter([]), { provide: AuthService, useValue: { isAuthenticated: signedIn, roles, signIn } }]
     });
     router = TestBed.inject(Router);
   });
@@ -31,33 +34,37 @@ describe('route guards', () => {
       expect(run(authGuard)).toBe(true);
     });
 
-    it('should send a signed-out user to the sign-in page', () => {
-      expect(run(authGuard)).toBeInstanceOf(UrlTree);
-      expect(asUrl(run(authGuard))).toMatch(/^\/login/);
+    it('should send a signed-out user to OI.Auth to sign in, remembering the page they were going to', async () => {
+      await run(authGuard, '/orderInvoice/abc-123');
+
+      expect(signIn).toHaveBeenCalledWith('/orderInvoice/abc-123');
     });
 
-    it('should remember the page the user was going to', () => {
-      expect(asUrl(run(authGuard, '/orderInvoice/abc-123'))).toBe('/login?returnUrl=%2ForderInvoice%2Fabc-123');
+    it('should keep the query string of the page the user was going to', async () => {
+      await run(authGuard, '/orderSelection?page=2');
+
+      expect(signIn).toHaveBeenCalledWith('/orderSelection?page=2');
     });
 
-    it('should keep the query string of the page the user was going to', () => {
-      expect(asUrl(run(authGuard, '/orderSelection?page=2'))).toBe('/login?returnUrl=%2ForderSelection%3Fpage%3D2');
+    it('should cancel the navigation, because the browser is leaving for OI.Auth', async () => {
+      expect(await run(authGuard)).toBe(false);
     });
 
-    it('should not bother remembering the root, which only leads to the home page', () => {
-      expect(asUrl(run(authGuard, '/'))).toBe('/login');
-    });
-  });
-
-  describe('guestGuard', () => {
-    it('should let a signed-out user see the sign-in page', () => {
-      expect(run(guestGuard, '/login')).toBe(true);
-    });
-
-    it('should send a signed-in user to the home page instead', () => {
+    it('should not start a sign-in for a user who is already signed in', () => {
       signedIn.set(true);
 
-      expect(asUrl(run(guestGuard, '/login'))).toBe('/home');
+      run(authGuard);
+
+      expect(signIn).not.toHaveBeenCalled();
+    });
+
+    it('should land on the signed-out page with a message when OI.Auth cannot be reached', async () => {
+      signIn.mockRejectedValue(new Error('Network Error'));
+
+      const result = await run(authGuard, '/customers');
+
+      expect(result).toBeInstanceOf(UrlTree);
+      expect(asUrl(result)).toBe('/signed-out?error=unavailable');
     });
   });
 

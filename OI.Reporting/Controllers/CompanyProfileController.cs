@@ -1,4 +1,9 @@
+using System.Security.Cryptography;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Net.Http.Headers;
+using OI.Glue.Models;
 using OI.Reporting.Models;
 using OI.Reporting.Services;
 
@@ -84,6 +89,35 @@ public class CompanyProfileController(ICompanyProfileStore store, ILogger<Compan
         // the details are business contact data; the log only needs to show that a sync happened
         _logger.LogInformation("Company profile updated (logo: {LogoBytes} bytes)", logo.Length);
         return NoContent();
+    }
+
+    /// <summary>
+    /// The company logo, for the OI.Auth login page (the browser loads it directly, before anyone is signed in). It is the
+    /// only anonymous endpoint in this application and it returns nothing but the image: no company details.
+    /// Only PNG, JPG and GIF files are served (recognised by their first bytes). The browser may keep the image for 5 minutes.
+    /// </summary>
+    /// <returns>The image; 304 when the browser already has this version; 404 when there is no logo (or it is not a PNG, JPG or GIF).</returns>
+    [HttpGet("logo")]
+    [AllowAnonymous]
+    [EnableRateLimiting("logo")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status304NotModified)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public IActionResult Logo()
+    {
+        ICompanyProfile? profile = _store.Current;
+        byte[]? logo = profile?.LogoFile;
+        string? contentType = LogoImage.ContentTypeOf(logo);
+        if (logo is null || contentType is null)
+        {
+            return NotFound();
+        }
+
+        // The tag changes whenever the logo does, so a changed logo shows as soon as the 5 minutes are up.
+        EntityTagHeaderValue tag = new("\"" + Convert.ToHexString(SHA256.HashData(logo))[..32] + "\"");
+        Response.Headers.CacheControl = "public, max-age=300";
+        Response.Headers.XContentTypeOptions = "nosniff";
+        return File(logo, contentType, lastModified: null, entityTag: tag);
     }
 
     private static string Clean(string? value) => value?.Trim() ?? string.Empty;

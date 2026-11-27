@@ -4,13 +4,13 @@
   "configurations": [
 
     {
-      // Browse through the dev proxy (http://localhost:4300), not the app's own port: the OI UI and this UI
-      // must share one address to share one sign-in. "start with proxy" starts ng serve and the proxy.
+      // This UI is served on its own port (4200). It signs in through OI.Auth, so it needs no shared address with the OI UI:
+      // with an OI.Auth session from the OI UI (in the same browser) it signs in without asking for a password.
       "name": "ng serve",
       "type": "chrome",
       "request": "launch",
-      "preLaunchTask": "start with proxy",
-      "url": "http://localhost:4300/products/",
+      "preLaunchTask": "npm: start",
+      "url": "http://localhost:4200/",
       "runtimeExecutable": "C:\\Users\\Admin\\AppData\\Local\\Google\\Chrome SxS\\Application\\chrome.exe"
     },
     {

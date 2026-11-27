@@ -32,8 +32,7 @@
             "styles": [
               "src/styles.css"
             ],
-            "scripts": [],
-            "baseHref": "/products/"
+            "scripts": []
           },
           "configurations": {
             "production": {
@@ -78,10 +77,7 @@
               "buildTarget": "ProductAdmin:build:development"
             }
           },
-          "defaultConfiguration": "development",
-          "options": {
-            "servePath": "/products/"
-          }
+          "defaultConfiguration": "development"
         },
         "extract-i18n": {
           "builder": "@angular/build:extract-i18n",

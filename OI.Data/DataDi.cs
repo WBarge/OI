@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -70,7 +71,13 @@ public static class DataDi
         // Persistence only: the Identity tables are part of the context, but UserManager/SignInManager are not used.
         // Passwords, lockout and the other sign-in and administration rules live in OI.Business (AuthManager, AuthAdminManager).
         services.AddScoped<IAuthRepo, AuthRepo>();
-        services.AddScoped<IRefreshTokenRepo, RefreshTokenRepo>();
+
+        // Several OI.Auth instances can run side by side: the keys that protect the sign-in cookie and the login page's
+        // antiforgery tokens live in the auth database, so a cookie one instance wrote is readable by every other instance.
+        // The application name must be the same on every instance (it is part of what the keys are isolated by).
+        services.AddDataProtection()
+            .SetApplicationName("OI.Auth")
+            .PersistKeysToDbContext<OiAuthDbContext>();
     }
 
     /// <summary>

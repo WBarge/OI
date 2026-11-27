@@ -18,6 +18,14 @@ public sealed class JwtOptions
     public string Issuer { get; set; } = "";
 
     /// <summary>
+    /// The issuer exactly as it appears in every token and in the discovery document. OpenIddict writes the issuer
+    /// as an absolute URI, which adds a trailing slash to an address with no path ("https://localhost:7300/"), so
+    /// every place that writes or checks the issuer (user tokens, service tokens, this application's own bearer
+    /// check) uses this one value and they can never disagree.
+    /// </summary>
+    public string NormalizedIssuer => new Uri(Issuer, UriKind.Absolute).AbsoluteUri;
+
+    /// <summary>
     /// Gets or sets the intended audience for the JSON Web Token (JWT).
     /// This value is used to validate the "aud" (audience) claim in the token,
     /// ensuring that the token is meant for the specified recipient.

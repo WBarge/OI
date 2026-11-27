@@ -47,13 +47,16 @@ export const appConfig: ApplicationConfig = {
               // the sign-in plumbing is shared with the OI UI (UI/oi-ui-common)
               provideOiUiCommon({
                 appTitle: 'Product Manager',
-                homeRoute: '/products',            // where a signed-in user goes instead of the sign-in page
+                // the id this application is registered under in OI.Auth's "Clients" settings; its redirect addresses
+                // there must be this application's /auth/callback and /signed-out
+                clientId: 'product-admin',
+                homeRoute: '/products',            // where a signed-in user lands when no other page was asked for
                 forbiddenRoute: '/access-denied',  // signed in, but not an administrator
                 // the token is sent to the product API and to nothing else
                 securedUrls: (config) => [(config as ProductAdminConfig).productApiUrl],
               }),
               { provide: OI_CONFIG_DEFAULTS, useValue: () => new ProductAdminConfig() },
-              // read config.json, then continue without asking again if already signed in (in this UI or in the OI UI)
+              // read config.json, then pick the session back up if this tab was already signed in (a page reload)
               provideAppInitializer(() => startOiSession()),
               MessageService]
 };

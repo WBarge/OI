@@ -1,4 +1,5 @@
 
+using System.Threading.RateLimiting;
 using Hangfire;
 using OI.Integration.Middleware;
 using OI.Data.DBSchemaHelper;
@@ -26,6 +27,15 @@ namespace OI.Reporting
             builder.Services.HandleDbSchema();
             builder.Services.AddOiJwtBearer(builder.Configuration);
             builder.Services.AddOiAuthorization();
+
+            // The company logo is the one anonymous endpoint (the OI.Auth login page shows it): throttle it per IP.
+            builder.Services.AddRateLimiter(o =>
+            {
+                o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+                o.AddPolicy("logo", ctx => RateLimitPartition.GetFixedWindowLimiter(
+                    ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                    _ => new FixedWindowRateLimiterOptions { PermitLimit = 60, Window = TimeSpan.FromMinutes(1) }));
+            });
 
             builder.Services.AddHangfire(config =>
             {
@@ -85,6 +95,8 @@ namespace OI.Reporting
             app.UseHttpsRedirection();
 
             app.UseHangfireDashboard(@"/jobs");
+
+            app.UseRateLimiter();
 
             app.UseAuthentication();
             app.UseAuthorization();

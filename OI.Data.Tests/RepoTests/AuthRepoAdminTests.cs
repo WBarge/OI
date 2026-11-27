@@ -335,8 +335,6 @@ public class AuthRepoAdminTests
         {
             arrange.UserClaims.Add(new IdentityUserClaim<string> { UserId = pat, ClaimType = "x", ClaimValue = "1" });
             arrange.UserClaims.Add(new IdentityUserClaim<string> { UserId = sam, ClaimType = "x", ClaimValue = "2" });
-            arrange.RefreshTokens.Add(new RefreshToken { UserId = pat, TokenHash = "h1", CreatedAt = DateTimeOffset.UtcNow, ExpiresAt = DateTimeOffset.UtcNow.AddDays(1) });
-            arrange.RefreshTokens.Add(new RefreshToken { UserId = sam, TokenHash = "h2", CreatedAt = DateTimeOffset.UtcNow, ExpiresAt = DateTimeOffset.UtcNow.AddDays(1) });
             await arrange.SaveChangesAsync(Ct);
         }
 
@@ -346,13 +344,11 @@ public class AuthRepoAdminTests
         (await context.Users.AnyAsync(u => u.Id == pat, Ct)).Should().BeFalse();
         (await context.UserRoles.AnyAsync(x => x.UserId == pat, Ct)).Should().BeFalse();
         (await context.UserClaims.AnyAsync(x => x.UserId == pat, Ct)).Should().BeFalse();
-        (await context.RefreshTokens.AnyAsync(x => x.UserId == pat, Ct)).Should().BeFalse();
         (await context.AuthUserGroups.AnyAsync(x => x.UserId == pat, Ct)).Should().BeFalse();
 
         (await context.Users.AnyAsync(u => u.Id == sam, Ct)).Should().BeTrue();
         (await context.UserRoles.CountAsync(x => x.UserId == sam, Ct)).Should().Be(1);
         (await context.UserClaims.CountAsync(x => x.UserId == sam, Ct)).Should().Be(1);
-        (await context.RefreshTokens.CountAsync(x => x.UserId == sam, Ct)).Should().Be(1);
         (await context.AuthUserGroups.CountAsync(x => x.UserId == sam, Ct)).Should().Be(1);
     }
 

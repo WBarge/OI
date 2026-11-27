@@ -1,32 +1,35 @@
 import { signal } from '@angular/core';
+import { vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { Router, Route, provideRouter } from '@angular/router';
 import { routes } from './app.routes';
 import { OrderInvoice } from '../pages/order-invoice/order-invoice';
 import { About } from '../pages/about/about';
 import { Home } from '../pages/home/home';
-import { Login } from '../pages/login/login';
 import { HubTest } from '../pages/hub-test/hub-test';
 import { OrderSelection } from '../pages/order-selection/order-selection';
 import { CustomerManager } from '../pages/customer-manager/customer-manager';
 import { AuthService } from '../services/auth-service';
-import { adminGuard, authGuard, guestGuard } from '../services/auth-guard';
+import { adminGuard, authGuard } from '../services/auth-guard';
+import { AuthCallback, SignedOut } from '@oi/ui-common';
 import { AdminUsers } from '../pages/admin-users/admin-users';
 import { AdminRoles } from '../pages/admin-roles/admin-roles';
 import { AdminGroups } from '../pages/admin-groups/admin-groups';
 
 describe('routes', () => {
-  // every page except the sign-in page sits inside one parent route that requires a signed-in user
-  const loginRoute = routes.find(route => route.path === 'login') as Route;
+  // every page except the two OI.Auth sends the browser back to sits inside one parent route that requires a signed-in user
+  const callbackRoute = routes.find(route => route.path === 'auth/callback') as Route;
+  const signedOutRoute = routes.find(route => route.path === 'signed-out') as Route;
   const protectedParent = routes.find(route => route.children) as Route;
   const pages = protectedParent.children as Route[];
   const find = (path: string) => pages.find(route => route.path === path);
 
   const signedIn = signal(true);
   const roles = signal<string[]>([]);
+  let signIn: ReturnType<typeof vi.fn>;
   const configure = () => {
     TestBed.configureTestingModule({
-      providers: [provideRouter(routes), { provide: AuthService, useValue: { isAuthenticated: signedIn, roles } }]
+      providers: [provideRouter(routes), { provide: AuthService, useValue: { isAuthenticated: signedIn, roles, signIn } }]
     });
     return TestBed.inject(Router);
   };
@@ -34,6 +37,7 @@ describe('routes', () => {
   beforeEach(() => {
     signedIn.set(true);
     roles.set([]);
+    signIn = vi.fn().mockResolvedValue(undefined);
   });
 
   it('should redirect the empty path to the home page', () => {
@@ -168,13 +172,14 @@ describe('routes', () => {
     describe('when signed out', () => {
       beforeEach(() => signedIn.set(false));
 
-      it.each(['/admin/users', '/admin/roles', '/admin/groups'])('should ask %s to sign in first, and remember it', async url => {
+      it.each(['/admin/users', '/admin/roles', '/admin/groups'])('should send %s to OI.Auth to sign in first, and remember it', async url => {
         roles.set(['Admin']);   // whatever the roles say, nobody is signed in
         const router = configure();
 
         await router.navigateByUrl(url);
 
-        expect(router.url).toBe(`/login?returnUrl=${encodeURIComponent(url)}`);
+        expect(signIn).toHaveBeenCalledWith(url);
+        expect(router.url).not.toBe(url);
       });
     });
 
@@ -192,16 +197,25 @@ describe('routes', () => {
   });
 
   describe('sign-in', () => {
-    it('should route login to the Login page', () => {
-      expect(loginRoute.component).toBe(Login);
+    it('should route auth/callback to the AuthCallback page, where OI.Auth sends the browser back', () => {
+      expect(callbackRoute.component).toBe(AuthCallback);
     });
 
-    it('should keep signed-in users off the sign-in page', () => {
-      expect(loginRoute.canActivate).toEqual([guestGuard]);
+    it('should route signed-out to the SignedOut page, where OI.Auth sends the browser after signing out', () => {
+      expect(signedOutRoute.component).toBe(SignedOut);
     });
 
-    it('should leave nothing outside the sign-in page and the guarded parent, so no page can be reached without signing in', () => {
-      const others = routes.filter(route => route !== loginRoute && route !== protectedParent);
+    it('should not guard the two pages OI.Auth sends the browser to, or nobody could ever finish signing in', () => {
+      expect(callbackRoute.canActivate).toBeUndefined();
+      expect(signedOutRoute.canActivate).toBeUndefined();
+    });
+
+    it('should have no login page of its own: the password is typed on OI.Auth', () => {
+      expect(routes.find(route => route.path === 'login')).toBeUndefined();
+    });
+
+    it('should leave nothing outside those two pages and the guarded parent, so no page can be reached without signing in', () => {
+      const others = routes.filter(route => route !== callbackRoute && route !== signedOutRoute && route !== protectedParent);
 
       expect(others).toEqual([]);
     });
@@ -244,12 +258,12 @@ describe('routes', () => {
       expect(router.url).toBe('/home');
     });
 
-    it('should not show the sign-in page, and go home instead', async () => {
+    it.each(['/auth/callback', '/signed-out'])('should still show %s', async url => {
       const router = configure();
 
-      await router.navigateByUrl('/login');
+      await router.navigateByUrl(url);
 
-      expect(router.url).toBe('/home');
+      expect(router.url).toBe(url);
     });
   });
 
@@ -258,39 +272,40 @@ describe('routes', () => {
       signedIn.set(false);
     });
 
-    it('should send the root url to the sign-in page, remembering the home page it redirects to', async () => {
+    it('should send the root url to OI.Auth, remembering the home page it redirects to', async () => {
       const router = configure();
 
       await router.navigateByUrl('/');
 
-      expect(router.url).toBe('/login?returnUrl=%2Fhome');
+      expect(signIn).toHaveBeenCalledWith('/home');
     });
 
     it.each(['/home', '/orderInvoice', '/orderInvoice/abc-123', '/orderInvoice-view/abc-123', '/orderSelection', '/customers', '/about'])(
-      'should send %s to the sign-in page and remember it',
+      'should send %s to OI.Auth and remember it',
       async url => {
         const router = configure();
 
         await router.navigateByUrl(url);
 
-        expect(router.url).toBe(`/login?returnUrl=${encodeURIComponent(url)}`);
+        expect(signIn).toHaveBeenCalledWith(url);
       }
     );
 
-    it('should send an unknown address to the sign-in page too', async () => {
+    it('should send an unknown address to OI.Auth too', async () => {
       const router = configure();
 
       await router.navigateByUrl('/no/such/page');
 
-      expect(router.url.startsWith('/login')).toBe(true);
+      expect(signIn).toHaveBeenCalled();
     });
 
-    it('should show the sign-in page itself', async () => {
+    it.each(['/auth/callback', '/signed-out'])('should show %s without asking anyone to sign in', async url => {
       const router = configure();
 
-      await router.navigateByUrl('/login');
+      await router.navigateByUrl(url);
 
-      expect(router.url).toBe('/login');
+      expect(router.url).toBe(url);
+      expect(signIn).not.toHaveBeenCalled();
     });
 
     it('should check again on every move, so signing out mid-session stops the next navigation', async () => {
@@ -302,7 +317,8 @@ describe('routes', () => {
       signedIn.set(false);
       await router.navigateByUrl('/about');
 
-      expect(router.url).toBe('/login?returnUrl=%2Fabout');
+      expect(signIn).toHaveBeenCalledWith('/about');
+      expect(router.url).toBe('/customers');
     });
   });
 });

@@ -38,7 +38,7 @@ public interface IAuthRepo
     Task SetPasswordHashAsync(string userId, string passwordHash, CancellationToken cancellationToken = default);
     /// <summary>Disabling locks the user out for good; enabling clears every lockout and the failed-attempt count.</summary>
     Task SetDisabledAsync(string userId, bool disabled, CancellationToken cancellationToken = default);
-    /// <summary>Removes the user and everything that belongs to them (roles, groups, claims, refresh tokens).</summary>
+    /// <summary>Removes the user and everything that belongs to them (roles, groups, claims).</summary>
     Task DeleteUserAsync(string userId, CancellationToken cancellationToken = default);
     /// <summary>How many users have the role and are not disabled.</summary>
     Task<int> CountEnabledUsersInRoleAsync(string role, CancellationToken cancellationToken = default);

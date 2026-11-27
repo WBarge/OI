@@ -1,6 +1,9 @@
 using FluentAssertions;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Moq;
 using OI.Data.Contexts;
 using OI.Data.Repos.Auth;
@@ -29,7 +32,6 @@ public class DataAuthAndReportingDiTests
     // ---- ConfigureAuthDi
 
     [TestCase(typeof(IAuthRepo), typeof(AuthRepo))]
-    [TestCase(typeof(IRefreshTokenRepo), typeof(RefreshTokenRepo))]
     [Description("ConfigureAuthDi should register each auth repository interface to its implementation as scoped")]
     public void ConfigureAuthDi_RegistersRepositoryAsScoped(Type serviceType, Type implementationType)
     {
@@ -66,7 +68,6 @@ public class DataAuthAndReportingDiTests
     }
 
     [TestCase(typeof(IAuthRepo), typeof(AuthRepo))]
-    [TestCase(typeof(IRefreshTokenRepo), typeof(RefreshTokenRepo))]
     [Description("Each auth repository should be resolvable from a scope, with its auth context")]
     public void ConfigureAuthDi_RepositoriesCanBeResolved(Type serviceType, Type implementationType)
     {
@@ -132,7 +133,30 @@ public class DataAuthAndReportingDiTests
 
         services.Should().NotContain(d => d.ServiceType == typeof(OiAuthDbContext));
         services.Should().NotContain(d => d.ServiceType == typeof(IAuthRepo));
-        services.Should().NotContain(d => d.ServiceType == typeof(IRefreshTokenRepo));
+    }
+
+    [Test, Description("ConfigureAuthDi should keep the Data Protection keys in the auth database, under one application name, so every OI.Auth instance reads the same keys")]
+    public void ConfigureAuthDi_SharesTheDataProtectionKeyRing()
+    {
+        ServiceCollection services = new();
+        services.AddLogging();
+        DataDi.ConfigureAuthDi(services, CreateConfiguration());
+        using ServiceProvider provider = services.BuildServiceProvider();
+
+        provider.GetRequiredService<IOptions<DataProtectionOptions>>().Value.ApplicationDiscriminator.Should().Be("OI.Auth");
+        provider.GetRequiredService<IOptions<KeyManagementOptions>>().Value.XmlRepository!.GetType().Name
+            .Should().StartWith("EntityFrameworkCoreXmlRepository");
+    }
+
+    [Test, Description("ConfigureReportingDi should not register data protection: only OI.Auth has a sign-in cookie")]
+    public void ConfigureReportingDi_DoesNotRegisterDataProtectionKeys()
+    {
+        ServiceCollection services = new();
+        services.AddLogging();
+        DataDi.ConfigureReportingDi(services, CreateConfiguration());
+        using ServiceProvider provider = services.BuildServiceProvider();
+
+        provider.GetService<IOptions<KeyManagementOptions>>()?.Value.XmlRepository.Should().BeNull();
     }
 
     [Test, Description("The company repository should be resolvable from a scope, with the reporting context")]

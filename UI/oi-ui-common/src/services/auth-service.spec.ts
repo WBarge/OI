@@ -1,527 +1,515 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router, provideRouter } from '@angular/router';
 import { vi } from 'vitest';
-import { AuthService, REFRESH_KEY } from './auth-service';
-import { ConfigService } from './config-service';
-import { Configuration } from '../testing/configuration';
-import { authResult } from '../testing/jwt-helper';
+import { AuthService } from './auth-service';
+import { OIDC_SESSION, OidcUser } from './oidc-session';
+import { provideOiUiCommon } from '../options/oi-ui-options';
+import { FakeOidcSession, errorResponse } from '../testing/fake-oidc-session';
+import { makeJwt, oidcUser } from '../testing/jwt-helper';
 
 describe('AuthService', () => {
   let service: AuthService;
-  let http: HttpTestingController;
+  let oidc: FakeOidcSession;
   let router: Router;
   let navigate: ReturnType<typeof vi.fn>;
 
-  const login = 'https://auth.test/api/auth/login';
-  const refresh = 'https://auth.test/api/auth/refresh';
-  const logout = 'https://auth.test/api/auth/logout';
-
   beforeEach(() => {
-    localStorage.clear();
-    const config = Object.assign(new Configuration(), { authApiUrl: 'https://auth.test/api/' });
+    oidc = new FakeOidcSession();
     TestBed.configureTestingModule({
       providers: [
-        provideHttpClient(),
-        provideHttpClientTesting(),
         provideRouter([]),
-        { provide: ConfigService, useValue: { config, isLoaded: true } }
-      ]
+        provideOiUiCommon({ securedUrls: () => [], clientId: 'oi-ui', homeRoute: '/home' }),
+        { provide: OIDC_SESSION, useValue: oidc },
+      ],
     });
     service = TestBed.inject(AuthService);
-    http = TestBed.inject(HttpTestingController);
     router = TestBed.inject(Router);
     navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true) as unknown as ReturnType<typeof vi.fn>;
   });
 
   afterEach(() => {
-    http.verify();
-    localStorage.clear();
+    vi.useRealTimers();
     vi.restoreAllMocks();
-    delete (navigator as unknown as { locks?: unknown }).locks;
   });
 
-  /** Lets a pending promise chain run, so a request made after an await is visible to the test. */
-  const settle = () => new Promise(resolve => setTimeout(resolve, 0));
+  const at = (url: string) => vi.spyOn(router, 'url', 'get').mockReturnValue(url);
+
+  /** Signs in through the callback, the way a real sign-in ends. */
+  async function signedInAs(user: OidcUser = oidcUser()): Promise<void> {
+    oidc.signinCallback.mockResolvedValue(user);
+    await service.completeSignIn();
+  }
 
   describe('at the start', () => {
     it('should be signed out', () => {
       expect(service.isAuthenticated()).toBe(false);
       expect(service.currentToken).toBeNull();
+      expect(service.userId()).toBe('');
       expect(service.userName()).toBe('');
       expect(service.roles()).toEqual([]);
       expect(service.groups()).toEqual([]);
     });
   });
 
-  describe('the user id', () => {
-    it('should be empty while signed out', () => {
-      expect(service.userId()).toBe('');
+  describe('restore (a page reload)', () => {
+    it('should stay signed out when this tab holds no user', async () => {
+      await service.restore();
+
+      expect(service.isAuthenticated()).toBe(false);
+      expect(oidc.signinSilent).not.toHaveBeenCalled();
     });
 
-    it('should be the id in the token once signed in, which is how the Admin screens recognise the user', async () => {
-      const signingIn = service.login('a', 'b');
-      http.expectOne(login).flush(authResult({ sub: 'user-42' }));
-      await signingIn;
+    it('should pick the session back up from the kept user without contacting OI.Auth while the token is still good', async () => {
+      oidc.user = oidcUser({ sub: 'user-7', name: 'Pat Example', role: 'Admin' });
+
+      await service.restore();
+
+      expect(service.isAuthenticated()).toBe(true);
+      expect(service.userId()).toBe('user-7');
+      expect(service.roles()).toEqual(['Admin']);
+      expect(service.currentToken).toBe(oidc.user.access_token);
+      expect(oidc.signinSilent).not.toHaveBeenCalled();
+    });
+
+    it('should renew with the refresh token when the kept access token has run out or is about to', async () => {
+      oidc.user = oidcUser({}, { expiresInSeconds: 30 });
+      const renewed = oidcUser({ name: 'Renewed' }, { refreshToken: 'refresh-2' });
+      oidc.signinSilent.mockResolvedValue(renewed);
+
+      await service.restore();
+
+      expect(oidc.signinSilent).toHaveBeenCalledOnce();
+      expect(service.currentToken).toBe(renewed.access_token);
+      expect(service.userName()).toBe('Renewed');
+    });
+
+    it('should stay signed out and forget the user when OI.Auth refuses the refresh token', async () => {
+      oidc.user = oidcUser({}, { expiresInSeconds: -10 });
+      oidc.signinSilent.mockRejectedValue(errorResponse('invalid_grant'));
+
+      await service.restore();
+
+      expect(service.isAuthenticated()).toBe(false);
+      expect(oidc.removeUser).toHaveBeenCalled();
+    });
+
+    it('should not sign the user out because OI.Auth could not be reached, and keep what is stored', async () => {
+      oidc.user = oidcUser({}, { expiresInSeconds: -10 });
+      oidc.signinSilent.mockRejectedValue(new Error('Network Error'));
+
+      await service.restore();
+
+      expect(oidc.removeUser).not.toHaveBeenCalled();
+      expect(oidc.user).not.toBeNull();
+    });
+
+    it('should renew when the kept access token cannot be read', async () => {
+      oidc.user = { access_token: 'not-a-jwt', refresh_token: 'r1', expires_at: Math.floor(Date.now() / 1000) + 900 };
+      const renewed = oidcUser();
+      oidc.signinSilent.mockResolvedValue(renewed);
+
+      await service.restore();
+
+      expect(service.currentToken).toBe(renewed.access_token);
+    });
+
+    it('should stay signed out, without throwing, when the stored user cannot be read at all', async () => {
+      oidc.getUser.mockRejectedValue(new Error('storage is unavailable'));
+
+      await expect(service.restore()).resolves.toBeUndefined();
+      expect(service.isAuthenticated()).toBe(false);
+    });
+  });
+
+  describe('signIn (sending the browser to OI.Auth)', () => {
+    it('should send the browser to OI.Auth, remembering where the user was going', async () => {
+      await service.signIn('/customers?page=2');
+
+      expect(oidc.signinRedirect).toHaveBeenCalledWith({ returnUrl: '/customers?page=2' });
+    });
+
+    it('should remember the current page when no address is given', async () => {
+      at('/orders/42');
+
+      await service.signIn();
+
+      expect(oidc.signinRedirect).toHaveBeenCalledWith({ returnUrl: '/orders/42' });
+    });
+
+    it('should never remember an address outside the application', async () => {
+      await service.signIn('https://evil.example/steal');
+
+      expect(oidc.signinRedirect).toHaveBeenCalledWith({ returnUrl: '/home' });
+    });
+
+    it('should not remember the sign-in pages themselves, which would loop', async () => {
+      await service.signIn('/auth/callback?code=abc');
+
+      expect(oidc.signinRedirect).toHaveBeenCalledWith({ returnUrl: '/home' });
+    });
+
+    it('should send the browser only once when several things ask at the same moment', async () => {
+      await Promise.all([service.signIn('/a'), service.signIn('/b'), service.signIn('/c')]);
+
+      expect(oidc.signinRedirect).toHaveBeenCalledOnce();
+    });
+
+    it('should allow another attempt after OI.Auth could not be reached, and tell the caller', async () => {
+      oidc.signinRedirect.mockRejectedValueOnce(new Error('Network Error'));
+
+      await expect(service.signIn('/a')).rejects.toThrow('Network Error');
+      await service.signIn('/a');
+
+      expect(oidc.signinRedirect).toHaveBeenCalledTimes(2);
+    });
+
+    it('should allow another attempt after a while, in case the browser came back from the cache without leaving', async () => {
+      vi.useFakeTimers();
+      await service.signIn('/a');
+
+      await vi.advanceTimersByTimeAsync(6_000);
+      await service.signIn('/a');
+
+      expect(oidc.signinRedirect).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('completeSignIn (the callback page)', () => {
+    it('should sign in with the tokens OI.Auth issued and say where the user was going', async () => {
+      oidc.signinCallback.mockResolvedValue(oidcUser({ sub: 'user-42', name: 'Pat Example' }, { state: { returnUrl: '/customers' } }));
+
+      const target = await service.completeSignIn();
+
+      expect(target).toBe('/customers');
+      expect(service.isAuthenticated()).toBe(true);
+      expect(service.userId()).toBe('user-42');
+    });
+
+    it('should pass the address on to oidc-client-ts when one is given', async () => {
+      oidc.signinCallback.mockResolvedValue(oidcUser());
+
+      await service.completeSignIn('https://app.test/auth/callback?code=abc&state=xyz');
+
+      expect(oidc.signinCallback).toHaveBeenCalledWith('https://app.test/auth/callback?code=abc&state=xyz');
+    });
+
+    it('should go home when no destination was remembered', async () => {
+      oidc.signinCallback.mockResolvedValue(oidcUser());
+
+      expect(await service.completeSignIn()).toBe('/home');
+    });
+
+    it('should go home when the remembered destination is not inside the application', async () => {
+      oidc.signinCallback.mockResolvedValue(oidcUser({}, { state: { returnUrl: '//evil.example' } }));
+
+      expect(await service.completeSignIn()).toBe('/home');
+    });
+
+    it('should tell the caller and stay signed out when OI.Auth refused (the sign-in was cancelled, or the code was used twice)', async () => {
+      oidc.signinCallback.mockRejectedValue(errorResponse('access_denied'));
+
+      await expect(service.completeSignIn()).rejects.toThrow();
+      expect(service.isAuthenticated()).toBe(false);
+    });
+
+    it('should refuse an access token that cannot be read', async () => {
+      oidc.signinCallback.mockResolvedValue({ access_token: 'garbage', refresh_token: 'r1' });
+
+      await expect(service.completeSignIn()).rejects.toThrow();
+      expect(service.isAuthenticated()).toBe(false);
+    });
+
+    it('should allow signing in again afterwards', async () => {
+      await service.signIn('/a');
+      oidc.signinCallback.mockResolvedValue(oidcUser());
+      await service.completeSignIn();
+
+      await service.signIn('/b');
+
+      expect(oidc.signinRedirect).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('who is signed in', () => {
+    it('should expose the id in the token, which is how the Admin screens recognise the user', async () => {
+      await signedInAs(oidcUser({ sub: 'user-42' }));
 
       expect(service.userId()).toBe('user-42');
     });
 
-    it('should go back to empty on sign-out', async () => {
-      const signingIn = service.login('a', 'b');
-      http.expectOne(login).flush(authResult({ sub: 'user-42' }));
-      await signingIn;
+    it('should read the roles and groups from the token, whether there is one or several', async () => {
+      await signedInAs(oidcUser({ name: 'Pat Example', role: 'Admin', group: ['default', 'sales'] }));
 
-      const signingOut = service.logout();
-      await settle();
-      http.expectOne(logout).flush(null);
-      await signingOut;
-
-      expect(service.userId()).toBe('');
-    });
-  });
-
-  describe('login', () => {
-    it('should post the credentials to the auth api', async () => {
-      const signingIn = service.login('pat@example.com', 'secret-password');
-
-      const request = http.expectOne(login);
-      expect(request.request.method).toBe('POST');
-      expect(request.request.body).toEqual({ email: 'pat@example.com', password: 'secret-password' });
-      request.flush(authResult());
-      await signingIn;
-    });
-
-    it('should hold the access token, and know who the user is', async () => {
-      const result = authResult({ name: 'Pat Example', role: 'Admin', group: ['default', 'sales-west'] });
-      const signingIn = service.login('pat@example.com', 'x');
-      http.expectOne(login).flush(result);
-      await signingIn;
-
-      expect(service.isAuthenticated()).toBe(true);
-      expect(service.currentToken).toBe(result.accessToken);
       expect(service.userName()).toBe('Pat Example');
       expect(service.roles()).toEqual(['Admin']);
-      expect(service.groups()).toEqual(['default', 'sales-west']);
+      expect(service.groups()).toEqual(['default', 'sales']);
     });
 
-    it('should treat a single role or group as a list', async () => {
-      const signingIn = service.login('a', 'b');
-      http.expectOne(login).flush(authResult({ role: 'Admin', group: 'default' }));
-      await signingIn;
+    it('should read several roles', async () => {
+      await signedInAs(oidcUser({ role: ['Admin', 'User'] }));
 
-      expect(service.roles()).toEqual(['Admin']);
-      expect(service.groups()).toEqual(['default']);
+      expect(service.roles()).toEqual(['Admin', 'User']);
     });
 
-    it('should keep the refresh token so the next visit does not ask for a password', async () => {
-      const signingIn = service.login('a', 'b');
-      http.expectOne(login).flush(authResult({}, 'refresh-abc'));
-      await signingIn;
-
-      expect(localStorage.getItem(REFRESH_KEY)).toBe('refresh-abc');
-    });
-
-    it('should read a name with accents and symbols correctly', async () => {
-      const signingIn = service.login('a', 'b');
-      http.expectOne(login).flush(authResult({ name: 'Zoë Müller ✓' }));
-      await signingIn;
+    it('should read names with accents and symbols', async () => {
+      await signedInAs(oidcUser({ name: 'Zoë Müller ✓' }));
 
       expect(service.userName()).toBe('Zoë Müller ✓');
     });
 
-    it.each([401, 429, 0])('should reject with the server error, and stay signed out, for status %s', async status => {
-      const signingIn = service.login('a', 'b');
-      http.expectOne(login).flush('no', { status: status || 0, statusText: 'No' });
+    it('should have no roles or groups when the token carries none', async () => {
+      await signedInAs(oidcUser());
 
-      await expect(signingIn).rejects.toBeInstanceOf(HttpErrorResponse);
-      expect(service.isAuthenticated()).toBe(false);
-      expect(localStorage.getItem(REFRESH_KEY)).toBeNull();
+      expect(service.roles()).toEqual([]);
+      expect(service.groups()).toEqual([]);
     });
-  });
-
-  describe('restore (already signed in from an earlier visit)', () => {
-    it('should not call the server when there is nothing to restore from', async () => {
-      await service.restore();
-
-      http.expectNone(refresh);
-      expect(service.isAuthenticated()).toBe(false);
-    });
-
-    it('should sign the user back in with the kept refresh token', async () => {
-      localStorage.setItem(REFRESH_KEY, 'kept-token');
-
-      const restoring = service.restore();
-      const request = http.expectOne(refresh);
-      expect(request.request.body).toEqual({ refreshToken: 'kept-token' });
-      request.flush(authResult({ name: 'Pat Example' }, 'replacement-token'));
-      await restoring;
-
-      expect(service.isAuthenticated()).toBe(true);
-      expect(service.userName()).toBe('Pat Example');
-    });
-
-    it('should keep the replacement refresh token, because each one works only once', async () => {
-      localStorage.setItem(REFRESH_KEY, 'kept-token');
-
-      const restoring = service.restore();
-      http.expectOne(refresh).flush(authResult({}, 'replacement-token'));
-      await restoring;
-
-      expect(localStorage.getItem(REFRESH_KEY)).toBe('replacement-token');
-    });
-
-    it.each([400, 401, 403])('should forget a refresh token the server refuses (%s)', async status => {
-      localStorage.setItem(REFRESH_KEY, 'old-token');
-
-      const restoring = service.restore();
-      http.expectOne(refresh).flush('no', { status, statusText: 'Refused' });
-      await restoring;
-
-      expect(service.isAuthenticated()).toBe(false);
-      expect(localStorage.getItem(REFRESH_KEY)).toBeNull();
-    });
-
-    it.each([0, 500, 502, 503, 429])(
-      'should keep the refresh token when the server cannot be asked right now (%s), so a short outage does not sign anyone out',
-      async status => {
-        localStorage.setItem(REFRESH_KEY, 'old-token');
-
-        const restoring = service.restore();
-        http.expectOne(refresh).flush('down', { status, statusText: 'Trouble' });
-        await restoring;
-
-        expect(service.isAuthenticated()).toBe(false);
-        expect(localStorage.getItem(REFRESH_KEY)).toBe('old-token');
-      }
-    );
   });
 
   describe('refresh', () => {
-    it('should report refreshed when the server hands out a new token', async () => {
-      localStorage.setItem(REFRESH_KEY, 'r1');
+    it('should renew with the refresh token and use the new access token', async () => {
+      await signedInAs(oidcUser({}, { refreshToken: 'r1' }));
+      oidc.user = oidcUser({}, { refreshToken: 'r1' });
+      const renewed = oidcUser({ name: 'Renewed' }, { refreshToken: 'r2' });
+      oidc.signinSilent.mockResolvedValue(renewed);
 
-      const refreshing = service.refresh();
-      http.expectOne(refresh).flush(authResult());
+      const outcome = await service.refresh();
 
-      expect(await refreshing).toBe('refreshed');
+      expect(outcome).toBe('refreshed');
+      expect(service.currentToken).toBe(renewed.access_token);
+      expect(service.userName()).toBe('Renewed');
     });
 
-    it('should report rejected, without calling the server, when there is no refresh token', async () => {
+    it('should make one request when several callers ask together', async () => {
+      oidc.user = oidcUser({}, { refreshToken: 'r1' });
+      oidc.signinSilent.mockResolvedValue(oidcUser());
+
+      const outcomes = await Promise.all([service.refresh(), service.refresh(), service.refresh()]);
+
+      expect(outcomes).toEqual(['refreshed', 'refreshed', 'refreshed']);
+      expect(oidc.signinSilent).toHaveBeenCalledOnce();
+    });
+
+    it('should make a new request for a later call', async () => {
+      oidc.user = oidcUser({}, { refreshToken: 'r1' });
+      oidc.signinSilent.mockResolvedValue(oidcUser());
+
+      await service.refresh();
+      await service.refresh();
+
+      expect(oidc.signinSilent).toHaveBeenCalledTimes(2);
+    });
+
+    it('should be rejected, without contacting OI.Auth, when there is no refresh token to use', async () => {
+      oidc.user = oidcUser({}, { refreshToken: null });
+
       expect(await service.refresh()).toBe('rejected');
-
-      http.expectNone(refresh);
+      expect(oidc.signinSilent).not.toHaveBeenCalled();
     });
 
-    it('should report rejected when the server refuses the token', async () => {
-      localStorage.setItem(REFRESH_KEY, 'r1');
-
-      const refreshing = service.refresh();
-      http.expectOne(refresh).flush('no', { status: 401, statusText: 'Unauthorized' });
-
-      expect(await refreshing).toBe('rejected');
+    it('should be rejected when nobody is signed in in this tab', async () => {
+      expect(await service.refresh()).toBe('rejected');
     });
 
-    it('should report unavailable when the server cannot be reached', async () => {
-      localStorage.setItem(REFRESH_KEY, 'r1');
+    it.each(['invalid_grant', 'invalid_token', 'invalid_client', 'unauthorized_client', 'access_denied'])(
+      'should be rejected, ending the session, when OI.Auth answers %s',
+      async (error) => {
+        await signedInAs();
+        oidc.user = oidcUser({}, { refreshToken: 'r1' });
+        oidc.signinSilent.mockRejectedValue(errorResponse(error));
 
-      const refreshing = service.refresh();
-      http.expectOne(refresh).error(new ProgressEvent('error'));
+        expect(await service.refresh()).toBe('rejected');
+        expect(service.isAuthenticated()).toBe(false);
+        expect(oidc.removeUser).toHaveBeenCalled();
+      },
+    );
 
-      expect(await refreshing).toBe('unavailable');
+    it('should be rejected when OI.Auth answers with nothing', async () => {
+      oidc.user = oidcUser({}, { refreshToken: 'r1' });
+      oidc.signinSilent.mockResolvedValue(null);
+
+      expect(await service.refresh()).toBe('rejected');
     });
 
-    it('should make one request when several callers refresh at the same time', async () => {
-      localStorage.setItem(REFRESH_KEY, 'r1');
+    it('should be rejected when the new access token cannot be read, keeping nothing of it', async () => {
+      oidc.user = oidcUser({}, { refreshToken: 'r1' });
+      oidc.signinSilent.mockResolvedValue({ access_token: 'garbage', refresh_token: 'r2' });
 
-      const first = service.refresh();
-      const second = service.refresh();
-      const third = service.refresh();
-      http.expectOne(refresh).flush(authResult());
-
-      expect(await Promise.all([first, second, third])).toEqual(['refreshed', 'refreshed', 'refreshed']);
+      expect(await service.refresh()).toBe('rejected');
+      expect(service.currentToken).toBeNull();
     });
 
-    it('should be able to refresh again after an earlier refresh has finished', async () => {
-      localStorage.setItem(REFRESH_KEY, 'r1');
-      const first = service.refresh();
-      http.expectOne(refresh).flush(authResult({}, 'r2'));
-      await first;
+    it.each([
+      ['a network failure', new Error('Network Error')],
+      ['a server error', new Error('Internal Server Error (500)')],
+      ['being throttled', new Error('Too Many Requests (429)')],
+      ['a temporary OAuth error', errorResponse('server_error')],
+      ['a timeout', Object.assign(new Error('timed out'), { name: 'ErrorTimeout' })],
+    ])('should say unavailable, and keep the session, on %s', async (_what, failure) => {
+      await signedInAs();
+      oidc.user = oidcUser({}, { refreshToken: 'r1' });
+      oidc.signinSilent.mockRejectedValue(failure);
+      const before = service.currentToken;
 
-      const second = service.refresh();
-      const request = http.expectOne(refresh);
-      expect(request.request.body).toEqual({ refreshToken: 'r2' });
-      request.flush(authResult({}, 'r3'));
-      await second;
+      expect(await service.refresh()).toBe('unavailable');
+      expect(service.isAuthenticated()).toBe(true);
+      expect(service.currentToken).toBe(before);
+      expect(oidc.removeUser).not.toHaveBeenCalled();
     });
 
-    it('should take the cross-tab lock when the browser has one, so two tabs never use the same refresh token', async () => {
-      const request = vi.fn((_name: string, callback: () => Promise<unknown>) => callback());
-      Object.defineProperty(navigator, 'locks', { value: { request }, configurable: true });
-      localStorage.setItem(REFRESH_KEY, 'r1');
+    it('should say unavailable when the stored user cannot be read', async () => {
+      oidc.getUser.mockRejectedValue(new Error('storage is unavailable'));
 
-      const refreshing = service.refresh();
-      await settle();
-      http.expectOne(refresh).flush(authResult());
-      await refreshing;
-
-      expect(request).toHaveBeenCalledTimes(1);
-      expect(request.mock.calls[0][0]).toBe('oi-token-refresh');
-    });
-
-    it('should read the refresh token inside the lock, so it uses the one another tab just stored', async () => {
-      let release!: () => void;
-      const gate = new Promise<void>(resolve => (release = resolve));
-      const request = vi.fn(async (_name: string, callback: () => Promise<unknown>) => {
-        await gate;                                   // the other tab is still refreshing
-        return callback();
-      });
-      Object.defineProperty(navigator, 'locks', { value: { request }, configurable: true });
-      localStorage.setItem(REFRESH_KEY, 'stale-token');
-
-      const refreshing = service.refresh();
-      localStorage.setItem(REFRESH_KEY, 'token-from-other-tab');   // the other tab finishes
-      release();
-      await settle();
-
-      const sent = http.expectOne(refresh);
-      expect(sent.request.body).toEqual({ refreshToken: 'token-from-other-tab' });
-      sent.flush(authResult());
-      await refreshing;
+      expect(await service.refresh()).toBe('unavailable');
     });
   });
 
   describe('renewAfterRejection', () => {
-    it('should not refresh when a newer token already exists, because another request has renewed since this one was sent', async () => {
-      const signingIn = service.login('a', 'b');
-      http.expectOne(login).flush(authResult());
-      await signingIn;
+    it('should renew when the token that was rejected is still the current one', async () => {
+      await signedInAs();
+      oidc.user = oidcUser({}, { refreshToken: 'r1' });
+      oidc.signinSilent.mockResolvedValue(oidcUser({ name: 'Renewed' }));
 
-      expect(await service.renewAfterRejection('an-older-token')).toBe('refreshed');
-      http.expectNone(refresh);
+      const outcome = await service.renewAfterRejection(service.currentToken);
+
+      expect(outcome).toBe('refreshed');
+      expect(oidc.signinSilent).toHaveBeenCalledOnce();
     });
 
-    it('should refresh when the rejected token is still the current one', async () => {
-      const signingIn = service.login('a', 'b');
-      http.expectOne(login).flush(authResult());
-      await signingIn;
+    it('should not renew when another request already got a newer token', async () => {
+      await signedInAs();
 
-      const renewing = service.renewAfterRejection(service.currentToken);
-      http.expectOne(refresh).flush(authResult({}, 'r2'));
+      const outcome = await service.renewAfterRejection('an-older-token');
 
-      expect(await renewing).toBe('refreshed');
+      expect(outcome).toBe('refreshed');
+      expect(oidc.signinSilent).not.toHaveBeenCalled();
     });
 
-    it('should refresh when there was no token at all', async () => {
-      localStorage.setItem(REFRESH_KEY, 'r1');
+    it('should renew when nobody is signed in yet', async () => {
+      oidc.user = oidcUser({}, { refreshToken: 'r1' });
+      oidc.signinSilent.mockResolvedValue(oidcUser());
 
-      const renewing = service.renewAfterRejection(null);
-      http.expectOne(refresh).flush(authResult());
-
-      expect(await renewing).toBe('refreshed');
+      expect(await service.renewAfterRejection(null)).toBe('refreshed');
     });
   });
 
-  describe('getAccessToken (used by the hub connection)', () => {
-    it('should return the current token without a request while it has plenty of life left', async () => {
-      const result = authResult({}, 'r1', 900);
-      const signingIn = service.login('a', 'b');
-      http.expectOne(login).flush(result);
-      await signingIn;
+  describe('getAccessToken (for SignalR)', () => {
+    it('should return the current token without renewing while it is good', async () => {
+      await signedInAs(oidcUser({}, { expiresInSeconds: 900 }));
 
-      expect(await service.getAccessToken()).toBe(result.accessToken);
-      http.expectNone(refresh);
+      const token = await service.getAccessToken();
+
+      expect(token).toBe(service.currentToken);
+      expect(oidc.signinSilent).not.toHaveBeenCalled();
     });
 
     it('should renew first when the token is about to expire', async () => {
-      const signingIn = service.login('a', 'b');
-      http.expectOne(login).flush(authResult({}, 'r1', 30));
-      await signingIn;
+      await signedInAs(oidcUser({}, { expiresInSeconds: 30 }));
+      oidc.user = oidcUser({}, { refreshToken: 'r1' });
+      const fresh = oidcUser({}, { expiresInSeconds: 900 });
+      oidc.signinSilent.mockResolvedValue(fresh);
 
-      const getting = service.getAccessToken();
-      const fresh = authResult({}, 'r2', 900);
-      http.expectOne(refresh).flush(fresh);
-
-      expect(await getting).toBe(fresh.accessToken);
+      expect(await service.getAccessToken()).toBe(fresh.access_token);
     });
 
-    it('should renew when there is no token yet but a refresh token was kept', async () => {
-      localStorage.setItem(REFRESH_KEY, 'r1');
-
-      const getting = service.getAccessToken();
-      const fresh = authResult();
-      http.expectOne(refresh).flush(fresh);
-
-      expect(await getting).toBe(fresh.accessToken);
-    });
-
-    it('should return an empty token when the user is signed out', async () => {
+    it('should return an empty token when nobody is signed in and nothing can be renewed', async () => {
       expect(await service.getAccessToken()).toBe('');
+    });
+
+    it('should return the old token when renewing was not possible right now', async () => {
+      const user = oidcUser({}, { expiresInSeconds: 30 });
+      await signedInAs(user);
+      oidc.user = oidcUser({}, { refreshToken: 'r1' });
+      oidc.signinSilent.mockRejectedValue(new Error('Network Error'));
+
+      expect(await service.getAccessToken()).toBe(user.access_token);
     });
   });
 
   describe('logout', () => {
-    const signIn = async () => {
-      const signingIn = service.login('a', 'b');
-      http.expectOne(login).flush(authResult({}, 'r1'));
-      await signingIn;
-    };
+    it('should forget the user here and send the browser to OI.Auth to end the sign-in', async () => {
+      await signedInAs(oidcUser({ sub: 'user-42' }));
 
-    it('should forget the session straight away', async () => {
-      await signIn();
-
-      const signingOut = service.logout();
-      expect(service.isAuthenticated()).toBe(false);
-      expect(localStorage.getItem(REFRESH_KEY)).toBeNull();
-      await settle();
-      http.expectOne(logout).flush(null);
-      await signingOut;
-    });
-
-    it('should go to the sign-in page', async () => {
-      await signIn();
-
-      const signingOut = service.logout();
-      await settle();
-      http.expectOne(logout).flush(null);
-      await signingOut;
-
-      expect(navigate).toHaveBeenCalledWith(['/login']);
-    });
-
-    it('should revoke the refresh token on the server so it cannot be used again', async () => {
-      await signIn();
-
-      const signingOut = service.logout();
-      await settle();
-      const request = http.expectOne(logout);
-      expect(request.request.body).toEqual({ refreshToken: 'r1' });
-      request.flush(null);
-      await signingOut;
-    });
-
-    it('should not call the server when there is no refresh token', async () => {
       await service.logout();
 
-      http.expectNone(logout);
-      expect(navigate).toHaveBeenCalledWith(['/login']);
+      expect(service.isAuthenticated()).toBe(false);
+      expect(service.userId()).toBe('');
+      expect(service.currentToken).toBeNull();
+      expect(oidc.signoutRedirect).toHaveBeenCalledOnce();
     });
 
-    it('should still finish when the server cannot be reached', async () => {
-      await signIn();
+    it('should clear the session before the browser leaves, so nothing keeps using the token', async () => {
+      await signedInAs();
+      let signedInWhenLeaving: boolean | null = null;
+      oidc.signoutRedirect.mockImplementation(async () => {
+        signedInWhenLeaving = service.isAuthenticated();
+      });
 
-      const signingOut = service.logout();
-      await settle();
-      http.expectOne(logout).error(new ProgressEvent('error'));
-      await signingOut;
+      await service.logout();
+
+      expect(signedInWhenLeaving).toBe(false);
+    });
+
+    it('should still sign out here, and land on the signed-out page, when OI.Auth cannot be reached', async () => {
+      await signedInAs();
+      oidc.signoutRedirect.mockRejectedValue(new Error('Network Error'));
+
+      await service.logout();
 
       expect(service.isAuthenticated()).toBe(false);
+      expect(oidc.removeUser).toHaveBeenCalled();
+      expect(navigate).toHaveBeenCalledWith(['/signed-out']);
     });
   });
 
   describe('sessionExpired', () => {
-    it('should forget the session and go to the sign-in page, remembering where the user was', async () => {
-      localStorage.setItem(REFRESH_KEY, 'r1');
-      vi.spyOn(router, 'url', 'get').mockReturnValue('/customers');
+    it('should forget the session and go back to OI.Auth, remembering the page', async () => {
+      await signedInAs();
+      at('/orders/42');
 
       await service.sessionExpired();
 
       expect(service.isAuthenticated()).toBe(false);
-      expect(localStorage.getItem(REFRESH_KEY)).toBeNull();
-      expect(navigate).toHaveBeenCalledWith(['/login'], { queryParams: { reason: 'expired', returnUrl: '/customers' } });
+      expect(oidc.removeUser).toHaveBeenCalled();
+      expect(oidc.signinRedirect).toHaveBeenCalledWith({ returnUrl: '/orders/42' });
     });
 
-    it('should only navigate once when several requests fail together', async () => {
-      vi.spyOn(router, 'url', 'get').mockReturnValue('/customers');
-      let finish!: () => void;
-      navigate.mockImplementation(() => new Promise<boolean>(resolve => (finish = () => resolve(true))));
+    it('should go to OI.Auth once when several requests fail together', async () => {
+      await signedInAs();
+      at('/orders/42');
 
-      const first = service.sessionExpired();
-      const second = service.sessionExpired();
-      const third = service.sessionExpired();
-      finish();
-      await Promise.all([first, second, third]);
+      await Promise.all([service.sessionExpired(), service.sessionExpired(), service.sessionExpired()]);
 
-      expect(navigate).toHaveBeenCalledTimes(1);
+      expect(oidc.signinRedirect).toHaveBeenCalledOnce();
     });
 
-    it('should be able to navigate again for a later expiry', async () => {
-      vi.spyOn(router, 'url', 'get').mockReturnValue('/customers');
+    it.each(['/auth/callback', '/auth/callback?code=abc', '/signed-out', '/signed-out?error=unavailable'])(
+      'should not start another sign-in while on %s',
+      async (url) => {
+        await signedInAs();
+        at(url);
+
+        await service.sessionExpired();
+
+        expect(service.isAuthenticated()).toBe(false);
+        expect(oidc.signinRedirect).not.toHaveBeenCalled();
+      },
+    );
+
+    it('should land on the signed-out page with a message when OI.Auth cannot be reached', async () => {
+      await signedInAs();
+      at('/orders/42');
+      oidc.signinRedirect.mockRejectedValue(new Error('Network Error'));
 
       await service.sessionExpired();
-      await service.sessionExpired();
 
-      expect(navigate).toHaveBeenCalledTimes(2);
-    });
-
-    it('should not navigate when the user is already on the sign-in page', async () => {
-      vi.spyOn(router, 'url', 'get').mockReturnValue('/login?reason=expired');
-
-      await service.sessionExpired();
-
-      expect(navigate).not.toHaveBeenCalled();
+      expect(navigate).toHaveBeenCalledWith(['/signed-out'], { queryParams: { error: 'unavailable' } });
     });
   });
 
-  describe('when another tab signs out', () => {
-    const signIn = async () => {
-      const signingIn = service.login('a', 'b');
-      http.expectOne(login).flush(authResult({}, 'r1'));
-      await signingIn;
-    };
-    const otherTabRemovedTheToken = (key: string | null = REFRESH_KEY) => {
-      localStorage.removeItem(REFRESH_KEY);
-      window.dispatchEvent(new StorageEvent('storage', { key, newValue: null }));
-    };
+  it('should read a token whose payload is not padded base64', async () => {
+    const token = makeJwt({ sub: 'u1', name: 'A', exp: Math.floor(Date.now() / 1000) + 900 });
+    await signedInAs({ access_token: token, refresh_token: 'r1' });
 
-    it('should sign out here too and go to the sign-in page', async () => {
-      await signIn();
-
-      otherTabRemovedTheToken();
-
-      expect(service.isAuthenticated()).toBe(false);
-      expect(navigate).toHaveBeenCalledWith(['/login']);
-    });
-
-    it('should also react when all storage is cleared', async () => {
-      await signIn();
-
-      otherTabRemovedTheToken(null);
-
-      expect(service.isAuthenticated()).toBe(false);
-    });
-
-    it('should ignore changes to other keys', async () => {
-      await signIn();
-
-      window.dispatchEvent(new StorageEvent('storage', { key: 'something-else', newValue: null }));
-
-      expect(service.isAuthenticated()).toBe(true);
-      expect(navigate).not.toHaveBeenCalled();
-    });
-
-    it('should stay signed in when the refresh token is still there, as when another tab just renewed it', async () => {
-      await signIn();
-
-      window.dispatchEvent(new StorageEvent('storage', { key: REFRESH_KEY, newValue: null }));
-
-      expect(service.isAuthenticated()).toBe(true);
-    });
-
-    it('should do nothing when this tab was not signed in', () => {
-      otherTabRemovedTheToken();
-
-      expect(navigate).not.toHaveBeenCalled();
-    });
-
-    it('should stop listening when the service is destroyed', async () => {
-      await signIn();
-      TestBed.resetTestingModule();
-
-      otherTabRemovedTheToken();
-
-      expect(navigate).not.toHaveBeenCalled();
-    });
+    expect(service.userId()).toBe('u1');
   });
 });

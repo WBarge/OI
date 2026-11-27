@@ -29,8 +29,6 @@ namespace ProductManager.Service.Utilities
         /// <param name="configuration">The configuration.</param>
         public static void ConfigureDi(this IServiceCollection services, IConfiguration configuration)
         {
-         
-
             DataDi.ConfigureDi(services, configuration);
             BusinessDi.ConfigureDi(services);
         }

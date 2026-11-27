@@ -18,57 +18,6 @@ public class RequestValidationTests
 
     private static string Chars(int length) => new('x', length);
 
-    // ---- LoginRequest
-
-    [Test, Description("LoginRequest should be valid with an email and a password")]
-    public void LoginRequest_IsValidWhenComplete()
-    {
-        IsValid(new LoginRequest { Email = "pat@example.com", Password = "pw" }).Should().BeTrue();
-    }
-
-    [Test, Description("LoginRequest should start empty, which is not valid")]
-    public void LoginRequest_IsNotValidWhenEmpty()
-    {
-        LoginRequest sut = new();
-
-        sut.Email.Should().BeEmpty();
-        sut.Password.Should().BeEmpty();
-        Validate(sut).SelectMany(r => r.MemberNames).Should().BeEquivalentTo("Email", "Password");
-    }
-
-    [TestCase(256, true)]
-    [TestCase(257, false)]
-    [Description("LoginRequest should accept an email of up to 256 characters")]
-    public void LoginRequest_LimitsTheEmail(int length, bool valid)
-    {
-        IsValid(new LoginRequest { Email = Chars(length), Password = "pw" }).Should().Be(valid);
-    }
-
-    [TestCase(256, true)]
-    [TestCase(257, false)]
-    [Description("LoginRequest should accept a password of up to 256 characters")]
-    public void LoginRequest_LimitsThePassword(int length, bool valid)
-    {
-        IsValid(new LoginRequest { Email = "pat@example.com", Password = Chars(length) }).Should().Be(valid);
-    }
-
-    // ---- RefreshRequest
-
-    [Test, Description("RefreshRequest should require a refresh token")]
-    public void RefreshRequest_RequiresAToken()
-    {
-        IsValid(new RefreshRequest()).Should().BeFalse();
-        IsValid(new RefreshRequest { RefreshToken = "abc" }).Should().BeTrue();
-    }
-
-    [TestCase(512, true)]
-    [TestCase(513, false)]
-    [Description("RefreshRequest should accept a refresh token of up to 512 characters")]
-    public void RefreshRequest_LimitsTheToken(int length, bool valid)
-    {
-        IsValid(new RefreshRequest { RefreshToken = Chars(length) }).Should().Be(valid);
-    }
-
     // ---- ServiceTokenRequest
 
     [Test, Description("ServiceTokenRequest should require a client id and a secret")]

@@ -10,8 +10,7 @@
   "scripts": {
     "build:lib": "npm run build --workspace oi-ui-common",
     "build:all": "node scripts/run-all.mjs build",
-    "test:all": "node scripts/run-all.mjs test",
-    "dev-proxy": "node dev-proxy/proxy.mjs"
+    "test:all": "node scripts/run-all.mjs test"
   },
   "devDependencies": {}
 }

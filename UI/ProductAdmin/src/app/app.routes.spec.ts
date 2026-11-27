@@ -1,4 +1,4 @@
-import { adminGuard, authGuard, guestGuard } from '@oi/ui-common';
+import { adminGuard, authGuard, AuthCallback, SignedOut } from '@oi/ui-common';
 import { routes } from './app.routes';
 
 /**
@@ -6,9 +6,9 @@ import { routes } from './app.routes';
  * is added outside the guarded group.
  */
 describe('routes', () => {
-  const openRoutes = ['login', 'access-denied'];
+  const openRoutes = ['auth/callback', 'signed-out', 'access-denied'];
 
-  it('should let anyone reach only the sign-in page and the access-denied page', () => {
+  it('should let anyone reach only the pages OI.Auth sends the browser back to, and the access-denied page', () => {
     const open = routes.filter(route => !route.canActivate?.includes(adminGuard)).map(route => route.path);
 
     expect(open).toEqual(openRoutes);
@@ -24,8 +24,18 @@ describe('routes', () => {
     ]);
   });
 
-  it('should keep a signed-in user off the sign-in page', () => {
-    expect(routes.find(route => route.path === 'login')?.canActivate).toEqual([guestGuard]);
+  it('should show the callback and signed-out pages, with no guard, or nobody could ever finish signing in', () => {
+    const callback = routes.find(route => route.path === 'auth/callback');
+    const signedOut = routes.find(route => route.path === 'signed-out');
+
+    expect(callback?.component).toBe(AuthCallback);
+    expect(callback?.canActivate).toBeUndefined();
+    expect(signedOut?.component).toBe(SignedOut);
+    expect(signedOut?.canActivate).toBeUndefined();
+  });
+
+  it('should have no login page of its own: the password is typed on OI.Auth', () => {
+    expect(routes.find(route => route.path === 'login')).toBeUndefined();
   });
 
   it('should only show the access-denied page to someone who is signed in', () => {

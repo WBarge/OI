@@ -31,4 +31,21 @@ public class JwtOptionsTests
         sut.Issuer.Should().BeEmpty("the issuer must be set to this application's address");
         sut.SigningKeyPem.Should().BeNull("a key is never built into the application");
     }
+
+    [TestCase("https://localhost:7300", "https://localhost:7300/")]
+    [TestCase("https://localhost:7300/", "https://localhost:7300/")]
+    [TestCase("https://auth.example.com/auth", "https://auth.example.com/auth")]
+    [Description("NormalizedIssuer should be the absolute address OpenIddict writes into every token")]
+    public void NormalizedIssuer_IsTheAbsoluteAddress(string issuer, string expected)
+    {
+        new JwtOptions { Issuer = issuer }.NormalizedIssuer.Should().Be(expected);
+    }
+
+    [Test, Description("NormalizedIssuer should fail when no issuer is set")]
+    public void NormalizedIssuer_FailsWhenThereIsNoIssuer()
+    {
+        Action act = () => _ = new JwtOptions().NormalizedIssuer;
+
+        act.Should().Throw<UriFormatException>();
+    }
 }

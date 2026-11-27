@@ -22,8 +22,8 @@ export class ConfigService<T extends OiBaseConfig = OiBaseConfig> {
 
   /**
    * Called once by the app initializer.
-   * The address is relative on purpose: it is worked out from the page's base href, so the OI UI (served at /)
-   * reads /config.json and the ProductManager UI (served at /products/) reads /products/config.json.
+   * The address is relative on purpose: it is worked out from the page's base href, so each application reads the
+   * config.json served next to it (both UIs are served at the root of their own address: /config.json).
    */
   async load(): Promise<void> {
     const raw = await firstValueFrom(this.http.get<T>(`config.json?v=${Date.now()}`));

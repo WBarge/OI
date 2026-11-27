@@ -1,0 +1,23 @@
+.authPage {
+  display: flex;
+  justify-content: center;
+  padding: 4rem 1rem;
+}
+
+.authCard {
+  width: 100%;
+  max-width: 24rem;
+}
+
+.authMessage {
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.authStatus {
+  margin: 0;
+}
+
+.authButton {
+  width: 100%;
+}

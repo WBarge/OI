@@ -12,11 +12,12 @@ export * from './services/config-service';
 
 // sign-in
 export * from './model/session-ended-error';
-export * from './services/refresh-token-store';
+export * from './services/oidc-session';
 export * from './services/auth-service';
 export * from './services/auth-interceptor';
 export * from './services/auth-guard';
-export * from './pages/login/login';
+export * from './pages/auth-callback/auth-callback';
+export * from './pages/signed-out/signed-out';
 export * from './components/user-menu/user-menu';
 export * from './utils/url.utils';
 

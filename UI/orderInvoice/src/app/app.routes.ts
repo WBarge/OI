@@ -2,18 +2,21 @@ import { Routes } from '@angular/router';
 import { OrderInvoice } from '../pages/order-invoice/order-invoice';
 import { About } from '../pages/about/about';
 import { Home } from '../pages/home/home';
-import { Login } from '../pages/login/login';
 import { HubTest } from '../pages/hub-test/hub-test';
 import { AdminUsers } from '../pages/admin-users/admin-users';
 import { AdminRoles } from '../pages/admin-roles/admin-roles';
 import { AdminGroups } from '../pages/admin-groups/admin-groups';
 import { OrderSelection } from '../pages/order-selection/order-selection';
 import { CustomerManager } from '../pages/customer-manager/customer-manager';
-import { adminGuard, authGuard, guestGuard } from '../services/auth-guard';
+import { adminGuard, authGuard } from '../services/auth-guard';
+import { AuthCallback, SignedOut } from '@oi/ui-common';
 import { CanceledOrderSelection } from '../pages/canceled-order-selection/canceled-order-selection';
 
 export const routes: Routes = [
-  { path: 'login', component: Login, canActivate: [guestGuard] },
+  // OI.Auth sends the browser back to these two (the addresses registered for oi-ui in OI.Auth's "Clients" settings).
+  // They are the only pages that do not need a signed-in user.
+  { path: 'auth/callback', component: AuthCallback },
+  { path: 'signed-out', component: SignedOut },
   {
     // Everything in here needs a signed-in user. A page added to this list is protected automatically.
     // canActivateChild is what re-checks on every move between pages; canActivate alone only runs on the way in.

@@ -220,13 +220,4 @@ public class ModelTests
         sut.Data.Should().Equal(1, 2, 3);
         sut.TotalRecordSize.Should().Be(42);
     }
-
-    [Test, Description("RefreshTokenRecord should default to not revoked and not replaced")]
-    public void RefreshTokenRecord_DefaultsToLive()
-    {
-        RefreshTokenRecord sut = new("u1", "HASH", Now, Now.AddDays(7));
-
-        sut.RevokedAt.Should().BeNull();
-        sut.ReplacedByHash.Should().BeNull();
-    }
 }

@@ -1,18 +1,8 @@
-import { computed, DestroyRef, inject, Service, signal } from '@angular/core';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { computed, inject, Service, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
 import { OI_UI_OPTIONS } from '../options/oi-ui-options';
-import { ConfigService } from './config-service';
-import { REFRESH_KEY, REFRESH_TOKEN_STORE } from './refresh-token-store';
-
-export { REFRESH_KEY };
-
-interface AuthResult {
-  accessToken: string;
-  accessTokenExpires: string;
-  refreshToken: string;
-}
+import { safeReturnUrl } from '../utils/url.utils';
+import { OIDC_SESSION, OidcUser } from './oidc-session';
 
 interface TokenClaims {
   sub: string;
@@ -30,29 +20,41 @@ interface TokenClaims {
  */
 export type RefreshOutcome = 'refreshed' | 'rejected' | 'unavailable';
 
-const REFRESH_LOCK = 'oi-token-refresh';
+/** What the application remembers across the redirect to OI.Auth. */
+interface SignInState {
+  returnUrl: string;
+}
+
+/** The errors OI.Auth answers a refresh with when the session is genuinely over (as opposed to being temporarily unavailable). */
+const REFUSALS = ['invalid_grant', 'invalid_token', 'invalid_client', 'unauthorized_client', 'access_denied'];
+
 const RENEW_BEFORE_EXPIRY_MS = 60_000;
+/** If the browser comes back to this page without having left (the back button restoring it from the cache), sign-in may be started again after this long. */
+const SIGN_IN_RESET_MS = 5_000;
 const toArray = (v?: string | string[]) => (v === undefined ? [] : Array.isArray(v) ? v : [v]);
 
 /**
- * Keeps the signed-in session.
- *  - The access token (15 minutes) lives in memory only.
- *  - The refresh token (7 days, replaced every time it is used) lives in the RefreshTokenStore (localStorage by default) so a reload,
- *    a new tab, or coming back tomorrow does not ask for a password again. The trade-off is that a
- *    script running on the page could read it, which is why the Angular templates must never bypass sanitising.
+ * Keeps the signed-in session. People sign in on OI.Auth (the browser is sent there; no password is ever typed into this
+ * application), and OI.Auth sends the browser back with a code that is traded for tokens.
+ *  - The access token (15 minutes) is what the APIs check. It is kept for the page's use in memory and by oidc-client-ts in
+ *    the tab's sessionStorage, so a reload does not sign the user out.
+ *  - The refresh token (rotating: each use replaces it) is kept the same way. sessionStorage belongs to one tab, so each tab
+ *    has its own sign-in and tabs never race to use the same refresh token. A tab that is closed is signed out of this
+ *    application, but opening another one signs in again without a password while the OI.Auth session lasts (8 hours).
+ *  - The trade-off of keeping tokens in the page's storage is that a script running on the page could read them, which is why
+ *    the Angular templates must never bypass sanitising.
  */
 @Service()
 export class AuthService {
-  private http = inject(HttpClient);
-  private configService = inject(ConfigService);
   private router = inject(Router);
   private options = inject(OI_UI_OPTIONS);
-  private store = inject(REFRESH_TOKEN_STORE);
+  private oidc = inject(OIDC_SESSION);
 
   private readonly accessToken = signal<string | null>(null);
   private readonly claims = signal<TokenClaims | null>(null);
   private refreshInFlight: Promise<RefreshOutcome> | null = null;
   private sessionEnding = false;
+  private signInStarted = false;
 
   readonly isAuthenticated = computed(() => this.accessToken() !== null);
   /** The user's id (the token's "sub"), which is how the Admin screens recognise the signed-in user's own row. */
@@ -61,65 +63,95 @@ export class AuthService {
   readonly roles = computed(() => toArray(this.claims()?.role));
   readonly groups = computed(() => toArray(this.claims()?.group));
 
-  constructor() {
-    // Signing out in one window removes the shared refresh token; follow it in the other windows.
-    const stopListening = this.store.onExternalRemoval(() => {
-      if (this.accessToken() !== null) {
-        this.clearSession();
-        void this.router.navigate([this.options.loginRoute]);
-      }
-    });
-    inject(DestroyRef).onDestroy(stopListening);
-  }
-
-  private get authUrl(): string {
-    return this.configService.config.authApiUrl + 'auth/';
-  }
-
   /** For the interceptor. */
   get currentToken(): string | null {
     return this.accessToken();
   }
 
-  /** Called by the app initializer: quietly sign back in if a refresh token was kept from last time. */
+  /**
+   * Called by the app initializer: pick the session back up if this tab was already signed in (a page reload).
+   * A token that has run out is renewed with the refresh token. Nothing is stored: nobody is signed in.
+   */
   async restore(): Promise<void> {
-    if (this.store.get()) {
-      await this.refresh();
-    }
-  }
-
-  /** Rejects with the HttpErrorResponse when the sign-in is refused (401), throttled (429) or unreachable (0). */
-  async login(email: string, password: string): Promise<void> {
-    const result = await firstValueFrom(
-      this.http.post<AuthResult>(this.authUrl + 'login', { email, password }),
-    );
-    this.applySession(result);
-  }
-
-  async logout(): Promise<void> {
-    const refreshToken = this.store.get();
-    this.clearSession();
-    await this.router.navigate([this.options.loginRoute]);
-    if (refreshToken) {
-      try {
-        await firstValueFrom(this.http.post(this.authUrl + 'logout', { refreshToken }));
-      } catch {
-        /* best effort: the token is already gone from this browser */
-      }
-    }
-  }
-
-  /** The session cannot be kept alive. Forget it and go to the sign-in page, remembering where the user was. */
-  async sessionExpired(): Promise<void> {
-    this.clearSession();
-    const here = this.router.url;
-    const loginRoute = this.options.loginRoute;
-    if (this.sessionEnding || here === loginRoute || here.startsWith(loginRoute + '?')) {
+    let user: OidcUser | null;
+    try {
+      user = await this.oidc.getUser();
+    } catch {
       return;
     }
-    this.sessionEnding = true;   // several requests can fail together; navigate once
+    if (!user) {
+      return;
+    }
+
+    if (this.isFresh(user) && this.applyUser(user)) {
+      return;
+    }
+    await this.refresh();
+  }
+
+  /**
+   * Sends the browser to OI.Auth to sign in. If the person already has an OI.Auth session (the other application, another tab)
+   * they come straight back signed in without typing a password. Where they were going is remembered and restored afterwards.
+   * Rejects if the sign-in cannot be started (OI.Auth cannot be reached).
+   */
+  async signIn(returnUrl?: string): Promise<void> {
+    if (this.signInStarted) {
+      return;   // several guards or failing requests can ask at the same moment: send the browser once
+    }
+    this.signInStarted = true;
     try {
-      await this.router.navigate([loginRoute], { queryParams: { reason: 'expired', returnUrl: here } });
+      const state: SignInState = { returnUrl: safeReturnUrl(returnUrl ?? this.router.url, this.options.homeRoute) };
+      await this.oidc.signinRedirect(state);
+      setTimeout(() => (this.signInStarted = false), SIGN_IN_RESET_MS);
+    } catch (error) {
+      this.signInStarted = false;
+      throw error;
+    }
+  }
+
+  /**
+   * Finishes a sign-in on the callback page: trades the code in the address for tokens and returns where the person was going.
+   * Rejects when OI.Auth refused (sign-in cancelled, bad or reused code) or cannot be reached.
+   */
+  async completeSignIn(url?: string): Promise<string> {
+    const user = await this.oidc.signinCallback(url);
+    if (!this.applyUser(user)) {
+      throw new Error('OI.Auth returned an access token that cannot be read.');
+    }
+    this.signInStarted = false;
+    const state = user.state as Partial<SignInState> | undefined;
+    return safeReturnUrl(state?.returnUrl, this.options.homeRoute);
+  }
+
+  /** Ends the session here and at OI.Auth (which ends this browser's tokens), then lands on the signed-out page. */
+  async logout(): Promise<void> {
+    this.clearSession();
+    try {
+      await this.oidc.signoutRedirect();
+    } catch {
+      // OI.Auth could not be reached: this tab is signed out anyway
+      await this.forget();
+      await this.router.navigate([this.options.signedOutRoute]);
+    }
+  }
+
+  /**
+   * The session cannot be kept alive. Forget it and go back to OI.Auth, remembering where the user was. If their OI.Auth session
+   * is still valid they come straight back signed in; if not, they are asked for a password.
+   */
+  async sessionExpired(): Promise<void> {
+    this.clearSession();
+    await this.forget();
+    const here = this.router.url;
+    const plumbing = [this.options.callbackRoute, this.options.signedOutRoute];
+    if (this.sessionEnding || plumbing.some((route) => here === route || here.startsWith(route + '?'))) {
+      return;
+    }
+    this.sessionEnding = true;   // several requests can fail together; go once
+    try {
+      await this.signIn(here);
+    } catch {
+      await this.router.navigate([this.options.signedOutRoute], { queryParams: { error: 'unavailable' } });
     } finally {
       this.sessionEnding = false;
     }
@@ -127,7 +159,7 @@ export class AuthService {
 
   /** Single flight: concurrent callers (interceptor, SignalR) share one request. */
   refresh(): Promise<RefreshOutcome> {
-    this.refreshInFlight ??= this.refreshAcrossTabs().finally(() => (this.refreshInFlight = null));
+    this.refreshInFlight ??= this.doRefresh().finally(() => (this.refreshInFlight = null));
     return this.refreshInFlight;
   }
 
@@ -152,50 +184,70 @@ export class AuthService {
     return this.accessToken() ?? '';
   }
 
-  /**
-   * Every tab shares one refresh token and each use replaces it. Two tabs refreshing at the same moment
-   * would use the same one twice, so they take turns (Web Locks) and the second reads the replacement.
-   */
-  private refreshAcrossTabs(): Promise<RefreshOutcome> {
-    const locks = typeof navigator === 'undefined' ? undefined : navigator.locks;
-    return locks ? locks.request(REFRESH_LOCK, () => this.doRefresh()) : this.doRefresh();
-  }
-
   private async doRefresh(): Promise<RefreshOutcome> {
-    const refreshToken = this.store.get();
-    if (!refreshToken) {
+    let stored: OidcUser | null;
+    try {
+      stored = await this.oidc.getUser();
+    } catch {
+      return 'unavailable';
+    }
+    if (!stored?.refresh_token) {
+      // nothing to renew with (signed out in this tab, or offline_access was not granted)
       this.clearSession();
       return 'rejected';
     }
+
     try {
-      const result = await firstValueFrom(
-        this.http.post<AuthResult>(this.authUrl + 'refresh', { refreshToken }),
-      );
-      this.applySession(result);
+      const user = await this.oidc.signinSilent();
+      if (!user || !this.applyUser(user)) {
+        return await this.reject();
+      }
       return 'refreshed';
     } catch (error) {
       // Only a refusal ends the session. A network problem or a server error must not sign the user out.
-      const refused =
-        error instanceof HttpErrorResponse && (error.status === 400 || error.status === 401 || error.status === 403);
-      if (refused) {
-        this.clearSession();
-        return 'rejected';
-      }
-      return 'unavailable';
+      return this.isRefusal(error) ? await this.reject() : 'unavailable';
     }
   }
 
-  private applySession(result: AuthResult): void {
-    const claims = this.decode(result.accessToken);
-    this.accessToken.set(result.accessToken);
-    this.claims.set(claims);
-    this.store.set(result.refreshToken);
+  private async reject(): Promise<RefreshOutcome> {
+    this.clearSession();
+    await this.forget();
+    return 'rejected';
+  }
+
+  private isRefusal(error: unknown): boolean {
+    const failure = error as { name?: string; error?: string | null } | null;
+    return failure?.name === 'ErrorResponse' && typeof failure.error === 'string' && REFUSALS.includes(failure.error);
+  }
+
+  private isFresh(user: OidcUser): boolean {
+    return user.expires_at === undefined || user.expires_at * 1000 - Date.now() > RENEW_BEFORE_EXPIRY_MS;
+  }
+
+  /** Takes the tokens into use. False when the access token cannot be read (nothing is changed then). */
+  private applyUser(user: OidcUser): boolean {
+    try {
+      const claims = this.decode(user.access_token);
+      this.accessToken.set(user.access_token);
+      this.claims.set(claims);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   private clearSession(): void {
     this.accessToken.set(null);
     this.claims.set(null);
-    this.store.clear();
+  }
+
+  /** Forgets the user kept in this tab's storage. Best effort. */
+  private async forget(): Promise<void> {
+    try {
+      await this.oidc.removeUser();
+    } catch {
+      /* nothing more to do */
+    }
   }
 
   /** Reads the payload for display and expiry only. The server is what enforces access. */

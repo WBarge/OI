@@ -3,18 +3,25 @@ import { CanActivateFn, Router } from '@angular/router';
 import { OI_UI_OPTIONS } from '../options/oi-ui-options';
 import { AuthService } from './auth-service';
 
-/** Everything except the sign-in page. Sends a signed-out user to the sign-in route and remembers where they were going. */
+/**
+ * Everything except the sign-in plumbing pages. Sends a signed-out user to OI.Auth to sign in and remembers where they were
+ * going; they come back to that page signed in (straight away, with no password, if they already have an OI.Auth session).
+ * The navigation is cancelled because the browser is leaving this application.
+ * If OI.Auth cannot be reached, the user lands on the signed-out page with a message and a Try again button.
+ */
 export const authGuard: CanActivateFn = (_route, state) => {
-  if (inject(AuthService).isAuthenticated()) {
+  const auth = inject(AuthService);
+  if (auth.isAuthenticated()) {
     return true;
   }
-  const queryParams = state.url && state.url !== '/' ? { returnUrl: state.url } : undefined;
-  return inject(Router).createUrlTree([inject(OI_UI_OPTIONS).loginRoute], { queryParams });
-};
 
-/** The sign-in page itself: a user who is already signed in has no reason to see it. */
-export const guestGuard: CanActivateFn = () =>
-  inject(AuthService).isAuthenticated() ? inject(Router).createUrlTree([inject(OI_UI_OPTIONS).homeRoute]) : true;
+  const router = inject(Router);
+  const options = inject(OI_UI_OPTIONS);
+  return auth.signIn(state.url).then(
+    () => false,
+    () => router.createUrlTree([options.signedOutRoute], { queryParams: { error: 'unavailable' } }),
+  );
+};
 
 export const roleGuard =
   (role: string): CanActivateFn =>
