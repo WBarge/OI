@@ -2,5 +2,6 @@
   // VS Code's npm tasks ("npm: start", "npm: test", "npm: build:watch" ...) pick the package manager by looking at the
   // folder. A parent folder with a "workspaces" field (UI\package.json has one) makes VS Code choose yarn.
   // These projects use npm, so say so.
-  "npm.packageManager": "npm"
+  "npm.packageManager": "npm",
+  "npm.scriptRunner": "npm"
 }
