@@ -1,6 +1,6 @@
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
+using Microsoft.EntityFrameworkCore; 
 using OI.Data.Contexts;
 using OpenIddict.EntityFrameworkCore;
 
@@ -9,16 +9,23 @@ namespace OI.Data.Tests;
 [TestFixture, Description("Tests for OiAuthStoresExtensions: OpenIddict storing its data in the auth database")]
 public class OiAuthStoresExtensionsTests
 {
-    //[Test, Description("AddOiAuthStores should point OpenIddict at the auth database context")]
-    //public void AddOiAuthStores_UsesTheAuthContext()
-    //{
-    //    ServiceCollection services = new();
-    //    services.AddOpenIddict().AddOiAuthStores();
-    //    using ServiceProvider provider = services.BuildServiceProvider();
+    [Test, Description("AddOiAuthStores should point OpenIddict at the auth database context")]
+    public async Task AddOiAuthStores_UsesTheAuthContext()
+    {
+        ServiceCollection services = new();
+        services.AddDbContext<OiAuthDbContext>(options =>
+            options.UseInMemoryDatabase(nameof(AddOiAuthStores_UsesTheAuthContext)));
+        services.AddOpenIddict().AddOiAuthStores();
 
-    //    provider.GetRequiredService<IOptionsMonitor<OpenIddictEntityFrameworkCoreOptions>>().CurrentValue.DbContextType
-    //        .Should().Be(typeof(OiAuthDbContext));
-    //}
+        using ServiceProvider provider = services.BuildServiceProvider();
+        using IServiceScope scope = provider.CreateScope();
+
+        IOpenIddictEntityFrameworkCoreContext openIdDictContext =
+            scope.ServiceProvider.GetRequiredService<IOpenIddictEntityFrameworkCoreContext>();
+        DbContext dbContext = await openIdDictContext.GetDbContextAsync(CancellationToken.None);
+
+        dbContext.Should().BeOfType<OiAuthDbContext>();
+    }
 
     [Test, Description("AddOiAuthStores should return the builder so the server can be chained after it")]
     public void AddOiAuthStores_ReturnsTheBuilder()

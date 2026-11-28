@@ -146,7 +146,7 @@ public class RootCompositionTests
             ("Branding:LogoUrl", "https://reporting.test/api/CompanyProfile/logo")));
         using ServiceProvider provider = services.BuildServiceProvider();
 
-      //  provider.GetRequiredService<ClientRegistry>().Clients.Select(c => c.ClientId).Should().Equal("oi-ui");
+        provider.GetRequiredService<ClientRegistry>().Clients.Select(c => c.ClientId).Should().Equal("oi-ui");
         provider.GetRequiredService<IOptions<BrandingOptions>>().Value.LogoUrl.Should().Be("https://reporting.test/api/CompanyProfile/logo");
     }
 

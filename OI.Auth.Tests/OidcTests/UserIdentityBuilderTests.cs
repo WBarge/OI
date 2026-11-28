@@ -132,7 +132,7 @@ public class UserIdentityBuilderTests
 
         renewed.GetClaim(Claims.Private.AuthorizationId).Should().Be("auth-1");
         renewed.GetClaim(Claims.Name).Should().Be("Pat Example");
-        renewed.GetClaims(Claims.Role).ToArray().Should().Contain("User", "a lost role must be gone at the next renewal");
+        renewed.GetClaims(Claims.Role).ToArray().Should().BeEquivalentTo(new[] { "User" }, "a lost role must be gone at the next renewal");
         renewed.FindAll("group").Select(c => c.Value).Should().Equal("new-group");
         renewed.GetScopes().ToArray().Should().BeEquivalentTo("openid", "profile");
         renewed.GetResources().ToArray().Should().Equal("oi");

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using OI.Auth.Security;
+using OI.Data;
 using OI.Glue.Services;
 using OpenIddict.Server;
 using static OpenIddict.Abstractions.OpenIddictConstants;
@@ -25,7 +26,8 @@ public static class OidcServerSetup
     {
         services.Configure<OidcOptions>(configuration.GetSection(OidcOptions.SECTION));
         services.Configure<BrandingOptions>(configuration.GetSection(BrandingOptions.SECTION));
-        services.AddSingleton<ClientRegistry>();
+        // Registered as an instance (like ServiceClientRegistry): it needs the settings, not a container that happens to hold them.
+        services.AddSingleton(new ClientRegistry(configuration));
         services.AddSingleton<PasswordGrantGate>();
         services.AddScoped<SessionAuthorizations>();
         services.AddScoped<IUserSessionRevoker>(sp => sp.GetRequiredService<SessionAuthorizations>());

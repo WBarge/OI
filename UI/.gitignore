@@ -1,2 +1,6 @@
 # npm workspace: one shared install for orderInvoice, ProductAdmin and oi-ui-common
 node_modules/
+
+# build output and caches (rebuilt by npm run build / ng serve)
+dist/
+.angular/

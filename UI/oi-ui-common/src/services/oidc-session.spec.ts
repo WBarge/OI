@@ -20,7 +20,6 @@ describe('oidc-session', () => {
     scopes: 'openid profile email offline_access',
     callbackRoute: '/auth/callback',
     signedOutRoute: '/signed-out',
-    loginRoute: undefined as never,
     homeRoute: '/home',
     forbiddenRoute: '/home',
     appTitle: 'Orders',
