@@ -1,5 +1,0 @@
-{
-  "authApiUrl": "https://localhost:7300/api/",
-  "productApiUrl": "https://localhost:7253/api/",
-  "hubUrl": "https://localhost:7400/hubs/app"
-}
